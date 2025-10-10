@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "Abstract background for hero section",
+      "imageUrl": "https://picsum.photos/seed/1/1200/800",
+      "imageHint": "abstract gradient"
+    },
+    {
+      "id": "guitar",
+      "description": "A person playing guitar",
+      "imageUrl": "https://picsum.photos/seed/2/400/300",
+      "imageHint": "playing guitar"
+    },
+    {
+      "id": "speaking",
+      "description": "A person giving a presentation",
+      "imageUrl": "https://picsum.photos/seed/3/400/300",
+      "imageHint": "public speaking"
+    },
+    {
+      "id": "coding",
+      "description": "Code on a computer screen",
+      "imageUrl": "https://picsum.photos/seed/4/400/300",
+      "imageHint": "code screen"
+    }
+  ]
 }

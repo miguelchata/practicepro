@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +23,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/icons/logo';
 import { useToast } from '@/hooks/use-toast';
+import { Github } from 'lucide-react';
+
+const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg role="img" viewBox="0 0 24 24" {...props}>
+    <path
+      fill="currentColor"
+      d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.36 1.67-4.66 1.67-3.86 0-6.99-3.14-6.99-7s3.13-7 6.99-7c2.08 0 3.66.86 4.79 1.85l2.6-2.58C18.06 1.61 15.49 0 12.48 0 5.88 0 0 5.88 0 12.48s5.88 12.48 12.48 12.48c7.05 0 12.1-4.87 12.1-12.48 0-.8-.08-1.57-.2-2.32h-11.9z"
+    />
+  </svg>
+);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,11 +57,29 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    if (!auth) return;
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
-          <Link href="/dashboard" className="flex items-center gap-2 text-foreground">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 text-foreground"
+          >
             <Logo className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold font-headline tracking-tighter">
               PracticePro
@@ -56,7 +88,9 @@ export default function LoginPage() {
         </div>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
+            <CardTitle className="font-headline text-2xl">
+              Welcome Back
+            </CardTitle>
             <CardDescription>
               Enter your credentials to access your practice dashboard.
             </CardDescription>
@@ -108,8 +142,12 @@ export default function LoginPage() {
                 </span>
               </div>
             </div>
-            <Button variant="outline" className="w-full" disabled>
-              {/* Replace with actual provider icons */}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleGoogleLogin}
+            >
+              <GoogleIcon className="mr-2 h-4 w-4" />
               Google
             </Button>
             <p className="text-center text-sm text-muted-foreground">

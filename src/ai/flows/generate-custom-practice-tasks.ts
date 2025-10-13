@@ -21,9 +21,6 @@ const GenerateCustomPracticeTasksInputSchema = z.object({
       'The AI-analyzed insights from the user\u2019s previous journal entries, highlighting patterns, strengths, and weaknesses.'
     ),
   skill: z.string().describe('The specific skill the user is practicing.'),
-  proficiencyLevel: z
-    .enum(['Beginner', 'Intermediate', 'Advanced'])
-    .describe('The user-defined proficiency level.'),
 });
 export type GenerateCustomPracticeTasksInput = z.infer<
   typeof GenerateCustomPracticeTasksInputSchema
@@ -32,7 +29,7 @@ export type GenerateCustomPracticeTasksInput = z.infer<
 const GenerateCustomPracticeTasksOutputSchema = z.object({
   practiceTasks: z
     .array(z.string())
-    .describe('A list of custom practice tasks tailored to the user\u2019s goals, journal analysis, skill, and proficiency level.'),
+    .describe('A list of custom practice tasks tailored to the user\u2019s goals, journal analysis, and skill.'),
 });
 export type GenerateCustomPracticeTasksOutput = z.infer<
   typeof GenerateCustomPracticeTasksOutputSchema
@@ -50,10 +47,9 @@ const prompt = ai.definePrompt({
     schema: GenerateCustomPracticeTasksInputSchema,
   },
   output: {schema: GenerateCustomPracticeTasksOutputSchema},
-  prompt: `You are an AI practice task generator. You will generate custom practice tasks based on the user's goals, journal analysis, skill, and proficiency level.
+  prompt: `You are an AI practice task generator. You will generate custom practice tasks based on the user's goals, journal analysis, and skill.
 
 Skill: {{{skill}}}
-Proficiency Level: {{{proficiencyLevel}}}
 User Goals: {{{userGoals}}}
 Journal Analysis: {{{journalAnalysis}}}
 

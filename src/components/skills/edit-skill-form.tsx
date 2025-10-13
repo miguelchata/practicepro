@@ -21,19 +21,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Skill, SkillProficiency } from '@/lib/types';
+import type { Skill } from '@/lib/types';
 
-const proficiencyLevels: SkillProficiency[] = [
-  'Beginner',
-  'Intermediate',
-  'Advanced',
-];
 
 const formSchema = z.object({
   name: z.string().min(2, {
     message: 'Skill name must be at least 2 characters.',
   }),
-  proficiency: z.enum(['Beginner', 'Intermediate', 'Advanced']),
+  category: z.string().min(2, { message: 'Category is required.' }),
   goals: z.string().min(1, { message: 'Please set at least one goal.' }),
   subSkills: z.string().optional(),
 });
@@ -48,7 +43,7 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: skill.name,
-      proficiency: skill.proficiency,
+      category: skill.category,
       goals: skill.goals.map(g => g.description).join('\n'),
       subSkills: skill.subSkills?.join('\n') || '',
     },
@@ -57,7 +52,7 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
   function onSubmit(values: z.infer<typeof formSchema>) {
     const updatedSkill = {
       name: values.name,
-      proficiency: values.proficiency,
+      category: values.category,
       goals: values.goals.split('\n').filter(g => g.trim() !== '').map(g => ({ description: g})),
       subSkills: values.subSkills?.split('\n').filter(s => s.trim() !== '') || [],
     };
@@ -82,24 +77,13 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
         />
         <FormField
           control={form.control}
-          name="proficiency"
+          name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Proficiency Level</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your proficiency" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {proficiencyLevels.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {level}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Music" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

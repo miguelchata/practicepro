@@ -91,7 +91,7 @@ export const skills: Skill[] = [
     id: 'guitar',
     name: 'Guitar',
     icon: Guitar,
-    proficiency: 'Intermediate',
+    category: 'Music',
     goals: [
         { description: 'Master bar chords' }, 
         { description: 'Learn "Stairway to Heaven" solo' }
@@ -103,7 +103,7 @@ export const skills: Skill[] = [
     id: 'public-speaking',
     name: 'Public Speaking',
     icon: Mic,
-    proficiency: 'Beginner',
+    category: 'Communication',
     goals: [
         { description: 'Reduce filler words' }, 
         { description: 'Improve stage presence' }
@@ -115,7 +115,7 @@ export const skills: Skill[] = [
     id: 'python',
     name: 'Python Programming',
     icon: Code,
-    proficiency: 'Advanced',
+    category: 'Technology',
     goals: [
         { description: 'Build a Django web app' }, 
         { description: 'Contribute to an open-source project' }

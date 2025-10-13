@@ -104,7 +104,7 @@ export default function SkillDetailPage() {
             {skill.name}
           </h1>
           <Badge variant="outline" className="ml-auto sm:ml-0">
-            {skill.proficiency}
+            {skill.category}
           </Badge>
           <div className="flex items-center gap-2">
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

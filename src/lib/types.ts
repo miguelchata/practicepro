@@ -25,7 +25,7 @@ export type Skill = {
   id:string;
   name: string;
   icon: LucideIcon;
-  proficiency: SkillProficiency;
+  category: string;
   totalHours: number;
   goals: Goal[];
   subSkills: string[];

@@ -84,7 +84,7 @@ export default function SkillsPage() {
                 <skill.icon className="h-10 w-10 text-primary" />
                 <div>
                   <CardTitle className="font-headline">{skill.name}</CardTitle>
-                  <CardDescription>{skill.proficiency}</CardDescription>
+                  <CardDescription>{skill.category}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>

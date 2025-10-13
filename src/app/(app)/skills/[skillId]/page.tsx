@@ -1,6 +1,7 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import {
   Card,
@@ -9,19 +10,34 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { skills } from '@/lib/data';
+import { skills as initialSkills } from '@/lib/data';
+import type { Skill } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { EditSkillForm } from '@/components/skills/edit-skill-form';
 
 export default function SkillDetailPage() {
   const params = useParams();
   const { skillId } = params;
+  const router = useRouter();
 
-  const skill = skills.find((s) => s.id === skillId);
+  // In a real app, you'd fetch this from a database
+  const initialSkill = initialSkills.find((s) => s.id === skillId);
+
+  const [skill, setSkill] = useState<Skill | undefined>(initialSkill);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   if (!skill) {
     return (
@@ -39,6 +55,15 @@ export default function SkillDetailPage() {
       </div>
     );
   }
+
+  const handleSkillUpdated = (updatedSkillData: Omit<Skill, 'id' | 'totalHours' | 'icon'>) => {
+    // In a real app, this would also update the database.
+    setSkill(prevSkill => prevSkill ? { ...prevSkill, ...updatedSkillData } : undefined);
+    setIsDialogOpen(false);
+    // Note: This only updates the state on this page. The main skills list won't reflect changes
+    // until we implement a shared state management or data fetching solution.
+  };
+
 
   const { icon: Icon } = skill;
 
@@ -60,10 +85,26 @@ export default function SkillDetailPage() {
             {skill.proficiency}
           </Badge>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Skill</DialogTitle>
+                  <DialogDescription>
+                    Update the details for your skill.
+                  </DialogDescription>
+                </DialogHeader>
+                <EditSkillForm
+                  skill={skill}
+                  onSkillUpdated={handleSkillUpdated}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 

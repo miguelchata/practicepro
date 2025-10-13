@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useAuth } from '@/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,15 +18,33 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/icons/logo';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SignupPage() {
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleSignup = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // In a real app, you'd handle user creation here.
-    // For this prototype, we'll just redirect to onboarding.
-    router.push('/onboarding');
+    if (!auth) return;
+    
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: name });
+      }
+      router.push('/onboarding');
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Sign-up Failed',
+        description: error.message,
+      });
+    }
   };
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -49,7 +70,7 @@ export default function SignupPage() {
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" type="text" placeholder="John Doe" required />
+                <Input id="name" type="text" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -58,11 +79,13 @@ export default function SignupPage() {
                   type="email"
                   placeholder="name@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required />
+                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <Button type="submit" className="w-full">
                 Create Account

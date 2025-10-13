@@ -32,10 +32,14 @@ const formSchema = z.object({
 });
 
 type AddSkillFormProps = {
-    onSkillAdded: (newSkill: Omit<Skill, 'id' | 'totalHours' | 'icon'>) => void;
+  onSkillAdded: (newSkill: Omit<Skill, 'id' | 'totalHours' | 'icon'>) => void;
+  categories: string[];
 };
 
-export function AddSkillForm({ onSkillAdded }: AddSkillFormProps) {
+export function AddSkillForm({
+  onSkillAdded,
+  categories,
+}: AddSkillFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -47,11 +51,14 @@ export function AddSkillForm({ onSkillAdded }: AddSkillFormProps) {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newSkill = {
-        name: values.name,
-        category: values.category,
-        goals: values.goals.split('\n').filter(g => g.trim() !== '').map(g => ({ description: g })),
-        subSkills: [],
-    }
+      name: values.name,
+      category: values.category,
+      goals: values.goals
+        .split('\n')
+        .filter((g) => g.trim() !== '')
+        .map((g) => ({ description: g })),
+      subSkills: [],
+    };
     onSkillAdded(newSkill);
     form.reset();
   }
@@ -78,9 +85,30 @@ export function AddSkillForm({ onSkillAdded }: AddSkillFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Music" {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="new">Create new category...</SelectItem>
+                </SelectContent>
+              </Select>
+              {field.value === 'new' && (
+                <FormControl>
+                  <Input
+                    placeholder="New category name"
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="mt-2"
+                  />
+                </FormControl>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -101,7 +129,9 @@ export function AddSkillForm({ onSkillAdded }: AddSkillFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Add Skill</Button>
+        <Button type="submit" className="w-full">
+          Add Skill
+        </Button>
       </form>
     </Form>
   );

@@ -108,7 +108,10 @@ export default function SkillsPage() {
                   What new skill do you want to master?
                 </DialogDescription>
               </DialogHeader>
-              <AddSkillForm onSkillAdded={handleSkillAdded} />
+              <AddSkillForm
+                onSkillAdded={handleSkillAdded}
+                categories={categories}
+              />
             </DialogContent>
           </Dialog>
         </div>

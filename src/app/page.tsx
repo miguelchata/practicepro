@@ -8,12 +8,18 @@ export default function Home() {
   const user = useUser();
 
   useEffect(() => {
-    if (user.data === null && !user.loading) {
+    if (user.loading) {
+      // Wait until user status is resolved
+      return;
+    }
+    if (!user.data) {
       redirect('/login');
-    } else if(user.data) {
-      redirect('/onboarding');
+    } else {
+      // Assuming that if a user exists, they have completed onboarding.
+      // A more robust solution would check if onboarding is complete from user profile data.
+      redirect('/dashboard');
     }
   }, [user.data, user.loading]);
 
-  return null;
+  return null; // Or a loading spinner
 }

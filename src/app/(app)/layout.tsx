@@ -19,7 +19,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar>
         <SidebarHeader>
           <Link
-            href="/"
+            href="/dashboard"
             className="flex items-center gap-2 text-sidebar-foreground"
           >
             <Logo className="h-8 w-8 text-primary" />

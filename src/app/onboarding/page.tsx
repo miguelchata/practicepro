@@ -26,8 +26,9 @@ export default function OnboardingPage() {
 
   const handleOnboardingSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Save user preferences
-    router.push('/');
+    // In a real app, you would save user preferences here.
+    // For example, using Firestore to update the user's profile.
+    router.push('/dashboard');
   };
 
   return (
@@ -47,7 +48,7 @@ export default function OnboardingPage() {
               Welcome to PracticePro!
             </CardTitle>
             <CardDescription>
-              Let&apos;s set up your profile. Tell us what you want to master.
+              Let's set up your profile. Tell us what you want to master.
             </CardDescription>
           </CardHeader>
           <CardContent>

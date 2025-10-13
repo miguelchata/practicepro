@@ -50,7 +50,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
-          <Link href="/" className="flex items-center gap-2 text-foreground">
+          <Link href="/dashboard" className="flex items-center gap-2 text-foreground">
             <Logo className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold font-headline tracking-tighter">
               PracticePro
@@ -63,7 +63,7 @@ export default function SignupPage() {
               Create an Account
             </CardTitle>
             <CardDescription>
-              Start your journey to mastery. It&apos;s free!
+              Start your journey to mastery. It's free!
             </CardDescription>
           </CardHeader>
           <CardContent>

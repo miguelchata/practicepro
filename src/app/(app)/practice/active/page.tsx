@@ -22,30 +22,54 @@ function ActiveSession() {
   const skillName = searchParams.get('skillName') || 'Practice';
   const intention = searchParams.get('intention');
   const sessionType = searchParams.get('type') || 'pomodoro';
+  const customDuration = searchParams.get('duration');
   const skillId = searchParams.get('skillId');
 
-  // Pomodoro: 25 minutes = 1500 seconds
-  const initialTime = sessionType === 'pomodoro' ? 1500 : 0; 
-  const [timeRemaining, setTimeRemaining] = useState(initialTime);
+  const getInitialTime = () => {
+    switch (sessionType) {
+      case 'pomodoro':
+        return 25 * 60; // 25 minutes
+      case 'timed':
+        return customDuration ? parseInt(customDuration, 10) : 10 * 60; // Custom duration or default 10 mins
+      case 'manual':
+        return 0; // Starts from 0 and counts up
+      default:
+        return 25 * 60;
+    }
+  };
+  
+  const [startTime] = useState(Date.now());
+  const [time, setTime] = useState(getInitialTime());
   const [sessionEnded, setSessionEnded] = useState(false);
+  
+  const isCountdown = sessionType === 'pomodoro' || sessionType === 'timed';
 
 
   useEffect(() => {
-    if (sessionType !== 'manual' && timeRemaining > 0 && !sessionEnded) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prevTime => prevTime - 1);
-      }, 1000);
+    if (sessionEnded) return;
 
-      return () => clearInterval(timer);
-    } else if (timeRemaining === 0 && !sessionEnded && sessionType !== 'manual') {
-      setSessionEnded(true);
-      toast({
-        title: 'Session Complete!',
-        description: `Great work on your ${skillName} practice.`,
-      });
-      // Optionally play a sound here
-    }
-  }, [timeRemaining, sessionEnded, sessionType, skillName, toast]);
+    const timer = setInterval(() => {
+      if (isCountdown) {
+        setTime(prevTime => {
+          if (prevTime <= 1) {
+            clearInterval(timer);
+            setSessionEnded(true);
+            toast({
+              title: 'Session Complete!',
+              description: `Great work on your ${skillName} practice.`,
+            });
+            // Optionally play a sound here
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      } else { // Manual mode (count up)
+        setTime(prevTime => prevTime + 1);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [sessionEnded, isCountdown, skillName, toast]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -54,10 +78,14 @@ function ActiveSession() {
   };
 
   const handleEndSession = () => {
+    const durationInSeconds = isCountdown
+      ? getInitialTime() - time
+      : time;
+
     const queryParams = new URLSearchParams({
       skillId: skillId || '',
       skillName: skillName,
-      duration: String(initialTime - timeRemaining),
+      duration: String(durationInSeconds),
     });
     router.push(`/practice/journal?${queryParams.toString()}`);
   };
@@ -70,7 +98,7 @@ function ActiveSession() {
           <CardHeader>
             <CardDescription className="font-headline text-lg">{skillName}</CardDescription>
             <CardTitle className="text-4xl font-bold tracking-tighter font-mono">
-              {formatTime(timeRemaining)}
+              {formatTime(time)}
             </CardTitle>
             {intention && (
               <p className="text-muted-foreground pt-2">

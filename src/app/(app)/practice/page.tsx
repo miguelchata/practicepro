@@ -31,6 +31,7 @@ export default function PracticePage() {
   const [selectedSkill, setSelectedSkill] = useState('');
   const [sessionType, setSessionType] = useState('pomodoro');
   const [intention, setIntention] = useState('');
+  const [customTime, setCustomTime] = useState(10); // Default to 10 minutes
 
   const handleStartSession = () => {
     if (!selectedSkill) {
@@ -50,6 +51,10 @@ export default function PracticePage() {
       type: sessionType,
       intention: intention,
     });
+
+    if (sessionType === 'timed') {
+        queryParams.set('duration', String(customTime * 60));
+    }
 
     router.push(`/practice/active?${queryParams.toString()}`);
   };
@@ -91,28 +96,42 @@ export default function PracticePage() {
               <RadioGroup
                 value={sessionType}
                 onValueChange={setSessionType}
-                className="flex gap-4"
+                className="grid grid-cols-2 gap-4 md:grid-cols-3"
               >
                 <div>
-                  <RadioGroupItem value="pomodoro" id="pomodoro" />
-                  <Label htmlFor="pomodoro" className="ml-2">
-                    Pomodoro (25/5 min)
+                  <RadioGroupItem value="pomodoro" id="pomodoro" className="peer sr-only" />
+                  <Label htmlFor="pomodoro" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                    Pomodoro <span className="text-xs text-muted-foreground">(25 min)</span>
                   </Label>
                 </div>
                 <div>
-                  <RadioGroupItem value="timed" id="timed" />
-                  <Label htmlFor="timed" className="ml-2">
+                  <RadioGroupItem value="timed" id="timed" className="peer sr-only" />
+                  <Label htmlFor="timed" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                     Custom Timer
                   </Label>
                 </div>
                 <div>
-                  <RadioGroupItem value="manual" id="manual" />
-                  <Label htmlFor="manual" className="ml-2">
+                  <RadioGroupItem value="manual" id="manual" className="peer sr-only" />
+                  <Label htmlFor="manual" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                     Manual Log
                   </Label>
                 </div>
               </RadioGroup>
             </div>
+
+            {sessionType === 'timed' && (
+                <div className="space-y-2">
+                    <Label htmlFor="custom-time">Custom Duration (minutes)</Label>
+                    <Input
+                    id="custom-time"
+                    type="number"
+                    value={customTime}
+                    onChange={(e) => setCustomTime(Number(e.target.value))}
+                    min="1"
+                    />
+                </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="intention">Intention for this session</Label>
               <Input

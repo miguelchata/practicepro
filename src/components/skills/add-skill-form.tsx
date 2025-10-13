@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Skill } from '@/lib/types';
+import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -40,6 +41,8 @@ export function AddSkillForm({
   onSkillAdded,
   categories,
 }: AddSkillFormProps) {
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,6 +64,7 @@ export function AddSkillForm({
     };
     onSkillAdded(newSkill);
     form.reset();
+    setShowNewCategory(false);
   }
 
   return (
@@ -85,7 +89,18 @@ export function AddSkillForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                onValueChange={(value) => {
+                  if (value === 'new') {
+                    setShowNewCategory(true);
+                    field.onChange('');
+                  } else {
+                    setShowNewCategory(false);
+                    field.onChange(value);
+                  }
+                }} 
+                defaultValue={field.value}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -100,11 +115,11 @@ export function AddSkillForm({
                   <SelectItem value="new">Create new category...</SelectItem>
                 </SelectContent>
               </Select>
-              {field.value === 'new' && (
+              {showNewCategory && (
                 <FormControl>
                   <Input
                     placeholder="New category name"
-                    onChange={(e) => field.onChange(e.target.value)}
+                    onChange={field.onChange}
                     className="mt-2"
                   />
                 </FormControl>

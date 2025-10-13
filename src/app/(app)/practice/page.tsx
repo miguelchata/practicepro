@@ -1,3 +1,7 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,8 +23,37 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { skills } from '@/lib/data';
 import { Timer } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PracticePage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [selectedSkill, setSelectedSkill] = useState('');
+  const [sessionType, setSessionType] = useState('pomodoro');
+  const [intention, setIntention] = useState('');
+
+  const handleStartSession = () => {
+    if (!selectedSkill) {
+      toast({
+        variant: 'destructive',
+        title: 'Uh oh!',
+        description: 'Please select a skill before starting a session.',
+      });
+      return;
+    }
+
+    const skillName = skills.find(s => s.id === selectedSkill)?.name || 'Practice';
+
+    const queryParams = new URLSearchParams({
+      skillId: selectedSkill,
+      skillName: skillName,
+      type: sessionType,
+      intention: intention,
+    });
+
+    router.push(`/practice/active?${queryParams.toString()}`);
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title="Practice Session" />
@@ -37,12 +70,12 @@ export default function PracticePage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="skill">Select Skill</Label>
-              <Select>
+              <Select onValueChange={setSelectedSkill} value={selectedSkill}>
                 <SelectTrigger id="skill">
                   <SelectValue placeholder="Choose a skill to practice" />
                 </SelectTrigger>
                 <SelectContent>
-                  {skills.map((skill) => (
+                  {skills.map(skill => (
                     <SelectItem key={skill.id} value={skill.id}>
                       <div className="flex items-center gap-2">
                         <skill.icon className="h-4 w-4" />
@@ -55,7 +88,11 @@ export default function PracticePage() {
             </div>
             <div className="space-y-2">
               <Label>Session Type</Label>
-              <RadioGroup defaultValue="pomodoro" className="flex gap-4">
+              <RadioGroup
+                value={sessionType}
+                onValueChange={setSessionType}
+                className="flex gap-4"
+              >
                 <div>
                   <RadioGroupItem value="pomodoro" id="pomodoro" />
                   <Label htmlFor="pomodoro" className="ml-2">
@@ -81,9 +118,15 @@ export default function PracticePage() {
               <Input
                 id="intention"
                 placeholder='e.g., "Practice smooth transitions between G and C chords"'
+                value={intention}
+                onChange={e => setIntention(e.target.value)}
               />
             </div>
-            <Button size="lg" className="w-full">
+            <Button
+              size="lg"
+              className="w-full"
+              onClick={handleStartSession}
+            >
               <Timer className="mr-2 h-5 w-5" /> Start Session
             </Button>
           </CardContent>

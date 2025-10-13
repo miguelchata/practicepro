@@ -22,16 +22,28 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 import { skills } from '@/lib/data';
+import type { Skill } from '@/lib/types';
 import { Timer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PracticePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [selectedSkill, setSelectedSkill] = useState('');
+  const [selectedSkill, setSelectedSkill] = useState<Skill | undefined>(undefined);
   const [sessionType, setSessionType] = useState('pomodoro');
   const [intention, setIntention] = useState('');
   const [customTime, setCustomTime] = useState(10); // Default to 10 minutes
+  const [selectedSubSkill, setSelectedSubSkill] = useState('');
+  const [selectedGoal, setSelectedGoal] = useState('');
+
+
+  const handleSkillChange = (skillId: string) => {
+    const skill = skills.find(s => s.id === skillId);
+    setSelectedSkill(skill);
+    // Reset sub-skill and goal selection when skill changes
+    setSelectedSubSkill('');
+    setSelectedGoal('');
+  };
 
   const handleStartSession = () => {
     if (!selectedSkill) {
@@ -43,11 +55,9 @@ export default function PracticePage() {
       return;
     }
 
-    const skillName = skills.find(s => s.id === selectedSkill)?.name || 'Practice';
-
     const queryParams = new URLSearchParams({
-      skillId: selectedSkill,
-      skillName: skillName,
+      skillId: selectedSkill.id,
+      skillName: selectedSkill.name,
       type: sessionType,
       intention: intention,
     });
@@ -55,6 +65,15 @@ export default function PracticePage() {
     if (sessionType === 'timed') {
         queryParams.set('duration', String(customTime * 60));
     }
+    
+    if (selectedSubSkill) {
+        queryParams.set('subSkill', selectedSubSkill);
+    }
+
+    if (selectedGoal) {
+        queryParams.set('goal', selectedGoal);
+    }
+
 
     router.push(`/practice/active?${queryParams.toString()}`);
   };
@@ -75,7 +94,7 @@ export default function PracticePage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="skill">Select Skill</Label>
-              <Select onValueChange={setSelectedSkill} value={selectedSkill}>
+              <Select onValueChange={handleSkillChange} value={selectedSkill?.id}>
                 <SelectTrigger id="skill">
                   <SelectValue placeholder="Choose a skill to practice" />
                 </SelectTrigger>
@@ -91,6 +110,43 @@ export default function PracticePage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {selectedSkill && (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="sub-skill">Focus on Sub-skill (optional)</Label>
+                        <Select onValueChange={setSelectedSubSkill} value={selectedSubSkill} disabled={!selectedSkill.subSkills || selectedSkill.subSkills.length === 0}>
+                            <SelectTrigger id="sub-skill">
+                                <SelectValue placeholder="Select a sub-skill" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {selectedSkill.subSkills.map((subSkill) => (
+                                    <SelectItem key={subSkill} value={subSkill}>
+                                        {subSkill}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="goal">Link to Goal (optional)</Label>
+                        <Select onValueChange={setSelectedGoal} value={selectedGoal} disabled={!selectedSkill.goals || selectedSkill.goals.length === 0}>
+                            <SelectTrigger id="goal">
+                                <SelectValue placeholder="Select a goal" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {selectedSkill.goals.map((goal, index) => (
+                                    <SelectItem key={index} value={goal.description}>
+                                        {goal.description}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
+
+
             <div className="space-y-2">
               <Label>Session Type</Label>
               <RadioGroup

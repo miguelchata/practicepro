@@ -11,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { StopCircle, Star } from 'lucide-react';
+import { StopCircle, Star, Target, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 function ActiveSession() {
   const searchParams = useSearchParams();
@@ -24,6 +25,9 @@ function ActiveSession() {
   const sessionType = searchParams.get('type') || 'pomodoro';
   const customDuration = searchParams.get('duration');
   const skillId = searchParams.get('skillId');
+  const subSkill = searchParams.get('subSkill');
+  const goal = searchParams.get('goal');
+
 
   const getInitialTime = () => {
     switch (sessionType) {
@@ -100,6 +104,10 @@ function ActiveSession() {
             <CardTitle className="text-4xl font-bold tracking-tighter font-mono">
               {formatTime(time)}
             </CardTitle>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-muted-foreground">
+                {subSkill && <Badge variant="secondary" className="gap-1.5"><Zap className="h-3 w-3" /> {subSkill}</Badge>}
+                {goal && <Badge variant="secondary" className="gap-1.5"><Target className="h-3 w-3" /> {goal}</Badge>}
+            </div>
             {intention && (
               <p className="text-muted-foreground pt-2">
                 <strong>Intention:</strong> {intention}

@@ -35,6 +35,7 @@ const formSchema = z.object({
   }),
   proficiency: z.enum(['Beginner', 'Intermediate', 'Advanced']),
   goals: z.string().min(1, { message: 'Please set at least one goal.' }),
+  subSkills: z.string().optional(),
 });
 
 type AddSkillFormProps = {
@@ -48,6 +49,7 @@ export function AddSkillForm({ onSkillAdded }: AddSkillFormProps) {
       name: '',
       proficiency: 'Beginner',
       goals: '',
+      subSkills: '',
     },
   });
 
@@ -55,7 +57,8 @@ export function AddSkillForm({ onSkillAdded }: AddSkillFormProps) {
     const newSkill = {
         name: values.name,
         proficiency: values.proficiency,
-        goals: values.goals.split('\n').filter(g => g.trim() !== ''),
+        goals: values.goals.split('\n').filter(g => g.trim() !== '').map(g => ({ description: g })),
+        subSkills: values.subSkills?.split('\n').filter(s => s.trim() !== '') || [],
     }
     onSkillAdded(newSkill);
     form.reset();
@@ -110,6 +113,22 @@ export function AddSkillForm({ onSkillAdded }: AddSkillFormProps) {
               <FormControl>
                 <Textarea
                   placeholder="List your goals, one per line.&#10;e.g., Learn to play Moonlight Sonata"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="subSkills"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Sub-skills</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Break the skill down into smaller parts, one per line.&#10;e.g., Scales, Chord Progressions, Music Theory"
                   {...field}
                 />
               </FormControl>

@@ -14,11 +14,19 @@ export type Achievement = {
 
 export type SkillProficiency = 'Beginner' | 'Intermediate' | 'Advanced';
 
+export type Goal = {
+  description: string;
+  target?: number;
+  unit?: string;
+  deadline?: string; // Storing as ISO string
+};
+
 export type Skill = {
-  id: string;
+  id:string;
   name: string;
   icon: LucideIcon;
   proficiency: SkillProficiency;
   totalHours: number;
-  goals: string[];
+  goals: Goal[];
+  subSkills: string[];
 };

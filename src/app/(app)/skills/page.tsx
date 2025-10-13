@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { skills as initialSkills } from '@/lib/data';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Target as TargetIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -94,9 +94,12 @@ export default function SkillsPage() {
                   </p>
                   <Progress value={(skill.totalHours / 250) * 100} />
                   <p className="text-sm font-medium pt-2">Active Goals:</p>
-                  <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                    {skill.goals.map((goal) => (
-                      <li key={goal}>{goal}</li>
+                  <ul className="list-inside space-y-1 text-sm text-muted-foreground">
+                    {skill.goals.map((goal, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                          <TargetIcon className="h-4 w-4 mt-1 flex-shrink-0" /> 
+                          <span>{goal.description}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>

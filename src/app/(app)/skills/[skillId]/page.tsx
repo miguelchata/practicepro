@@ -11,11 +11,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { skills as initialSkills } from '@/lib/data';
-import type { Skill } from '@/lib/types';
+import type { Goal, Skill } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, Target, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -27,6 +27,19 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { EditSkillForm } from '@/components/skills/edit-skill-form';
+
+function formatDeadline(deadline: string | undefined) {
+    if (!deadline) return '';
+    const date = new Date(deadline);
+    const now = new Date();
+    const diffTime = date.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+    if (diffDays < 0) return 'Overdue';
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    return `in ${diffDays} days`;
+  }
 
 export default function SkillDetailPage() {
   const params = useParams();
@@ -108,8 +121,9 @@ export default function SkillDetailPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="lg:col-span-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+          <Card>
             <CardHeader>
               <CardTitle className="font-headline flex items-center gap-2">
                 <Icon className="h-6 w-6" />
@@ -132,20 +146,63 @@ export default function SkillDetailPage() {
                   {(skill.totalHours / 250) * 100}% towards mastery (250 hours)
                 </p>
               </div>
-              <Separator />
-              <div>
-                <h4 className="text-lg font-semibold font-headline">
-                  Active Goals
-                </h4>
-                <ul className="mt-2 list-disc space-y-2 pl-5 text-muted-foreground">
-                  {skill.goals.map((goal) => (
-                    <li key={goal}>{goal}</li>
-                  ))}
-                </ul>
-              </div>
             </CardContent>
           </Card>
-          <Card className="lg:col-span-3">
+          
+          <Card>
+            <CardHeader>
+                <div className='flex items-center justify-between'>
+                    <CardTitle className="font-headline">Active Goals</CardTitle>
+                    <Button variant="outline" size="sm"><Plus className="mr-2 h-4 w-4"/> Add Goal</Button>
+                </div>
+              <CardDescription>Specific, measurable, and time-bound objectives.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                  {skill.goals.map((goal, index) => (
+                    <li key={index} className="flex items-start gap-4">
+                        <Target className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                        <div className="flex-1">
+                            <p className="font-semibold">{goal.description}</p>
+                            {(goal.target || goal.deadline) && (
+                                <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
+                                {goal.target && (<span>Target: {goal.target} {goal.unit}</span>)}
+                                {goal.deadline && (
+                                    <span className="flex items-center gap-1.5">
+                                        <Calendar className="h-4 w-4" />
+                                        {formatDeadline(goal.deadline)}
+                                    </span>
+                                )}
+                                </div>
+                            )}
+                        </div>
+                    </li>
+                  ))}
+                </ul>
+            </CardContent>
+          </Card>
+          </div>
+
+          <div className="space-y-6 lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline">Sub-Skills</CardTitle>
+                <CardDescription>Smaller components of this skill.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {skill.subSkills && skill.subSkills.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                        {skill.subSkills.map((subSkill) => (
+                            <Badge key={subSkill} variant="secondary">{subSkill}</Badge>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-muted-foreground text-sm">No sub-skills defined yet.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
             <CardHeader>
               <CardTitle className="font-headline">
                 Recent Practice Sessions
@@ -160,6 +217,8 @@ export default function SkillDetailPage() {
               </p>
             </CardContent>
           </Card>
+          </div>
+
         </div>
       </main>
     </div>

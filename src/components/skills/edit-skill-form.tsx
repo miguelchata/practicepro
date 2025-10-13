@@ -35,6 +35,7 @@ const formSchema = z.object({
   }),
   proficiency: z.enum(['Beginner', 'Intermediate', 'Advanced']),
   goals: z.string().min(1, { message: 'Please set at least one goal.' }),
+  subSkills: z.string().optional(),
 });
 
 type EditSkillFormProps = {
@@ -48,7 +49,8 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
     defaultValues: {
       name: skill.name,
       proficiency: skill.proficiency,
-      goals: skill.goals.join('\n'),
+      goals: skill.goals.map(g => g.description).join('\n'),
+      subSkills: skill.subSkills?.join('\n') || '',
     },
   });
 
@@ -56,7 +58,8 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
     const updatedSkill = {
       name: values.name,
       proficiency: values.proficiency,
-      goals: values.goals.split('\n').filter(g => g.trim() !== ''),
+      goals: values.goals.split('\n').filter(g => g.trim() !== '').map(g => ({ description: g})),
+      subSkills: values.subSkills?.split('\n').filter(s => s.trim() !== '') || [],
     };
     onSkillUpdated(updatedSkill);
   }
@@ -109,8 +112,24 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
               <FormLabel>Your Goals</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="List your goals, one per line.
-e.g., Learn to play Moonlight Sonata"
+                  placeholder="List your goals, one per line.&#10;e.g., Learn to play Moonlight Sonata"
+                  {...field}
+                  rows={4}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="subSkills"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Sub-skills</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Break the skill down into smaller parts, one per line.&#10;e.g., Scales, Chord Progressions, Music Theory"
                   {...field}
                   rows={4}
                 />

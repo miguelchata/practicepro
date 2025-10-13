@@ -92,7 +92,11 @@ export const skills: Skill[] = [
     name: 'Guitar',
     icon: Guitar,
     proficiency: 'Intermediate',
-    goals: ['Master bar chords', 'Learn "Stairway to Heaven" solo'],
+    goals: [
+        { description: 'Master bar chords' }, 
+        { description: 'Learn "Stairway to Heaven" solo' }
+    ],
+    subSkills: ['Fingerpicking', 'Music Theory', 'Improvisation'],
     totalHours: 75,
   },
   {
@@ -100,7 +104,11 @@ export const skills: Skill[] = [
     name: 'Public Speaking',
     icon: Mic,
     proficiency: 'Beginner',
-    goals: ['Reduce filler words', 'Improve stage presence'],
+    goals: [
+        { description: 'Reduce filler words' }, 
+        { description: 'Improve stage presence' }
+    ],
+    subSkills: ['Storytelling', 'Body Language', 'Vocal Variety'],
     totalHours: 32,
   },
   {
@@ -108,7 +116,11 @@ export const skills: Skill[] = [
     name: 'Python Programming',
     icon: Code,
     proficiency: 'Advanced',
-    goals: ['Build a Django web app', 'Contribute to an open-source project'],
+    goals: [
+        { description: 'Build a Django web app' }, 
+        { description: 'Contribute to an open-source project' }
+    ],
+    subSkills: ['Data Structures', 'Algorithms', 'Web Scraping', 'APIs'],
     totalHours: 210,
   },
 ];

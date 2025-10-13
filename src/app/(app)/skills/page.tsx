@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import { AddSkillForm } from '@/components/skills/add-skill-form';
 import type { Skill } from '@/lib/types';
+import Link from 'next/link';
 
 export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>(initialSkills);
@@ -101,8 +102,8 @@ export default function SkillsPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button variant="outline" className="w-full">
-                  View Details
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href={`/skills/${skill.id}`}>View Details</Link>
                 </Button>
               </CardFooter>
             </Card>

@@ -27,11 +27,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { EditSkillForm } from '@/components/skills/edit-skill-form';
+import { AddGoalForm } from '@/components/skills/add-goal-form';
 
 function formatDeadline(deadline: string | undefined) {
     if (!deadline) return '';
     const date = new Date(deadline);
     const now = new Date();
+    // Adjust for timezone differences by comparing dates only
+    date.setHours(0,0,0,0);
+    now.setHours(0,0,0,0);
     const diffTime = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
@@ -50,7 +54,8 @@ export default function SkillDetailPage() {
   const initialSkill = initialSkills.find((s) => s.id === skillId);
 
   const [skill, setSkill] = useState<Skill | undefined>(initialSkill);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddGoalDialogOpen, setIsAddGoalDialogOpen] = useState(false);
 
   if (!skill) {
     return (
@@ -72,11 +77,15 @@ export default function SkillDetailPage() {
   const handleSkillUpdated = (updatedSkillData: Omit<Skill, 'id' | 'totalHours' | 'icon'>) => {
     // In a real app, this would also update the database.
     setSkill(prevSkill => prevSkill ? { ...prevSkill, ...updatedSkillData } : undefined);
-    setIsDialogOpen(false);
+    setIsEditDialogOpen(false);
     // Note: This only updates the state on this page. The main skills list won't reflect changes
     // until we implement a shared state management or data fetching solution.
   };
 
+  const handleGoalAdded = (newGoal: Goal) => {
+    setSkill(prevSkill => prevSkill ? { ...prevSkill, goals: [...prevSkill.goals, newGoal] } : undefined);
+    setIsAddGoalDialogOpen(false);
+  }
 
   const { icon: Icon } = skill;
 
@@ -98,7 +107,7 @@ export default function SkillDetailPage() {
             {skill.proficiency}
           </Badge>
           <div className="flex items-center gap-2">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Edit className="mr-2 h-4 w-4" />
@@ -153,32 +162,49 @@ export default function SkillDetailPage() {
             <CardHeader>
                 <div className='flex items-center justify-between'>
                     <CardTitle className="font-headline">Active Goals</CardTitle>
-                    <Button variant="outline" size="sm"><Plus className="mr-2 h-4 w-4"/> Add Goal</Button>
+                     <Dialog open={isAddGoalDialogOpen} onOpenChange={setIsAddGoalDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm"><Plus className="mr-2 h-4 w-4"/> Add Goal</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add New Goal</DialogTitle>
+                                <DialogDescription>
+                                    Define a new SMART goal for {skill.name}.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <AddGoalForm onGoalAdded={handleGoalAdded} />
+                        </DialogContent>
+                    </Dialog>
                 </div>
               <CardDescription>Specific, measurable, and time-bound objectives.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-4">
-                  {skill.goals.map((goal, index) => (
-                    <li key={index} className="flex items-start gap-4">
-                        <Target className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                        <div className="flex-1">
-                            <p className="font-semibold">{goal.description}</p>
-                            {(goal.target || goal.deadline) && (
-                                <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
-                                {goal.target && (<span>Target: {goal.target} {goal.unit}</span>)}
-                                {goal.deadline && (
-                                    <span className="flex items-center gap-1.5">
-                                        <Calendar className="h-4 w-4" />
-                                        {formatDeadline(goal.deadline)}
-                                    </span>
-                                )}
-                                </div>
-                            )}
-                        </div>
-                    </li>
-                  ))}
-                </ul>
+              {skill.goals.length > 0 ? (
+                 <ul className="space-y-4">
+                 {skill.goals.map((goal, index) => (
+                   <li key={index} className="flex items-start gap-4">
+                       <Target className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                       <div className="flex-1">
+                           <p className="font-semibold">{goal.description}</p>
+                           {(goal.target || goal.deadline) && (
+                               <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
+                               {goal.target && (<span>Target: {goal.target} {goal.unit}</span>)}
+                               {goal.deadline && (
+                                   <span className="flex items-center gap-1.5">
+                                       <Calendar className="h-4 w-4" />
+                                       {formatDeadline(goal.deadline)}
+                                   </span>
+                               )}
+                               </div>
+                           )}
+                       </div>
+                   </li>
+                 ))}
+               </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No goals defined yet. Click "Add Goal" to get started.</p>
+              )}
             </CardContent>
           </Card>
           </div>

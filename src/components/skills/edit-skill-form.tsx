@@ -30,7 +30,6 @@ const formSchema = z.object({
   }),
   category: z.string().min(2, { message: 'Category is required.' }),
   goals: z.string().min(1, { message: 'Please set at least one goal.' }),
-  subSkills: z.string().optional(),
 });
 
 type EditSkillFormProps = {
@@ -45,7 +44,6 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
       name: skill.name,
       category: skill.category,
       goals: skill.goals.map(g => g.description).join('\n'),
-      subSkills: skill.subSkills?.join('\n') || '',
     },
   });
 
@@ -54,7 +52,7 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
       name: values.name,
       category: values.category,
       goals: values.goals.split('\n').filter(g => g.trim() !== '').map(g => ({ description: g})),
-      subSkills: values.subSkills?.split('\n').filter(s => s.trim() !== '') || [],
+      subSkills: skill.subSkills, // Keep existing subskills, don't edit them here
     };
     onSkillUpdated(updatedSkill);
   }
@@ -93,27 +91,10 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
           name="goals"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Your Goals</FormLabel>
+              <FormLabel>General Goal</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="List your goals, one per line.&#10;e.g., Learn to play Moonlight Sonata"
-                  {...field}
-                  rows={4}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="subSkills"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sub-skills</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Break the skill down into smaller parts, one per line.&#10;e.g., Scales, Chord Progressions, Music Theory"
                   {...field}
                   rows={4}
                 />

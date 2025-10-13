@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { skills as initialSkills } from '@/lib/data';
-import { PlusCircle, Target as TargetIcon } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, TargetIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -25,12 +25,28 @@ import {
 import { AddSkillForm } from '@/components/skills/add-skill-form';
 import type { Skill } from '@/lib/types';
 import Link from 'next/link';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>(initialSkills);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleSkillAdded = (newSkill: Omit<Skill, 'id' | 'totalHours' | 'icon'>) => {
+  const handleSkillAdded = (
+    newSkill: Omit<Skill, 'id' | 'totalHours' | 'icon'>
+  ) => {
     const newId = newSkill.name.toLowerCase().replace(/\s/g, '-');
     // For now, we'll use a default icon for new skills
     const { Target: NewIcon } = require('lucide-react');
@@ -45,6 +61,25 @@ export default function SkillsPage() {
       },
     ]);
     setIsDialogOpen(false);
+  };
+
+  const groupedSkills = skills.reduce((acc, skill) => {
+    const category = skill.category || 'Uncategorized';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(skill);
+    return acc;
+  }, {} as Record<string, Skill[]>);
+
+  const categories = Object.keys(groupedSkills);
+
+  const handleCategoryChange = (skillId: string, newCategory: string) => {
+    setSkills(prevSkills =>
+      prevSkills.map(skill =>
+        skill.id === skillId ? { ...skill, category: newCategory } : skill
+      )
+    );
   };
 
   return (
@@ -77,41 +112,76 @@ export default function SkillsPage() {
             </DialogContent>
           </Dialog>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {skills.map((skill) => (
-            <Card key={skill.id}>
-              <CardHeader className="flex flex-row items-center gap-4 space-y-0">
-                <skill.icon className="h-10 w-10 text-primary" />
-                <div>
-                  <CardTitle className="font-headline">{skill.name}</CardTitle>
-                  <CardDescription>{skill.category}</CardDescription>
+        <Accordion type="multiple" defaultValue={categories} className="w-full space-y-4">
+          {Object.entries(groupedSkills).map(([category, skillsInCategory]) => (
+            <AccordionItem value={category} key={category} className="border-b-0">
+                <AccordionTrigger className="text-xl font-headline font-bold tracking-tight rounded-lg bg-muted px-4 py-3 hover:no-underline">
+                  {category} ({skillsInCategory.length})
+                </AccordionTrigger>
+              <AccordionContent className="pt-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {skillsInCategory.map(skill => (
+                    <Card key={skill.id}>
+                      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                        <div className="flex items-center gap-4">
+                          <skill.icon className="h-10 w-10 text-primary" />
+                          <div>
+                            <CardTitle className="font-headline">
+                              {skill.name}
+                            </CardTitle>
+                          </div>
+                        </div>
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Move to</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {categories.filter(c => c !== category).map(c => (
+                                     <DropdownMenuItem key={c} onClick={() => handleCategoryChange(skill.id, c)}>
+                                        {c}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">
+                            Total Time: {skill.totalHours} hours
+                          </p>
+                          <Progress value={(skill.totalHours / 250) * 100} />
+                          <p className="text-sm font-medium pt-2">
+                            Active Goals:
+                          </p>
+                          <ul className="list-inside space-y-1 text-sm text-muted-foreground">
+                            {skill.goals.map((goal, index) => (
+                              <li
+                                key={index}
+                                className="flex items-start gap-2"
+                              >
+                                <TargetIcon className="h-4 w-4 mt-1 flex-shrink-0" />
+                                <span>{goal.description}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button variant="outline" className="w-full" asChild>
+                          <Link href={`/skills/${skill.id}`}>View Details</Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">
-                    Total Time: {skill.totalHours} hours
-                  </p>
-                  <Progress value={(skill.totalHours / 250) * 100} />
-                  <p className="text-sm font-medium pt-2">Active Goals:</p>
-                  <ul className="list-inside space-y-1 text-sm text-muted-foreground">
-                    {skill.goals.map((goal, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                          <TargetIcon className="h-4 w-4 mt-1 flex-shrink-0" /> 
-                          <span>{goal.description}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href={`/skills/${skill.id}`}>View Details</Link>
-                </Button>
-              </CardFooter>
-            </Card>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       </main>
     </div>
   );

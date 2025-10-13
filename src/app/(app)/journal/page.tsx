@@ -1,3 +1,5 @@
+'use client';
+
 import { Header } from '@/components/layout/header';
 import {
   Card,
@@ -9,8 +11,11 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles, Star, PlusCircle } from 'lucide-react';
+import Link from 'next/link';
 
+// Mock data, in a real app this would come from Firestore
 const journalEntries = [
   {
     date: 'June 18, 2024',
@@ -52,55 +57,83 @@ export default function JournalPage() {
               Review your progress and AI-powered insights.
             </p>
           </div>
+           <Button asChild>
+              <Link href="/practice">
+                <PlusCircle className="mr-2 h-4 w-4" /> New Session
+              </Link>
+            </Button>
         </div>
 
-        <div className="space-y-6">
-          {journalEntries.map((entry, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="font-headline">{entry.skill}</CardTitle>
-                  <div className="text-sm text-muted-foreground">
-                    {entry.date} &middot; {entry.duration}
+        {journalEntries.length === 0 ? (
+           <Card className="flex flex-col items-center justify-center p-12 text-center">
+            <CardHeader>
+              <CardTitle>No Entries Yet</CardTitle>
+              <CardDescription>Start a practice session to log your first entry.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href="/practice">Start Your First Session</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-6">
+            {journalEntries.map((entry, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="font-headline">{entry.skill}</CardTitle>
+                    <div className="text-sm text-muted-foreground">
+                      {entry.date} &middot; {entry.duration}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge>{entry.skill}</Badge>
-                  <Badge variant="outline">Rating: {entry.rating}/5</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-semibold">What went well?</h4>
-                  <p className="text-muted-foreground">{entry.well}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">What was difficult?</h4>
-                  <p className="text-muted-foreground">{entry.difficult}</p>
-                </div>
-                <Separator />
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                  <h4 className="font-semibold font-headline flex items-center gap-2 mb-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    AI Analysis
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <Badge>{entry.skill}</Badge>
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < entry.rating ? 'text-accent fill-accent' : 'text-muted-foreground'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div>
-                    <h5 className="font-semibold">Identified Patterns:</h5>
-                    <p className="text-sm text-primary/90">
-                      {entry.analysis.patterns}
-                    </p>
+                    <h4 className="font-semibold">What went well?</h4>
+                    <p className="text-muted-foreground">{entry.well}</p>
                   </div>
-                  <div className="mt-2">
-                    <h5 className="font-semibold">Suggestions:</h5>
-                    <p className="text-sm text-primary/90">
-                      {entry.analysis.suggestions}
-                    </p>
+                  <div>
+                    <h4 className="font-semibold">What was difficult?</h4>
+                    <p className="text-muted-foreground">{entry.difficult}</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <Separator />
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                    <h4 className="font-semibold font-headline flex items-center gap-2 mb-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      AI Analysis
+                    </h4>
+                    <div>
+                      <h5 className="font-semibold">Identified Patterns:</h5>
+                      <p className="text-sm text-primary/90">
+                        {entry.analysis.patterns}
+                      </p>
+                    </div>
+                    <div className="mt-2">
+                      <h5 className="font-semibold">Suggestions:</h5>
+                      <p className="text-sm text-primary/90">
+                        {entry.analysis.suggestions}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
@@ -11,22 +11,55 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { StopCircle, Square, Star, ThumbsDown, ThumbsUp } from 'lucide-react';
-import { skills } from '@/lib/data';
+import { StopCircle, Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 function ActiveSession() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
 
   const skillName = searchParams.get('skillName') || 'Practice';
   const intention = searchParams.get('intention');
+  const sessionType = searchParams.get('type') || 'pomodoro';
+  const skillId = searchParams.get('skillId');
 
-  // In a real app, the timer logic would be implemented here.
-  // For now, it's a placeholder.
+  // Pomodoro: 25 minutes = 1500 seconds
+  const initialTime = sessionType === 'pomodoro' ? 1500 : 0; 
+  const [timeRemaining, setTimeRemaining] = useState(initialTime);
+  const [sessionEnded, setSessionEnded] = useState(false);
+
+
+  useEffect(() => {
+    if (sessionType !== 'manual' && timeRemaining > 0 && !sessionEnded) {
+      const timer = setInterval(() => {
+        setTimeRemaining(prevTime => prevTime - 1);
+      }, 1000);
+
+      return () => clearInterval(timer);
+    } else if (timeRemaining === 0 && !sessionEnded && sessionType !== 'manual') {
+      setSessionEnded(true);
+      toast({
+        title: 'Session Complete!',
+        description: `Great work on your ${skillName} practice.`,
+      });
+      // Optionally play a sound here
+    }
+  }, [timeRemaining, sessionEnded, sessionType, skillName, toast]);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleEndSession = () => {
-    // Here you would typically navigate to a post-session summary/journaling page
-    router.push('/journal');
+    const queryParams = new URLSearchParams({
+      skillId: skillId || '',
+      skillName: skillName,
+      duration: String(initialTime - timeRemaining),
+    });
+    router.push(`/practice/journal?${queryParams.toString()}`);
   };
 
   return (
@@ -36,8 +69,8 @@ function ActiveSession() {
         <Card className="w-full max-w-lg">
           <CardHeader>
             <CardDescription className="font-headline text-lg">{skillName}</CardDescription>
-            <CardTitle className="text-4xl font-bold tracking-tighter">
-              25:00
+            <CardTitle className="text-4xl font-bold tracking-tighter font-mono">
+              {formatTime(timeRemaining)}
             </CardTitle>
             {intention && (
               <p className="text-muted-foreground pt-2">
@@ -53,14 +86,14 @@ function ActiveSession() {
                 onClick={handleEndSession}
                 className="w-full"
               >
-                <StopCircle className="mr-2" /> End Session
+                <StopCircle className="mr-2" /> End & Journal
               </Button>
             </div>
             <div className="space-y-4 rounded-lg border p-4">
-                <p className="text-sm font-medium">How did it go?</p>
+                <p className="text-sm font-medium">How did it go? (Rate after)</p>
                 <div className="flex justify-center gap-2">
                 {[1, 2, 3, 4, 5].map(rating => (
-                    <Button key={rating} variant="outline" size="icon">
+                    <Button key={rating} variant="outline" size="icon" disabled>
                     <Star className="h-5 w-5" />
                     <span className="sr-only">Rate {rating} of 5</span>
                     </Button>

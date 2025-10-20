@@ -40,6 +40,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 function formatDeadline(deadline: string | undefined) {
   if (!deadline) return '';
@@ -108,10 +115,16 @@ export default function SkillDetailPage() {
     setActiveSubSkill(null);
   };
   
-  const handleOpenAddGoalDialog = (subSkillName: string) => {
-    setActiveSubSkill(subSkillName);
+  const handleOpenAddGoalDialog = () => {
+    // If there's only one sub-skill, pre-select it. Otherwise, let user choose.
+    if (skill.subSkills.length === 1) {
+      setActiveSubSkill(skill.subSkills[0].name);
+    } else {
+      setActiveSubSkill(null); // Reset to force selection
+    }
     setIsAddGoalDialogOpen(true);
   };
+
 
   const allGoals = skill.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name})));
 
@@ -187,36 +200,56 @@ export default function SkillDetailPage() {
 
           {/* Right Column: Sub-Skills and Goals */}
           <div className="md:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sub-Skills</CardTitle>
-                <CardDescription>
-                  The core components of {skill.name}.
-                </CardDescription>
+             <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Sub-Skills</CardTitle>
+                  <CardDescription>
+                    The core components of {skill.name}.
+                  </CardDescription>
+                </div>
+                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="mr-2 h-4 w-4" /> Add Sub-skill
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Skill</DialogTitle>
+                      <DialogDescription>
+                        Add or modify your sub-skills below.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <EditSkillForm skill={skill} onSkillUpdated={handleSkillUpdated} />
+                  </DialogContent>
+                </Dialog>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="flex flex-wrap gap-2">
                 {skill.subSkills.length > 0 ? (
                   skill.subSkills.map((sub, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-lg border bg-card p-3">
-                        <h4 className="font-semibold text-base">{sub.name}</h4>
-                        <Button variant="ghost" size="sm" onClick={() => handleOpenAddGoalDialog(sub.name)}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Goal
-                        </Button>
-                      </div>
+                    <Badge key={index} variant="secondary" className="text-base py-1 px-3">
+                      {sub.name}
+                    </Badge>
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-sm text-center py-8">
-                    No sub-skills defined yet. Edit the skill to add some.
+                  <p className="text-muted-foreground text-sm text-center py-4 w-full">
+                    No sub-skills defined yet. Click &quot;Add Sub-skill&quot; to get started.
                   </p>
                 )}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                  <CardTitle>Active Goals</CardTitle>
-                  <CardDescription>Your specific targets for mastering {skill.name}.</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Active Goals</CardTitle>
+                    <CardDescription>Your specific targets for mastering {skill.name}.</CardDescription>
+                  </div>
+                   <Button variant="default" size="sm" onClick={handleOpenAddGoalDialog} disabled={skill.subSkills.length === 0}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Goal
+                    </Button>
               </CardHeader>
               <CardContent>
                  {allGoals.length > 0 ? (
@@ -265,7 +298,7 @@ export default function SkillDetailPage() {
                    </Accordion>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-8">
-                    No goals defined yet. Add a goal to a sub-skill to get started.
+                    No goals defined yet. Add a goal to get started.
                   </p>
                 )}
               </CardContent>
@@ -278,12 +311,33 @@ export default function SkillDetailPage() {
         <Dialog open={isAddGoalDialogOpen} onOpenChange={setIsAddGoalDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add New Goal for {activeSubSkill}</DialogTitle>
+              <DialogTitle>Add New Goal</DialogTitle>
               <DialogDescription>
-                Define a new goal for this sub-skill.
+                Define a new goal and link it to a sub-skill.
               </DialogDescription>
             </DialogHeader>
-            <AddGoalForm onGoalAdded={handleGoalAdded} />
+            {skill.subSkills.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="subskill-select">Sub-Skill</Label>
+                <Select 
+                  onValueChange={setActiveSubSkill} 
+                  defaultValue={activeSubSkill ?? undefined}
+                  disabled={skill.subSkills.length <= 1}
+                >
+                  <SelectTrigger id="subskill-select">
+                    <SelectValue placeholder="Select a sub-skill for this goal" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {skill.subSkills.map(sub => (
+                      <SelectItem key={sub.name} value={sub.name}>
+                        {sub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={!activeSubSkill} />
           </DialogContent>
         </Dialog>
       </main>

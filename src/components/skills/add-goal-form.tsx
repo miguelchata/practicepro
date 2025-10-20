@@ -34,9 +34,10 @@ const formSchema = z.object({
 
 type AddGoalFormProps = {
   onGoalAdded: (newGoal: Goal) => void;
+  disabled?: boolean;
 };
 
-export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
+export function AddGoalForm({ onGoalAdded, disabled }: AddGoalFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -149,7 +150,7 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={disabled}>
           Add Goal
         </Button>
       </form>

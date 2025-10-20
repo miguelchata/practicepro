@@ -113,6 +113,8 @@ export default function SkillDetailPage() {
     setIsAddGoalDialogOpen(true);
   };
 
+  const allGoals = skill.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name})));
+
   const { icon: Icon } = skill;
 
   return (
@@ -187,73 +189,21 @@ export default function SkillDetailPage() {
           <div className="md:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Sub-Skills & Goals</CardTitle>
+                <CardTitle>Sub-Skills</CardTitle>
                 <CardDescription>
-                  Break down your skill and set specific targets for each component.
+                  The core components of {skill.name}.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-2">
                 {skill.subSkills.length > 0 ? (
                   skill.subSkills.map((sub, index) => (
-                    <div key={index} className="rounded-lg border bg-card p-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-semibold text-lg">{sub.name}</h4>
+                    <div key={index} className="flex items-center justify-between rounded-lg border bg-card p-3">
+                        <h4 className="font-semibold text-base">{sub.name}</h4>
                         <Button variant="ghost" size="sm" onClick={() => handleOpenAddGoalDialog(sub.name)}>
                           <Plus className="mr-2 h-4 w-4" />
                           Add Goal
                         </Button>
                       </div>
-                      <div className="mt-4 space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
-                        {sub.goals.length > 0 ? (
-                            <Accordion type="multiple" className="w-full">
-                                {sub.goals.map((goal, goalIndex) => (
-                                    <AccordionItem value={`item-${goalIndex}`} key={goalIndex}>
-                                        <AccordionTrigger className="hover:no-underline">
-                                             <div className="flex items-start gap-3 relative w-full">
-                                                <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 absolute -left-[1.1rem] bg-card rounded-full p-0.5" />
-                                                <div className="flex-1 pl-4 text-left">
-                                                    <p className="font-medium">{goal.title}</p>
-                                                     {goal.deadline && (
-                                                    <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                                                        <span className="flex items-center gap-1.5">
-                                                            <Calendar className="h-4 w-4" />
-                                                            Due {formatDeadline(goal.deadline)}
-                                                        </span>
-                                                        <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
-                                                    </div>
-                                                     )}
-                                                </div>
-                                             </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent>
-                                            <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
-                                                <div>
-                                                    <h5 className="font-semibold text-foreground">Specific</h5>
-                                                    <p>{goal.specific}</p>
-                                                </div>
-                                                 <div>
-                                                    <h5 className="font-semibold text-foreground">Measurable</h5>
-                                                    <ul className="list-none space-y-1 mt-1">
-                                                        {(Array.isArray(goal.measurable) ? goal.measurable : [goal.measurable]).map((item, i) => (
-                                                            <li key={i} className="flex items-start gap-2">
-                                                                <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-                                                                <span>{item}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ))}
-                           </Accordion>
-                        ) : (
-                          <p className="text-sm text-muted-foreground pl-4">
-                            No goals yet for this sub-skill.
-                          </p>
-                        )}
-                      </div>
-                    </div>
                   ))
                 ) : (
                   <p className="text-muted-foreground text-sm text-center py-8">
@@ -262,6 +212,65 @@ export default function SkillDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                  <CardTitle>Active Goals</CardTitle>
+                  <CardDescription>Your specific targets for mastering {skill.name}.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                 {allGoals.length > 0 ? (
+                    <Accordion type="multiple" className="w-full">
+                        {allGoals.map((goal, goalIndex) => (
+                            <AccordionItem value={`item-${goalIndex}`} key={goalIndex}>
+                                <AccordionTrigger className="hover:no-underline">
+                                     <div className="flex items-start gap-3 relative w-full">
+                                        <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                                        <div className="flex-1 text-left">
+                                            <p className="font-medium">{goal.title}</p>
+                                             <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
+                                                <Badge variant="secondary">{goal.subSkillName}</Badge>
+                                                 {goal.deadline && (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Calendar className="h-4 w-4" />
+                                                    Due {formatDeadline(goal.deadline)}
+                                                </span>
+                                                 )}
+                                                <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
+                                            </div>
+                                        </div>
+                                     </div>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
+                                        <div>
+                                            <h5 className="font-semibold text-foreground">Specific</h5>
+                                            <p>{goal.specific}</p>
+                                        </div>
+                                         <div>
+                                            <h5 className="font-semibold text-foreground">Measurable</h5>
+                                            <ul className="list-none space-y-1 mt-1">
+                                                {(Array.isArray(goal.measurable) ? goal.measurable : [goal.measurable]).map((item, i) => (
+                                                    <li key={i} className="flex items-start gap-2">
+                                                        <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+                                                        <span>{item}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                   </Accordion>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No goals defined yet. Add a goal to a sub-skill to get started.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
           </div>
         </div>
 
@@ -281,3 +290,5 @@ export default function SkillDetailPage() {
     </div>
   );
 }
+
+    

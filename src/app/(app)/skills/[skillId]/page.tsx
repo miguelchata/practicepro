@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { skills as initialSkills } from '@/lib/data';
+import { skills as initialSkills, projects as initialProjects } from '@/lib/data';
 import type { Goal, Skill, SubSkill } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import {
   Target,
   Calendar,
   CheckCircle2,
+  FolderKanban,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -65,6 +66,7 @@ export default function SkillDetailPage() {
 
   // In a real app, you'd fetch this from a database
   const initialSkill = initialSkills.find((s) => s.id === skillId);
+  const [projects, setProjects] = useState(initialProjects);
 
   const [skill, setSkill] = useState<Skill | undefined>(initialSkill);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -251,47 +253,56 @@ export default function SkillDetailPage() {
               <CardContent>
                  {allGoals.length > 0 ? (
                     <Accordion type="multiple" className="w-full">
-                        {allGoals.map((goal, goalIndex) => (
-                            <AccordionItem value={`item-${goalIndex}`} key={goalIndex}>
-                                <AccordionTrigger className="hover:no-underline">
-                                     <div className="flex items-start gap-3 relative w-full">
-                                        <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                                        <div className="flex-1 text-left">
-                                            <p className="font-medium">{goal.title}</p>
-                                             <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                                                <Badge variant="secondary">{goal.subSkillName}</Badge>
-                                                 {goal.deadline && (
-                                                <span className="flex items-center gap-1.5">
-                                                    <Calendar className="h-4 w-4" />
-                                                    Due {formatDeadline(goal.deadline)}
-                                                </span>
-                                                 )}
-                                                <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
+                        {allGoals.map((goal, goalIndex) => {
+                            const project = projects.find(p => p.id === goal.projectId);
+                            return (
+                                <AccordionItem value={`item-${goalIndex}`} key={goalIndex}>
+                                    <AccordionTrigger className="hover:no-underline">
+                                        <div className="flex items-start gap-3 relative w-full">
+                                            <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                                            <div className="flex-1 text-left">
+                                                <p className="font-medium">{goal.title}</p>
+                                                <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
+                                                    <Badge variant="secondary">{goal.subSkillName}</Badge>
+                                                    {goal.deadline && (
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Calendar className="h-4 w-4" />
+                                                        Due {formatDeadline(goal.deadline)}
+                                                    </span>
+                                                    )}
+                                                    {project && (
+                                                      <span className="flex items-center gap-1.5">
+                                                        <FolderKanban className="h-4 w-4" />
+                                                        {project.title}
+                                                      </span>
+                                                    )}
+                                                    <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
+                                                </div>
                                             </div>
                                         </div>
-                                     </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                    <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
-                                        <div>
-                                            <h5 className="font-semibold text-foreground">Specific</h5>
-                                            <p>{goal.specific}</p>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
+                                            <div>
+                                                <h5 className="font-semibold text-foreground">Specific</h5>
+                                                <p>{goal.specific}</p>
+                                            </div>
+                                            <div>
+                                                <h5 className="font-semibold text-foreground">Measurable</h5>
+                                                <ul className="list-none space-y-1 mt-1">
+                                                    {(Array.isArray(goal.measurable) ? goal.measurable : [goal.measurable]).map((item, i) => (
+                                                        <li key={i} className="flex items-start gap-2">
+                                                            <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+                                                            <span>{item}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
                                         </div>
-                                         <div>
-                                            <h5 className="font-semibold text-foreground">Measurable</h5>
-                                            <ul className="list-none space-y-1 mt-1">
-                                                {(Array.isArray(goal.measurable) ? goal.measurable : [goal.measurable]).map((item, i) => (
-                                                    <li key={i} className="flex items-start gap-2">
-                                                        <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-                                                        <span>{item}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        ))}
+                                    </AccordionContent>
+                                </AccordionItem>
+                            )
+                        })}
                    </Accordion>
                 ) : (
                   <p className="text-sm text-muted-foreground text-center py-8">
@@ -332,7 +343,7 @@ export default function SkillDetailPage() {
                 </div>
               </div>
             )}
-            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0} />
+            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0} projects={projects} />
           </DialogContent>
         </Dialog>
       </main>

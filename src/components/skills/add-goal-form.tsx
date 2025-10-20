@@ -14,12 +14,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Goal } from '@/lib/types';
+import type { Goal, Project } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
@@ -30,20 +31,23 @@ const formSchema = z.object({
     message: 'Provide at least one measurable outcome, one per line.',
   }),
   deadline: z.date().optional(),
+  projectId: z.string().optional(),
 });
 
 type AddGoalFormProps = {
   onGoalAdded: (newGoal: Goal) => void;
   disabled?: boolean;
+  projects: Project[];
 };
 
-export function AddGoalForm({ onGoalAdded, disabled }: AddGoalFormProps) {
+export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
       specific: '',
       measurable: '',
+      projectId: '',
     },
   });
 
@@ -61,6 +65,28 @@ export function AddGoalForm({ onGoalAdded, disabled }: AddGoalFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="projectId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Link to Project (Optional)</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {projects.map(project => (
+                    <SelectItem key={project.id} value={project.id}>{project.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="title"

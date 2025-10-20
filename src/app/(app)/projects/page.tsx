@@ -22,14 +22,14 @@ import { PlusCircle } from 'lucide-react';
 import { AddProjectForm } from '@/components/projects/add-project-form';
 import type { Project } from '@/lib/types';
 import { ProjectCard } from '@/components/projects/project-card';
+import { projects as initialProjects } from '@/lib/data';
 
 export default function ProjectsPage() {
-  // In a real app, you'd fetch this from a database.
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleProjectAdded = (newProject: Omit<Project, 'id'>) => {
-    setProjects(prev => [...prev, { ...newProject, id: `proj-${Date.now()}` }]);
+  const handleProjectAdded = (newProject: Omit<Project, 'id' | 'goals'>) => {
+    setProjects(prev => [...prev, { ...newProject, id: `proj-${Date.now()}`, goals: [] }]);
     setIsDialogOpen(false);
   };
 

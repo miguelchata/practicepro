@@ -44,7 +44,7 @@ const projectSchema = z.object({
 });
 
 type AddProjectFormProps = {
-    onProjectAdded: (project: Omit<Project, 'id'>) => void;
+    onProjectAdded: (project: Omit<Project, 'id' | 'goals'>) => void;
 }
 
 export function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {

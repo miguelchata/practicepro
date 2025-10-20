@@ -1,4 +1,4 @@
-import type { Achievement, Skill, Stat } from '@/lib/types';
+import type { Achievement, Project, Skill, Stat } from '@/lib/types';
 import {
   Code,
   Flame,
@@ -99,15 +99,11 @@ export const skills: Skill[] = [
             measurable: [
               'Play the first verse smoothly at 80% of the original tempo.',
             ],
-            achievable:
-              'The pattern is repetitive and there are many tutorials available.',
-            relevant:
-              'This is a foundational fingerpicking technique used in many folk and acoustic songs.',
-            timeBound: 'Master the verse within 2 weeks.',
             deadline: new Date(
               Date.now() + 14 * 24 * 60 * 60 * 1000
             ).toISOString(),
             status: 'Not Started',
+            projectId: 'album-one',
           },
         ],
       },
@@ -143,4 +139,25 @@ export const skills: Skill[] = [
     ],
     totalHours: 210,
   },
+];
+
+export const projects: Project[] = [
+    {
+        id: 'album-one',
+        title: 'Acoustic Album',
+        description: 'Write and record a 5-song acoustic EP.',
+        startDate: new Date('2024-05-01').toISOString(),
+        targetDate: new Date('2024-09-30').toISOString(),
+        status: 'In Progress',
+        goals: [],
+    },
+    {
+        id: 'tech-talk-conf',
+        title: 'Tech Conference Talk',
+        description: 'Prepare and deliver a talk on reactive UI patterns.',
+        startDate: new Date('2024-06-15').toISOString(),
+        targetDate: new Date('2024-08-20').toISOString(),
+        status: 'Not Started',
+        goals: [],
+    }
 ];

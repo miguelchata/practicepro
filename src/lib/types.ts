@@ -22,6 +22,7 @@ export type Goal = {
   measurable: string[];
   deadline?: string; // Storing as ISO string
   status: GoalStatus;
+  projectId?: string;
 };
 
 export type SubSkill = {
@@ -48,4 +49,5 @@ export type Project = {
   startDate: string;
   targetDate: string;
   status: ProjectStatus;
+  goals: Goal[];
 };

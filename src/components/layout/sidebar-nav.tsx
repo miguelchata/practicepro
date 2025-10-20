@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Book,
+  FolderKanban,
   LayoutDashboard,
   Settings,
   Target,
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/skills', label: 'Skills', icon: Target },
   { href: '/practice', label: 'Practice', icon: Timer },
   { href: '/journal', label: 'Journal', icon: Book },
+  { href: '/projects', label: 'Projects', icon: FolderKanban },
 ];
 
 const bottomNavItems = [
@@ -30,6 +32,10 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
+    // Make 'Projects' active for sub-paths as well.
+    if (href.startsWith('/projects')) {
+      return pathname.startsWith(href);
+    }
     return pathname === href;
   };
 

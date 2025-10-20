@@ -23,7 +23,6 @@ import { Calendar } from '../ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
-  title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
   specific: z.string().min(3, {
     message: 'Specific goal description must be at least 3 characters.',
   }),
@@ -44,7 +43,6 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
       specific: '',
       measurable: '',
       projectId: '',
@@ -54,6 +52,7 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newGoal: Goal = {
         ...values,
+        title: values.specific, // Use specific as title
         measurable: values.measurable.split('\n').filter(m => m.trim() !== ''),
         deadline: values.deadline?.toISOString(),
         status: 'Not Started',
@@ -89,29 +88,13 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
         />
         <FormField
           control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Goal Title</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g., Build a To-Do List App"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="specific"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Specific</FormLabel>
+              <FormLabel>Goal</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="What exactly do you want to accomplish?"
+                  placeholder="What is your specific goal? e.g., 'Learn Travis Picking for Landslide'"
                   {...field}
                 />
               </FormControl>
@@ -124,7 +107,7 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
           name="measurable"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Measurable</FormLabel>
+              <FormLabel>Measurable Outcomes</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="How will you measure progress? List each outcome on a new line."

@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,12 +10,27 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { PlusCircle } from 'lucide-react';
-import Link from 'next/link';
+import { AddProjectForm } from '@/components/projects/add-project-form';
+import type { Project } from '@/lib/types';
 
 export default function ProjectsPage() {
   // In a real app, you'd fetch this from a database.
-  const projects = [];
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleProjectAdded = (newProject: Project) => {
+    setProjects(prev => [...prev, { ...newProject, id: `proj-${Date.now()}` }]);
+    setIsDialogOpen(false);
+  };
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -27,11 +45,22 @@ export default function ProjectsPage() {
               Group your goals into larger projects to track your progress.
             </p>
           </div>
-          <Button asChild>
-            <Link href="/projects/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Project
-            </Link>
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle className="font-headline text-2xl">New Project Details</DialogTitle>
+                <DialogDescription>
+                  Define your new project to start tracking it.
+                </DialogDescription>
+              </DialogHeader>
+              <AddProjectForm onProjectAdded={handleProjectAdded} />
+            </DialogContent>
+          </Dialog>
         </div>
 
         {projects.length === 0 ? (
@@ -43,15 +72,15 @@ export default function ProjectsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild>
-                <Link href="/projects/new">Create Your First Project</Link>
-              </Button>
+               <DialogTrigger asChild>
+                  <Button>Create Your First Project</Button>
+                </DialogTrigger>
             </CardContent>
           </Card>
         ) : (
-            <div>
-                {/* TODO: Display projects here */}
-            </div>
+          <div>
+            {/* TODO: Display projects here */}
+          </div>
         )}
       </main>
     </div>

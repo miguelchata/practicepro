@@ -19,10 +19,7 @@ export type GoalStatus = 'Not Started' | 'In Progress' | 'Completed';
 export type Goal = {
   title: string;
   specific: string;
-  measurable: string[]; // List of measurable outcomes
-  achievable: string;
-  relevant: string;
-  timeBound: string;
+  measurable: string[];
   deadline?: string; // Storing as ISO string
   status: GoalStatus;
 };

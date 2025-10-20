@@ -29,15 +29,6 @@ const formSchema = z.object({
   measurable: z.string().min(3, {
     message: 'Provide at least one measurable outcome, one per line.',
   }),
-  achievable: z.string().min(3, {
-    message: 'Achievable statement must be at least 3 characters.',
-  }),
-  relevant: z.string().min(3, {
-    message: 'Relevant statement must be at least 3 characters.',
-  }),
-  timeBound: z.string().min(3, {
-    message: 'Time-bound statement must be at least 3 characters.',
-  }),
   deadline: z.date().optional(),
 });
 
@@ -52,9 +43,6 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
       title: '',
       specific: '',
       measurable: '',
-      achievable: '',
-      relevant: '',
-      timeBound: '',
     },
   });
 
@@ -80,7 +68,7 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
               <FormLabel>Goal Title</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., Build Persistent To-Do List"
+                  placeholder="e.g., Build a To-Do List App"
                   {...field}
                 />
               </FormControl>
@@ -112,55 +100,7 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
               <FormLabel>Measurable</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="How will you measure progress? List each item on a new line."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-         <FormField
-          control={form.control}
-          name="achievable"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Achievable</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Is this goal realistic and attainable? How?"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-         <FormField
-          control={form.control}
-          name="relevant"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Relevant</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Why is this goal important to you?"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-         <FormField
-          control={form.control}
-          name="timeBound"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Time-bound</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="What is the deadline for this goal?"
+                  placeholder="How will you measure progress? List each outcome on a new line."
                   {...field}
                 />
               </FormControl>
@@ -210,7 +150,7 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
           )}
         />
         <Button type="submit" className="w-full">
-          Add SMART Goal
+          Add Goal
         </Button>
       </form>
     </Form>

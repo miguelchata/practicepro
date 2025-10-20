@@ -242,18 +242,6 @@ export default function SkillDetailPage() {
                                                         ))}
                                                     </ul>
                                                 </div>
-                                                <div>
-                                                    <h5 className="font-semibold text-foreground">Achievable</h5>
-                                                    <p>{goal.achievable}</p>
-                                                </div>
-                                                <div>
-                                                    <h5 className="font-semibold text-foreground">Relevant</h5>
-                                                    <p>{goal.relevant}</p>
-                                                </div>
-                                                <div>
-                                                    <h5 className="font-semibold text-foreground">Time-bound</h5>
-                                                    <p>{goal.timeBound}</p>
-                                                </div>
                                             </div>
                                         </AccordionContent>
                                     </AccordionItem>
@@ -281,9 +269,9 @@ export default function SkillDetailPage() {
         <Dialog open={isAddGoalDialogOpen} onOpenChange={setIsAddGoalDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add New SMART Goal for {activeSubSkill}</DialogTitle>
+              <DialogTitle>Add New Goal for {activeSubSkill}</DialogTitle>
               <DialogDescription>
-                Define a new goal using the SMART framework.
+                Define a new goal for this sub-skill.
               </DialogDescription>
             </DialogHeader>
             <AddGoalForm onGoalAdded={handleGoalAdded} />

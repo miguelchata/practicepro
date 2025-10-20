@@ -40,13 +40,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
 function formatDeadline(deadline: string | undefined) {
@@ -75,7 +69,7 @@ export default function SkillDetailPage() {
   const [skill, setSkill] = useState<Skill | undefined>(initialSkill);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddGoalDialogOpen, setIsAddGoalDialogOpen] = useState(false);
-  const [activeSubSkill, setActiveSubSkill] = useState<string | null>(null);
+  const [selectedSubSkills, setSelectedSubSkills] = useState<string[]>([]);
 
   if (!skill) {
     return (
@@ -100,12 +94,12 @@ export default function SkillDetailPage() {
   };
 
   const handleGoalAdded = (newGoal: Goal) => {
-    if (!activeSubSkill) return;
+    if (selectedSubSkills.length === 0) return;
 
     setSkill(prevSkill => {
       if (!prevSkill) return undefined;
       const newSubSkills = prevSkill.subSkills.map(sub => {
-        if (sub.name === activeSubSkill) {
+        if (selectedSubSkills.includes(sub.name)) {
           return { ...sub, goals: [...sub.goals, newGoal] };
         }
         return sub;
@@ -113,19 +107,21 @@ export default function SkillDetailPage() {
       return { ...prevSkill, subSkills: newSubSkills };
     });
     setIsAddGoalDialogOpen(false);
-    setActiveSubSkill(null);
+    setSelectedSubSkills([]);
   };
   
   const handleOpenAddGoalDialog = () => {
-    // If there's only one sub-skill, pre-select it. Otherwise, let user choose.
-    if (skill.subSkills.length === 1) {
-      setActiveSubSkill(skill.subSkills[0].name);
-    } else {
-      setActiveSubSkill(null); // Reset to force selection
-    }
+    setSelectedSubSkills([]);
     setIsAddGoalDialogOpen(true);
   };
 
+  const handleSubSkillSelectionChange = (subSkillName: string, isSelected: boolean) => {
+    setSelectedSubSkills(prev => 
+      isSelected 
+        ? [...prev, subSkillName]
+        : prev.filter(name => name !== subSkillName)
+    );
+  };
 
   const allGoals = skill.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name})));
 
@@ -314,36 +310,32 @@ export default function SkillDetailPage() {
             <DialogHeader>
               <DialogTitle>Add New Goal</DialogTitle>
               <DialogDescription>
-                Define a new goal and link it to a sub-skill.
+                Define a new goal and link it to one or more sub-skills.
               </DialogDescription>
             </DialogHeader>
             {skill.subSkills.length > 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="subskill-select">Sub-Skill</Label>
-                <Select 
-                  onValueChange={setActiveSubSkill} 
-                  defaultValue={activeSubSkill ?? undefined}
-                  disabled={skill.subSkills.length <= 1}
-                >
-                  <SelectTrigger id="subskill-select">
-                    <SelectValue placeholder="Select a sub-skill for this goal" />
-                  </SelectTrigger>
-                  <SelectContent>
+              <div className="space-y-4 py-4">
+                <Label>Link to Sub-Skill(s)</Label>
+                <div className="space-y-2 rounded-md border p-4">
                     {skill.subSkills.map(sub => (
-                      <SelectItem key={sub.name} value={sub.name}>
-                        {sub.name}
-                      </SelectItem>
+                      <div key={sub.name} className="flex items-center gap-3">
+                        <Checkbox 
+                          id={`subskill-checkbox-${sub.name}`}
+                          checked={selectedSubSkills.includes(sub.name)}
+                          onCheckedChange={(checked) => handleSubSkillSelectionChange(sub.name, !!checked)}
+                        />
+                        <Label htmlFor={`subskill-checkbox-${sub.name}`} className="font-normal cursor-pointer">
+                          {sub.name}
+                        </Label>
+                      </div>
                     ))}
-                  </SelectContent>
-                </Select>
+                </div>
               </div>
             )}
-            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={!activeSubSkill} />
+            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0} />
           </DialogContent>
         </Dialog>
       </main>
     </div>
   );
 }
-
-    

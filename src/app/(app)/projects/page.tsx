@@ -11,6 +11,9 @@ import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProjectsPage() {
+  // In a real app, you'd fetch this from a database.
+  const projects = [];
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title="Projects" />
@@ -31,19 +34,25 @@ export default function ProjectsPage() {
           </Button>
         </div>
 
-        <Card className="flex flex-col items-center justify-center p-12 text-center">
-          <CardHeader>
-            <CardTitle>No Projects Yet</CardTitle>
-            <CardDescription>
-              Create a project to start organizing your goals.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild>
-              <Link href="/projects/new">Create Your First Project</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {projects.length === 0 ? (
+          <Card className="flex flex-col items-center justify-center p-12 text-center">
+            <CardHeader>
+              <CardTitle>No Projects Yet</CardTitle>
+              <CardDescription>
+                Create a project to start organizing your goals.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link href="/projects/new">Create Your First Project</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+            <div>
+                {/* TODO: Display projects here */}
+            </div>
+        )}
       </main>
     </div>
   );

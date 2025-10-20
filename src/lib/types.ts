@@ -38,3 +38,14 @@ export type Skill = {
   goals: []; // Kept for legacy data, new structure uses subSkills
   subSkills: SubSkill[];
 };
+
+export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
+
+export type Project = {
+  id: string;
+  title: string;
+  description: string;
+  startDate: string;
+  targetDate: string;
+  status: ProjectStatus;
+};

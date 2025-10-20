@@ -21,12 +21,17 @@ export type Goal = {
   deadline?: string; // Storing as ISO string
 };
 
+export type SubSkill = {
+  name: string;
+  goals: Goal[];
+}
+
 export type Skill = {
   id:string;
   name: string;
   icon: LucideIcon;
   category: string;
   totalHours: number;
-  goals: Goal[];
-  subSkills: string[];
+  goals: Goal[]; // Kept for legacy data, new structure uses subSkills
+  subSkills: SubSkill[];
 };

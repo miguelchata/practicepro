@@ -77,6 +77,10 @@ export default function PracticePage() {
 
     router.push(`/practice/active?${queryParams.toString()}`);
   };
+  
+  const availableGoals = selectedSubSkill
+    ? selectedSkill?.subSkills.find(s => s.name === selectedSubSkill)?.goals
+    : [];
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -121,8 +125,8 @@ export default function PracticePage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {selectedSkill.subSkills.map((subSkill) => (
-                                    <SelectItem key={subSkill} value={subSkill}>
-                                        {subSkill}
+                                    <SelectItem key={subSkill.name} value={subSkill.name}>
+                                        {subSkill.name}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -130,12 +134,12 @@ export default function PracticePage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="goal">Link to Goal (optional)</Label>
-                        <Select onValueChange={setSelectedGoal} value={selectedGoal} disabled={!selectedSkill.goals || selectedSkill.goals.length === 0}>
+                        <Select onValueChange={setSelectedGoal} value={selectedGoal} disabled={!availableGoals || availableGoals.length === 0}>
                             <SelectTrigger id="goal">
                                 <SelectValue placeholder="Select a goal" />
                             </SelectTrigger>
                             <SelectContent>
-                                {selectedSkill.goals.map((goal, index) => (
+                                {availableGoals?.map((goal, index) => (
                                     <SelectItem key={index} value={goal.description}>
                                         {goal.description}
                                     </SelectItem>

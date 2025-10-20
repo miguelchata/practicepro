@@ -29,11 +29,11 @@ const formSchema = z.object({
     message: 'Skill name must be at least 2 characters.',
   }),
   category: z.string().min(2, { message: 'Category is required.' }),
-  goals: z.string().min(1, { message: 'Please set at least one goal.' }),
+  subSkills: z.string().optional(),
 });
 
 type AddSkillFormProps = {
-  onSkillAdded: (newSkill: Omit<Skill, 'id' | 'totalHours' | 'icon'>) => void;
+  onSkillAdded: (newSkill: Omit<Skill, 'id' | 'totalHours' | 'icon' | 'goals'>) => void;
   categories: string[];
 };
 
@@ -48,7 +48,7 @@ export function AddSkillForm({
     defaultValues: {
       name: '',
       category: '',
-      goals: '',
+      subSkills: '',
     },
   });
 
@@ -56,11 +56,9 @@ export function AddSkillForm({
     const newSkill = {
       name: values.name,
       category: values.category,
-      goals: values.goals
-        .split('\n')
-        .filter((g) => g.trim() !== '')
-        .map((g) => ({ description: g })),
-      subSkills: [],
+      subSkills: values.subSkills
+        ? values.subSkills.split('\n').filter((s) => s.trim() !== '').map((s) => ({ name: s, goals: [] }))
+        : [],
     };
     onSkillAdded(newSkill);
     form.reset();
@@ -99,7 +97,7 @@ export function AddSkillForm({
                     field.onChange(value);
                   }
                 }} 
-                defaultValue={field.value}
+                value={showNewCategory ? 'new' : field.value}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -119,7 +117,7 @@ export function AddSkillForm({
                 <FormControl>
                   <Input
                     placeholder="New category name"
-                    onChange={field.onChange}
+                    {...field}
                     className="mt-2"
                   />
                 </FormControl>
@@ -130,13 +128,13 @@ export function AddSkillForm({
         />
         <FormField
           control={form.control}
-          name="goals"
+          name="subSkills"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>General Goal</FormLabel>
+              <FormLabel>Sub-Skills</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="List your goals, one per line.&#10;e.g., Learn to play Moonlight Sonata"
+                  placeholder="List your sub-skills, one per line.&#10;e.g., Fingerpicking"
                   {...field}
                 />
               </FormControl>

@@ -92,11 +92,12 @@ export const skills: Skill[] = [
     name: 'Guitar',
     icon: Guitar,
     category: 'Music',
-    goals: [
-        { description: 'Master bar chords' }, 
-        { description: 'Learn "Stairway to Heaven" solo' }
+    goals: [], // Legacy
+    subSkills: [
+      { name: 'Fingerpicking', goals: [{ description: 'Learn Travis Picking style' }] },
+      { name: 'Music Theory', goals: [{ description: 'Memorize the notes on the fretboard' }, { description: 'Master the C major scale' }] },
+      { name: 'Improvisation', goals: [{ description: 'Improvise a solo over a 12-bar blues' }] },
     ],
-    subSkills: ['Fingerpicking', 'Music Theory', 'Improvisation'],
     totalHours: 75,
   },
   {
@@ -104,11 +105,12 @@ export const skills: Skill[] = [
     name: 'Public Speaking',
     icon: Mic,
     category: 'Communication',
-    goals: [
-        { description: 'Reduce filler words' }, 
-        { description: 'Improve stage presence' }
+    goals: [], // Legacy
+    subSkills: [
+        { name: 'Storytelling', goals: [{ description: 'Craft a compelling 5-minute story' }] },
+        { name: 'Body Language', goals: [{ description: 'Reduce nervous gestures by 50%' }] },
+        { name: 'Vocal Variety', goals: [{ description: 'Practice pitch and pace exercises daily' }] },
     ],
-    subSkills: ['Storytelling', 'Body Language', 'Vocal Variety'],
     totalHours: 32,
   },
   {
@@ -116,11 +118,13 @@ export const skills: Skill[] = [
     name: 'Python Programming',
     icon: Code,
     category: 'Technology',
-    goals: [
-        { description: 'Build a Django web app' }, 
-        { description: 'Contribute to an open-source project' }
+    goals: [], // Legacy
+    subSkills: [
+        { name: 'Data Structures', goals: [{ description: 'Implement a linked list from scratch' }] },
+        { name: 'Algorithms', goals: [{ description: 'Solve 10 medium-level problems on LeetCode' }] },
+        { name: 'Web Scraping', goals: [] },
+        { name: 'APIs', goals: [{ description: 'Build a weather app using a public API' }] },
     ],
-    subSkills: ['Data Structures', 'Algorithms', 'Web Scraping', 'APIs'],
     totalHours: 210,
   },
 ];

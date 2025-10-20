@@ -13,13 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Skill } from '@/lib/types';
 
@@ -29,12 +22,12 @@ const formSchema = z.object({
     message: 'Skill name must be at least 2 characters.',
   }),
   category: z.string().min(2, { message: 'Category is required.' }),
-  goals: z.string().min(1, { message: 'Please set at least one goal.' }),
+  subSkills: z.string().optional(),
 });
 
 type EditSkillFormProps = {
   skill: Skill;
-  onSkillUpdated: (updatedSkill: Omit<Skill, 'id' | 'totalHours' | 'icon'>) => void;
+  onSkillUpdated: (updatedSkill: Pick<Skill, 'name' | 'category' | 'subSkills'>) => void;
 };
 
 export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
@@ -43,7 +36,7 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
     defaultValues: {
       name: skill.name,
       category: skill.category,
-      goals: skill.goals.map(g => g.description).join('\n'),
+      subSkills: skill.subSkills.map(s => s.name).join('\n'),
     },
   });
 
@@ -51,8 +44,13 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
     const updatedSkill = {
       name: values.name,
       category: values.category,
-      goals: values.goals.split('\n').filter(g => g.trim() !== '').map(g => ({ description: g})),
-      subSkills: skill.subSkills, // Keep existing subskills, don't edit them here
+      // This preserves existing goals for existing subskills
+      subSkills: values.subSkills
+        ? values.subSkills.split('\n').filter(s => s.trim() !== '').map(newSubSkillName => {
+            const existingSubSkill = skill.subSkills.find(s => s.name === newSubSkillName);
+            return existingSubSkill || { name: newSubSkillName, goals: [] };
+        })
+        : [],
     };
     onSkillUpdated(updatedSkill);
   }
@@ -88,13 +86,13 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
         />
         <FormField
           control={form.control}
-          name="goals"
+          name="subSkills"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>General Goal</FormLabel>
+              <FormLabel>Sub-Skills</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="List your goals, one per line.&#10;e.g., Learn to play Moonlight Sonata"
+                  placeholder="List your sub-skills, one per line.&#10;e.g., Fingerpicking"
                   {...field}
                   rows={4}
                 />

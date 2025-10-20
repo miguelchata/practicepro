@@ -15,9 +15,11 @@ export type Achievement = {
 export type SkillProficiency = 'Beginner' | 'Intermediate' | 'Advanced';
 
 export type Goal = {
-  description: string;
-  target?: number;
-  unit?: string;
+  specific: string;
+  measurable: string;
+  achievable: string;
+  relevant: string;
+  timeBound: string;
   deadline?: string; // Storing as ISO string
 };
 
@@ -32,6 +34,6 @@ export type Skill = {
   icon: LucideIcon;
   category: string;
   totalHours: number;
-  goals: Goal[]; // Kept for legacy data, new structure uses subSkills
+  goals: []; // Kept for legacy data, new structure uses subSkills
   subSkills: SubSkill[];
 };

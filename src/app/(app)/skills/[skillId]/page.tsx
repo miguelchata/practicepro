@@ -21,7 +21,6 @@ import {
   Plus,
   Target,
   Calendar,
-  MoreVertical,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -35,11 +34,11 @@ import {
 import { EditSkillForm } from '@/components/skills/edit-skill-form';
 import { AddGoalForm } from '@/components/skills/add-goal-form';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 function formatDeadline(deadline: string | undefined) {
   if (!deadline) return '';
@@ -205,27 +204,36 @@ export default function SkillDetailPage() {
                       </div>
                       <div className="mt-4 space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
                         {sub.goals.length > 0 ? (
-                          sub.goals.map((goal, goalIndex) => (
-                            <div key={goalIndex} className="flex items-start gap-3 relative">
-                               <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 absolute -left-[1.1rem] bg-card rounded-full p-0.5" />
-                              <div className="flex-1 pl-4">
-                                <p className="font-medium">{goal.description}</p>
-                                {(goal.target || goal.deadline) && (
-                                  <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                                    {goal.target && (
-                                      <span>Target: {goal.target} {goal.unit}</span>
-                                    )}
-                                    {goal.deadline && (
-                                      <span className="flex items-center gap-1.5">
-                                        <Calendar className="h-4 w-4" />
-                                        {formatDeadline(goal.deadline)}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))
+                            <Accordion type="multiple" className="w-full">
+                                {sub.goals.map((goal, goalIndex) => (
+                                    <AccordionItem value={`item-${goalIndex}`} key={goalIndex}>
+                                        <AccordionTrigger className="hover:no-underline">
+                                             <div className="flex items-start gap-3 relative w-full">
+                                                <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 absolute -left-[1.1rem] bg-card rounded-full p-0.5" />
+                                                <div className="flex-1 pl-4 text-left">
+                                                    <p className="font-medium">{goal.specific}</p>
+                                                     {goal.deadline && (
+                                                    <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Calendar className="h-4 w-4" />
+                                                            Due {formatDeadline(goal.deadline)}
+                                                        </span>
+                                                    </div>
+                                                     )}
+                                                </div>
+                                             </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="pl-8 pr-4 space-y-2 text-muted-foreground">
+                                                <p><strong className="text-foreground">Measurable:</strong> {goal.measurable}</p>
+                                                <p><strong className="text-foreground">Achievable:</strong> {goal.achievable}</p>
+                                                <p><strong className="text-foreground">Relevant:</strong> {goal.relevant}</p>
+                                                <p><strong className="text-foreground">Time-bound:</strong> {goal.timeBound}</p>
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                           </Accordion>
                         ) : (
                           <p className="text-sm text-muted-foreground pl-4">
                             No goals yet for this sub-skill.
@@ -246,11 +254,11 @@ export default function SkillDetailPage() {
 
         {/* Add Goal Dialog */}
         <Dialog open={isAddGoalDialogOpen} onOpenChange={setIsAddGoalDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add New Goal for {activeSubSkill}</DialogTitle>
+              <DialogTitle>Add New SMART Goal for {activeSubSkill}</DialogTitle>
               <DialogDescription>
-                Define a new SMART goal.
+                Define a new goal using the SMART framework.
               </DialogDescription>
             </DialogHeader>
             <AddGoalForm onGoalAdded={handleGoalAdded} />

@@ -1,15 +1,10 @@
 import type { Achievement, Skill, Stat } from '@/lib/types';
 import {
-  Book,
-  Bot,
   Code,
   Flame,
-  Github,
-  Gitlab,
   Goal,
   Guitar,
   Mic,
-  Presentation,
   Target,
   Trophy,
 } from 'lucide-react';
@@ -94,9 +89,21 @@ export const skills: Skill[] = [
     category: 'Music',
     goals: [], // Legacy
     subSkills: [
-      { name: 'Fingerpicking', goals: [{ description: 'Learn Travis Picking style' }] },
-      { name: 'Music Theory', goals: [{ description: 'Memorize the notes on the fretboard' }, { description: 'Master the C major scale' }] },
-      { name: 'Improvisation', goals: [{ description: 'Improvise a solo over a 12-bar blues' }] },
+      { 
+        name: 'Fingerpicking', 
+        goals: [
+          {
+            specific: 'Learn Travis Picking pattern for "Landslide" by Fleetwood Mac.',
+            measurable: 'Play the first verse smoothly at 80% of the original tempo.',
+            achievable: 'The pattern is repetitive and there are many tutorials available.',
+            relevant: 'This is a foundational fingerpicking technique used in many folk and acoustic songs.',
+            timeBound: 'Master the verse within 2 weeks.',
+            deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ] 
+      },
+      { name: 'Music Theory', goals: [] },
+      { name: 'Improvisation', goals: [] },
     ],
     totalHours: 75,
   },
@@ -107,9 +114,9 @@ export const skills: Skill[] = [
     category: 'Communication',
     goals: [], // Legacy
     subSkills: [
-        { name: 'Storytelling', goals: [{ description: 'Craft a compelling 5-minute story' }] },
-        { name: 'Body Language', goals: [{ description: 'Reduce nervous gestures by 50%' }] },
-        { name: 'Vocal Variety', goals: [{ description: 'Practice pitch and pace exercises daily' }] },
+        { name: 'Storytelling', goals: [] },
+        { name: 'Body Language', goals: [] },
+        { name: 'Vocal Variety', goals: [] },
     ],
     totalHours: 32,
   },
@@ -120,10 +127,10 @@ export const skills: Skill[] = [
     category: 'Technology',
     goals: [], // Legacy
     subSkills: [
-        { name: 'Data Structures', goals: [{ description: 'Implement a linked list from scratch' }] },
-        { name: 'Algorithms', goals: [{ description: 'Solve 10 medium-level problems on LeetCode' }] },
+        { name: 'Data Structures', goals: [] },
+        { name: 'Algorithms', goals: [] },
         { name: 'Web Scraping', goals: [] },
-        { name: 'APIs', goals: [{ description: 'Build a weather app using a public API' }] },
+        { name: 'APIs', goals: [] },
     ],
     totalHours: 210,
   },

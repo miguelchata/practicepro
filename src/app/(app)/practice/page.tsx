@@ -140,8 +140,8 @@ export default function PracticePage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {availableGoals?.map((goal, index) => (
-                                    <SelectItem key={index} value={goal.description}>
-                                        {goal.description}
+                                    <SelectItem key={index} value={goal.specific}>
+                                        {goal.specific}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

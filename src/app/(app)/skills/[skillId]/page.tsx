@@ -21,6 +21,7 @@ import {
   Plus,
   Target,
   Calendar,
+  CheckCircle2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -211,24 +212,48 @@ export default function SkillDetailPage() {
                                              <div className="flex items-start gap-3 relative w-full">
                                                 <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5 absolute -left-[1.1rem] bg-card rounded-full p-0.5" />
                                                 <div className="flex-1 pl-4 text-left">
-                                                    <p className="font-medium">{goal.specific}</p>
+                                                    <p className="font-medium">{goal.title}</p>
                                                      {goal.deadline && (
                                                     <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
                                                         <span className="flex items-center gap-1.5">
                                                             <Calendar className="h-4 w-4" />
                                                             Due {formatDeadline(goal.deadline)}
                                                         </span>
+                                                        <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
                                                     </div>
                                                      )}
                                                 </div>
                                              </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
-                                            <div className="pl-8 pr-4 space-y-2 text-muted-foreground">
-                                                <p><strong className="text-foreground">Measurable:</strong> {goal.measurable}</p>
-                                                <p><strong className="text-foreground">Achievable:</strong> {goal.achievable}</p>
-                                                <p><strong className="text-foreground">Relevant:</strong> {goal.relevant}</p>
-                                                <p><strong className="text-foreground">Time-bound:</strong> {goal.timeBound}</p>
+                                            <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
+                                                <div>
+                                                    <h5 className="font-semibold text-foreground">Specific</h5>
+                                                    <p>{goal.specific}</p>
+                                                </div>
+                                                 <div>
+                                                    <h5 className="font-semibold text-foreground">Measurable</h5>
+                                                    <ul className="list-none space-y-1 mt-1">
+                                                        {goal.measurable.map((item, i) => (
+                                                            <li key={i} className="flex items-start gap-2">
+                                                                <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+                                                                <span>{item}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-semibold text-foreground">Achievable</h5>
+                                                    <p>{goal.achievable}</p>
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-semibold text-foreground">Relevant</h5>
+                                                    <p>{goal.relevant}</p>
+                                                </div>
+                                                <div>
+                                                    <h5 className="font-semibold text-foreground">Time-bound</h5>
+                                                    <p>{goal.timeBound}</p>
+                                                </div>
                                             </div>
                                         </AccordionContent>
                                     </AccordionItem>

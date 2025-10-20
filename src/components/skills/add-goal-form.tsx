@@ -22,11 +22,12 @@ import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 
 const formSchema = z.object({
+  title: z.string().min(3, { message: 'Title must be at least 3 characters.' }),
   specific: z.string().min(3, {
     message: 'Specific goal description must be at least 3 characters.',
   }),
   measurable: z.string().min(3, {
-    message: 'Measurable criteria must be at least 3 characters.',
+    message: 'Provide at least one measurable outcome, one per line.',
   }),
   achievable: z.string().min(3, {
     message: 'Achievable statement must be at least 3 characters.',
@@ -48,6 +49,7 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      title: '',
       specific: '',
       measurable: '',
       achievable: '',
@@ -59,7 +61,9 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
   function onSubmit(values: z.infer<typeof formSchema>) {
     const newGoal: Goal = {
         ...values,
+        measurable: values.measurable.split('\n').filter(m => m.trim() !== ''),
         deadline: values.deadline?.toISOString(),
+        status: 'Not Started',
     };
     onGoalAdded(newGoal);
     form.reset();
@@ -68,6 +72,22 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Goal Title</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g., Build Persistent To-Do List"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="specific"
@@ -92,7 +112,7 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
               <FormLabel>Measurable</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="How will you measure progress and know when it's complete?"
+                  placeholder="How will you measure progress? List each item on a new line."
                   {...field}
                 />
               </FormControl>
@@ -108,7 +128,7 @@ export function AddGoalForm({ onGoalAdded }: AddGoalFormProps) {
               <FormLabel>Achievable</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Is this goal realistic and attainable?"
+                  placeholder="Is this goal realistic and attainable? How?"
                   {...field}
                 />
               </FormControl>

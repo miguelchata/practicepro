@@ -14,13 +14,17 @@ export type Achievement = {
 
 export type SkillProficiency = 'Beginner' | 'Intermediate' | 'Advanced';
 
+export type GoalStatus = 'Not Started' | 'In Progress' | 'Completed';
+
 export type Goal = {
+  title: string;
   specific: string;
-  measurable: string;
+  measurable: string[]; // List of measurable outcomes
   achievable: string;
   relevant: string;
   timeBound: string;
   deadline?: string; // Storing as ISO string
+  status: GoalStatus;
 };
 
 export type SubSkill = {

@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 function formatDeadline(deadline: string | undefined) {
   if (!deadline) return '';

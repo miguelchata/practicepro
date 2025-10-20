@@ -86,7 +86,7 @@ export default function SkillDetailPage() {
     );
   }
 
-  const handleSkillUpdated = (updatedSkillData: Pick<Skill, 'name' | 'category'>) => {
+  const handleSkillUpdated = (updatedSkillData: Pick<Skill, 'name' | 'category' | 'subSkills'>) => {
     setSkill(prev => (prev ? { ...prev, ...updatedSkillData } : undefined));
     setIsEditDialogOpen(false);
   };
@@ -234,7 +234,7 @@ export default function SkillDetailPage() {
                                                  <div>
                                                     <h5 className="font-semibold text-foreground">Measurable</h5>
                                                     <ul className="list-none space-y-1 mt-1">
-                                                        {goal.measurable.map((item, i) => (
+                                                        {(Array.isArray(goal.measurable) ? goal.measurable : [goal.measurable]).map((item, i) => (
                                                             <li key={i} className="flex items-start gap-2">
                                                                 <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
                                                                 <span>{item}</span>

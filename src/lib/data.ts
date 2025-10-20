@@ -89,18 +89,27 @@ export const skills: Skill[] = [
     category: 'Music',
     goals: [], // Legacy
     subSkills: [
-      { 
-        name: 'Fingerpicking', 
+      {
+        name: 'Fingerpicking',
         goals: [
           {
-            specific: 'Learn Travis Picking pattern for "Landslide" by Fleetwood Mac.',
-            measurable: 'Play the first verse smoothly at 80% of the original tempo.',
-            achievable: 'The pattern is repetitive and there are many tutorials available.',
-            relevant: 'This is a foundational fingerpicking technique used in many folk and acoustic songs.',
+            title: 'Learn "Landslide"',
+            specific:
+              'Learn Travis Picking pattern for "Landslide" by Fleetwood Mac.',
+            measurable: [
+              'Play the first verse smoothly at 80% of the original tempo.',
+            ],
+            achievable:
+              'The pattern is repetitive and there are many tutorials available.',
+            relevant:
+              'This is a foundational fingerpicking technique used in many folk and acoustic songs.',
             timeBound: 'Master the verse within 2 weeks.',
-            deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ] 
+            deadline: new Date(
+              Date.now() + 14 * 24 * 60 * 60 * 1000
+            ).toISOString(),
+            status: 'Not Started',
+          },
+        ],
       },
       { name: 'Music Theory', goals: [] },
       { name: 'Improvisation', goals: [] },
@@ -114,9 +123,9 @@ export const skills: Skill[] = [
     category: 'Communication',
     goals: [], // Legacy
     subSkills: [
-        { name: 'Storytelling', goals: [] },
-        { name: 'Body Language', goals: [] },
-        { name: 'Vocal Variety', goals: [] },
+      { name: 'Storytelling', goals: [] },
+      { name: 'Body Language', goals: [] },
+      { name: 'Vocal Variety', goals: [] },
     ],
     totalHours: 32,
   },
@@ -127,10 +136,10 @@ export const skills: Skill[] = [
     category: 'Technology',
     goals: [], // Legacy
     subSkills: [
-        { name: 'Data Structures', goals: [] },
-        { name: 'Algorithms', goals: [] },
-        { name: 'Web Scraping', goals: [] },
-        { name: 'APIs', goals: [] },
+      { name: 'Data Structures', goals: [] },
+      { name: 'Algorithms', goals: [] },
+      { name: 'Web Scraping', goals: [] },
+      { name: 'APIs', goals: [] },
     ],
     totalHours: 210,
   },

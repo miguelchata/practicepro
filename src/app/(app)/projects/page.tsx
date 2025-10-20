@@ -72,9 +72,11 @@ export default function ProjectsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-               <DialogTrigger asChild>
+               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
                   <Button>Create Your First Project</Button>
                 </DialogTrigger>
+               </Dialog>
             </CardContent>
           </Card>
         ) : (

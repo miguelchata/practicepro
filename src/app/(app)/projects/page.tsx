@@ -21,13 +21,14 @@ import {
 import { PlusCircle } from 'lucide-react';
 import { AddProjectForm } from '@/components/projects/add-project-form';
 import type { Project } from '@/lib/types';
+import { ProjectCard } from '@/components/projects/project-card';
 
 export default function ProjectsPage() {
   // In a real app, you'd fetch this from a database.
   const [projects, setProjects] = useState<Project[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleProjectAdded = (newProject: Project) => {
+  const handleProjectAdded = (newProject: Omit<Project, 'id'>) => {
     setProjects(prev => [...prev, { ...newProject, id: `proj-${Date.now()}` }]);
     setIsDialogOpen(false);
   };
@@ -76,12 +77,23 @@ export default function ProjectsPage() {
                 <DialogTrigger asChild>
                   <Button>Create Your First Project</Button>
                 </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="font-headline text-2xl">New Project Details</DialogTitle>
+                    <DialogDescription>
+                      Define your new project to start tracking it.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AddProjectForm onProjectAdded={handleProjectAdded} />
+                </DialogContent>
                </Dialog>
             </CardContent>
           </Card>
         ) : (
-          <div>
-            {/* TODO: Display projects here */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map(project => (
+                <ProjectCard key={project.id} project={project} />
+            ))}
           </div>
         )}
       </main>

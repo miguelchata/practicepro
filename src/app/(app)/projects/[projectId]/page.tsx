@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useProject } from '@/firebase/firestore/use-doc';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,8 @@ import {
   CheckCircle,
   Circle,
   Ticket,
+  MoreVertical,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -36,14 +38,37 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { AddUserStoryForm } from '@/components/projects/add-user-story-form';
+import { EditUserStoryForm } from '@/components/projects/edit-user-story-form';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAddUserStory } from '@/firebase/firestore/use-add-user-story';
 import { useUserStories } from '@/firebase/firestore/use-collection';
+import {
+  useUpdateUserStory,
+  useDeleteUserStory,
+} from '@/firebase/firestore/use-update-user-story';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -51,11 +76,31 @@ export default function ProjectDetailPage() {
   const { data: project, loading } = useProject(projectId);
   const { data: userStories, loading: storiesLoading } = useUserStories(projectId);
   const addUserStory = useAddUserStory();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const updateUserStory = useUpdateUserStory();
+  const deleteUserStory = useDeleteUserStory();
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedStory, setSelectedStory] = useState<UserStory | null>(null);
 
   const handleUserStoryAdded = async (newUserStory: Omit<UserStory, 'id'>) => {
     await addUserStory(projectId, newUserStory);
-    setIsDialogOpen(false);
+    setIsAddDialogOpen(false);
+  };
+  
+  const handleEditClick = (story: UserStory) => {
+    setSelectedStory(story);
+    setIsEditDialogOpen(true);
+  };
+  
+  const handleUserStoryUpdated = async (storyId: string, updatedData: Partial<UserStory>) => {
+    await updateUserStory(projectId, storyId, updatedData);
+    setIsEditDialogOpen(false);
+    setSelectedStory(null);
+  };
+
+  const handleDeleteStory = (storyId: string) => {
+    deleteUserStory(projectId, storyId);
   };
 
   if (loading) {
@@ -109,7 +154,7 @@ export default function ProjectDetailPage() {
         return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
   };
-  
+
   const getStatusVariant = (status: ProjectStatus) => {
     switch (status) {
       case 'Completed':
@@ -152,9 +197,11 @@ export default function ProjectDetailPage() {
             <CardDescription>{project.description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-             <div className="flex items-center gap-2 text-muted-foreground">
-                {getStatusIcon(project.status)}
-                <span>Status: <strong>{project.status}</strong></span>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              {getStatusIcon(project.status)}
+              <span>
+                Status: <strong>{project.status}</strong>
+              </span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
@@ -181,7 +228,7 @@ export default function ProjectDetailPage() {
                   Features and requirements for this project.
                 </CardDescription>
               </div>
-               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add User Story
@@ -194,9 +241,9 @@ export default function ProjectDetailPage() {
                       Add a new user story to the project.
                     </DialogDescription>
                   </DialogHeader>
-                  <AddUserStoryForm 
-                    onUserStoryAdded={handleUserStoryAdded} 
-                    existingStoriesCount={userStories.length} 
+                  <AddUserStoryForm
+                    onUserStoryAdded={handleUserStoryAdded}
+                    existingStoriesCount={userStories.length}
                     ticketPrefix={project.ticketPrefix || ''}
                   />
                 </DialogContent>
@@ -205,47 +252,104 @@ export default function ProjectDetailPage() {
           </CardHeader>
           <CardContent>
             {storiesLoading ? (
-                <div className="space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                </div>
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
             ) : userStories.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
                 No user stories have been added to this project yet.
               </p>
             ) : (
-                 <Accordion type="multiple" className="w-full">
-                    {userStories.map((story) => (
-                        <AccordionItem value={`story-${story.id}`} key={story.id}>
-                            <AccordionTrigger className="hover:no-underline">
-                                <div className="flex items-start gap-3 relative w-full">
-                                    <Ticket className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                                    <div className="flex-1 text-left">
-                                        <p className="font-medium">{story.title}</p>
-                                        <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                                            <Badge variant="secondary">{story.ticketId}</Badge>
-                                        </div>
-                                    </div>
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                                <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
-                                    <div>
-                                        <h5 className="font-semibold text-foreground">Features</h5>
-                                        <ul className="list-disc list-inside space-y-1 mt-1">
-                                            {story.features.map((feature, i) => (
-                                                <li key={i}>{feature}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
+              <Accordion type="multiple" className="w-full">
+                {userStories.map((story) => (
+                  <AccordionItem value={`story-${story.id}`} key={story.id}>
+                    <div className="flex items-center pr-4">
+                      <AccordionTrigger className="hover:no-underline flex-1">
+                        <div className="flex items-start gap-3 relative w-full">
+                          <Ticket className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 text-left">
+                            <p className="font-medium">{story.title}</p>
+                            <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
+                              <Badge variant="secondary">{story.ticketId}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+
+                      <AlertDialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => handleEditClick(story)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit Story</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                             <AlertDialogTrigger asChild>
+                              <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete Story</span>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                         <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the user story <strong>&quot;{story.title}&quot;</strong>.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteStory(story.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+
+                    <AccordionContent>
+                      <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
+                        <div>
+                          <h5 className="font-semibold text-foreground">Features</h5>
+                          <ul className="list-disc list-inside space-y-1 mt-1">
+                            {story.features.map((feature, i) => (
+                              <li key={i}>{feature}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             )}
           </CardContent>
         </Card>
+
+        {selectedStory && (
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit User Story</DialogTitle>
+                <DialogDescription>
+                  Update the details for your user story.
+                </DialogDescription>
+              </DialogHeader>
+              <EditUserStoryForm
+                story={selectedStory}
+                onUserStoryUpdated={handleUserStoryUpdated}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </main>
     </div>
   );

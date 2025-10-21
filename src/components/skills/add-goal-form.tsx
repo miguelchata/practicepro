@@ -48,20 +48,22 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
     defaultValues: {
       specific: '',
       measurable: '',
-      projectId: '',
-      userStoryId: '',
+      projectId: 'none',
+      userStoryId: 'none',
     },
   });
 
   const selectedProjectId = form.watch('projectId');
-  const { data: userStories } = useUserStories(selectedProjectId || null);
+  const { data: userStories } = useUserStories(selectedProjectId === 'none' ? null : selectedProjectId || null);
 
   useEffect(() => {
-    form.setValue('userStoryId', '');
+    form.setValue('userStoryId', 'none');
   }, [selectedProjectId, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const selectedStory = userStories.find(story => story.id === values.userStoryId);
+    const finalProjectId = values.projectId === 'none' ? undefined : values.projectId;
+    const finalUserStoryId = values.userStoryId === 'none' ? undefined : values.userStoryId;
+    const selectedStory = userStories.find(story => story.id === finalUserStoryId);
 
     const newGoal: Goal = {
         title: values.specific, // Use specific as title
@@ -69,8 +71,8 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
         measurable: values.measurable.split('\n').filter(m => m.trim() !== ''),
         deadline: values.deadline?.toISOString(),
         status: 'Not Started',
-        projectId: values.projectId,
-        userStoryId: values.userStoryId,
+        projectId: finalProjectId,
+        userStoryId: finalUserStoryId,
         userStoryTicketId: selectedStory?.ticketId,
     };
     onGoalAdded(newGoal);
@@ -94,7 +96,7 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {projects.map(project => (
                         <SelectItem key={project.id} value={project.id}>{project.title}</SelectItem>
                       ))}
@@ -110,13 +112,14 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Link to Ticket (Optional)</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || userStories.length === 0}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || selectedProjectId === 'none' || userStories.length === 0}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a ticket" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
                       {userStories.map(story => (
                         <SelectItem key={story.id} value={story.id}>
                             <div className="flex items-center gap-2">

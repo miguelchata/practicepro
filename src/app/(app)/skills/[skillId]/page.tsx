@@ -148,7 +148,12 @@ export default function SkillDetailPage() {
   };
   
   const handleOpenAddGoalDialog = () => {
-    setSelectedSubSkills([]);
+    // Auto-select the first sub-skill if available
+    if (skill.subSkills && skill.subSkills.length > 0) {
+      setSelectedSubSkills([skill.subSkills[0].name]);
+    } else {
+      setSelectedSubSkills([]);
+    }
     setIsAddGoalDialogOpen(true);
   };
 

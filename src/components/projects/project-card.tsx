@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import {
   MoreVertical,
   Calendar,
+  Trash2,
+  Edit,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -21,13 +23,29 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '../ui/dropdown-menu';
+import Link from 'next/link';
+import { useDeleteProject } from '@/firebase/firestore/use-update-project';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type ProjectCardProps = {
   project: Project;
 };
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const deleteProject = useDeleteProject();
+
   const getStatusVariant = (status: Project['status']) => {
     switch (status) {
       case 'Completed':
@@ -43,28 +61,56 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   const isOverdue = new Date(project.targetDate) < new Date() && project.status !== 'Completed';
 
+  const handleDelete = () => {
+    deleteProject(project.id);
+  };
+
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="font-headline text-xl">{project.title}</CardTitle>
+          <Link href={`/projects/${project.id}`} className="block">
+            <CardTitle className="font-headline text-xl hover:underline">{project.title}</CardTitle>
             <CardDescription className="line-clamp-2 mt-1">{project.description}</CardDescription>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit Project</DropdownMenuItem>
-              <DropdownMenuItem>View Details</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
-                Delete Project
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </Link>
+          <AlertDialog>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                 <DropdownMenuItem asChild>
+                  <Link href={`/projects/${project.id}/edit`}>
+                    <Edit />
+                    <span>Edit Project</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                    <Trash2 />
+                    <span>Delete Project</span>
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the <strong>{project.title}</strong> project and all its associated data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-4">
@@ -87,8 +133,10 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" className="w-full">
-          View Details
+        <Button variant="outline" className="w-full" asChild>
+          <Link href={`/projects/${project.id}`}>
+            View Details
+          </Link>
         </Button>
       </CardFooter>
     </Card>

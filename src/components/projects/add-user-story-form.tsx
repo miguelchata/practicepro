@@ -29,9 +29,10 @@ const userStorySchema = z.object({
 type AddUserStoryFormProps = {
     onUserStoryAdded: (userStory: Omit<UserStory, 'id'>) => Promise<void>;
     existingStoriesCount: number;
+    ticketPrefix: string;
 }
 
-export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount }: AddUserStoryFormProps) {
+export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount, ticketPrefix }: AddUserStoryFormProps) {
 
   const form = useForm<z.infer<typeof userStorySchema>>({
     resolver: zodResolver(userStorySchema),
@@ -45,8 +46,8 @@ export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount }: Add
   useEffect(() => {
     const nextId = existingStoriesCount + 1;
     const paddedId = String(nextId).padStart(3, '0');
-    form.setValue('ticketId', `FR-${paddedId}`);
-  }, [existingStoriesCount, form]);
+    form.setValue('ticketId', `${ticketPrefix}-${paddedId}`);
+  }, [existingStoriesCount, ticketPrefix, form]);
 
 
   const onSubmit = async (values: z.infer<typeof userStorySchema>) => {

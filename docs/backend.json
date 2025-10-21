@@ -48,6 +48,10 @@
           "type": "string",
           "enum": ["Not Started", "In Progress", "On Hold", "Completed"],
           "description": "The current status of the project."
+        },
+        "ticketPrefix": {
+          "type": "string",
+          "description": "A two-letter prefix for user story tickets in this project."
         }
       },
       "required": ["userId", "title", "startDate", "targetDate", "status"]

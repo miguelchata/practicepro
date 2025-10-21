@@ -197,6 +197,7 @@ export default function ProjectDetailPage() {
                   <AddUserStoryForm 
                     onUserStoryAdded={handleUserStoryAdded} 
                     existingStoriesCount={userStories.length} 
+                    ticketPrefix={project.ticketPrefix || ''}
                   />
                 </DialogContent>
               </Dialog>

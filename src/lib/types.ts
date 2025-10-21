@@ -58,4 +58,5 @@ export type Project = {
   targetDate: string;
   status: ProjectStatus;
   userStories?: UserStory[];
+  ticketPrefix?: string;
 };

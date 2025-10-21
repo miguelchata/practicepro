@@ -14,7 +14,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Skill } from '@/lib/types';
+import type { Skill, SubSkill } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { iconMap, iconNames } from '@/lib/icons';
+import { Target } from 'lucide-react';
 
 
 const formSchema = z.object({
@@ -23,11 +26,12 @@ const formSchema = z.object({
   }),
   category: z.string().min(2, { message: 'Category is required.' }),
   subSkills: z.string().optional(),
+  icon: z.string(),
 });
 
 type EditSkillFormProps = {
   skill: Skill;
-  onSkillUpdated: (updatedSkill: Pick<Skill, 'name' | 'category' | 'subSkills'>) => void;
+  onSkillUpdated: (updatedSkill: Partial<Omit<Skill, 'id' | 'userId'>>) => void;
 };
 
 export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
@@ -37,23 +41,27 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
       name: skill.name,
       category: skill.category,
       subSkills: skill.subSkills.map(s => s.name).join('\n'),
+      icon: skill.icon,
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const updatedSkill = {
+    const updatedSkillData = {
       name: values.name,
       category: values.category,
-      // This preserves existing goals for existing subskills
+      icon: values.icon,
       subSkills: values.subSkills
-        ? values.subSkills.split('\n').filter(s => s.trim() !== '').map(newSubSkillName => {
+        ? values.subSkills.split('\n').filter(s => s.trim() !== '').map((newSubSkillName): SubSkill => {
             const existingSubSkill = skill.subSkills.find(s => s.name === newSubSkillName);
             return existingSubSkill || { name: newSubSkillName, goals: [] };
         })
         : [],
     };
-    onSkillUpdated(updatedSkill);
+    onSkillUpdated(updatedSkillData);
   }
+
+  const selectedIconName = form.watch('icon');
+  const SelectedIcon = iconMap[selectedIconName] || Target;
 
   return (
     <Form {...form}>
@@ -71,6 +79,7 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
             </FormItem>
           )}
         />
+        <div className="grid grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="category"
@@ -84,6 +93,40 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
             </FormItem>
           )}
         />
+         <FormField
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Icon</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                     <div className="flex items-center gap-2">
+                        <SelectedIcon className="h-4 w-4" />
+                        <SelectValue />
+                    </div>
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {iconNames.map((iconName) => {
+                    const Icon = iconMap[iconName];
+                    return (
+                        <SelectItem key={iconName} value={iconName}>
+                           <div className="flex items-center gap-2">
+                                <Icon className="h-4 w-4" />
+                                <span>{iconName}</span>
+                            </div>
+                        </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        </div>
         <FormField
           control={form.control}
           name="subSkills"
@@ -92,7 +135,8 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
               <FormLabel>Sub-Skills</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="List your sub-skills, one per line.&#10;e.g., Fingerpicking"
+                  placeholder="List your sub-skills, one per line.
+e.g., Fingerpicking"
                   {...field}
                   rows={4}
                 />

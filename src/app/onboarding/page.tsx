@@ -18,11 +18,14 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/icons/logo';
-import { skills } from '@/lib/data';
 import Link from 'next/link';
+import { useSkills } from '@/firebase/firestore/use-collection';
+import { iconMap } from '@/lib/icons';
+import { Timer } from 'lucide-react';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { data: skills, loading: skillsLoading } = useSkills();
 
   const handleOnboardingSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -60,19 +63,22 @@ export default function OnboardingPage() {
                 <Label htmlFor="primary-skill">
                   What is your primary skill?
                 </Label>
-                <Select name="primary-skill" required>
+                <Select name="primary-skill" required disabled={skillsLoading}>
                   <SelectTrigger id="primary-skill">
-                    <SelectValue placeholder="Select a skill" />
+                    <SelectValue placeholder={skillsLoading ? "Loading skills..." : "Select a skill"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {skills.map((skill) => (
-                      <SelectItem key={skill.id} value={skill.id}>
-                        <div className="flex items-center gap-2">
-                          <skill.icon className="h-4 w-4" />
-                          <span>{skill.name}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {skills.map((skill) => {
+                      const Icon = iconMap[skill.icon] || Timer;
+                      return (
+                        <SelectItem key={skill.id} value={skill.id}>
+                            <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            <span>{skill.name}</span>
+                            </div>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>

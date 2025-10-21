@@ -23,6 +23,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { Skill } from '@/lib/types';
 import { useState } from 'react';
+import { iconMap, iconNames } from '@/lib/icons';
+import { Target } from 'lucide-react';
+
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -30,10 +33,11 @@ const formSchema = z.object({
   }),
   category: z.string().min(2, { message: 'Category is required.' }),
   subSkills: z.string().optional(),
+  icon: z.string(),
 });
 
 type AddSkillFormProps = {
-  onSkillAdded: (newSkill: Omit<Skill, 'id' | 'totalHours' | 'icon' | 'goals'>) => void;
+  onSkillAdded: (newSkill: Omit<Skill, 'id' | 'totalHours' | 'userId' | 'subSkills'> & { subSkills?: string }) => void;
   categories: string[];
 };
 
@@ -49,6 +53,7 @@ export function AddSkillForm({
       name: '',
       category: '',
       subSkills: '',
+      icon: 'Target',
     },
   });
 
@@ -56,14 +61,16 @@ export function AddSkillForm({
     const newSkill = {
       name: values.name,
       category: values.category,
-      subSkills: values.subSkills
-        ? values.subSkills.split('\n').filter((s) => s.trim() !== '').map((s) => ({ name: s, goals: [] }))
-        : [],
+      subSkills: values.subSkills,
+      icon: values.icon,
     };
     onSkillAdded(newSkill);
     form.reset();
     setShowNewCategory(false);
   }
+
+  const selectedIconName = form.watch('icon');
+  const SelectedIcon = iconMap[selectedIconName] || Target;
 
   return (
     <Form {...form}>
@@ -81,51 +88,86 @@ export function AddSkillForm({
             </FormItem>
           )}
         />
-        <FormField
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select 
+                  onValueChange={(value) => {
+                    if (value === 'new') {
+                      setShowNewCategory(true);
+                      field.onChange('');
+                    } else {
+                      setShowNewCategory(false);
+                      field.onChange(value);
+                    }
+                  }} 
+                  value={showNewCategory ? 'new' : field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="new">Create new category...</SelectItem>
+                  </SelectContent>
+                </Select>
+                {showNewCategory && (
+                  <FormControl>
+                    <Input
+                      placeholder="New category name"
+                      {...field}
+                      className="mt-2"
+                    />
+                  </FormControl>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
           control={form.control}
-          name="category"
+          name="icon"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
-              <Select 
-                onValueChange={(value) => {
-                  if (value === 'new') {
-                    setShowNewCategory(true);
-                    field.onChange('');
-                  } else {
-                    setShowNewCategory(false);
-                    field.onChange(value);
-                  }
-                }} 
-                value={showNewCategory ? 'new' : field.value}
-              >
+              <FormLabel>Icon</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <div className="flex items-center gap-2">
+                        <SelectedIcon className="h-4 w-4" />
+                        <SelectValue />
+                    </div>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="new">Create new category...</SelectItem>
+                  {iconNames.map((iconName) => {
+                    const Icon = iconMap[iconName];
+                    return (
+                        <SelectItem key={iconName} value={iconName}>
+                            <div className="flex items-center gap-2">
+                                <Icon className="h-4 w-4" />
+                                <span>{iconName}</span>
+                            </div>
+                        </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
-              {showNewCategory && (
-                <FormControl>
-                  <Input
-                    placeholder="New category name"
-                    {...field}
-                    className="mt-2"
-                  />
-                </FormControl>
-              )}
               <FormMessage />
             </FormItem>
           )}
         />
+        </div>
         <FormField
           control={form.control}
           name="subSkills"
@@ -134,7 +176,8 @@ export function AddSkillForm({
               <FormLabel>Sub-Skills</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="List your sub-skills, one per line.&#10;e.g., Fingerpicking"
+                  placeholder="List your sub-skills, one per line.
+e.g., Fingerpicking"
                   {...field}
                 />
               </FormControl>

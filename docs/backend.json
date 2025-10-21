@@ -90,6 +90,48 @@
         }
       },
       "required": ["lastIndex"]
+    },
+    "skill": {
+        "title": "Skill",
+        "description": "Represents a skill a user is practicing.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string", "description": "The ID of the user who owns this skill." },
+            "name": { "type": "string", "description": "The name of the skill." },
+            "icon": { "type": "string", "description": "The name of the lucide-react icon for the skill." },
+            "category": { "type": "string", "description": "The category the skill belongs to." },
+            "totalHours": { "type": "number", "description": "Total hours practiced for this skill." },
+            "subSkills": {
+                "type": "array",
+                "description": "A list of sub-skills.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": { "type": "string" },
+                        "goals": {
+                            "type": "array",
+                            "items": { "$ref": "#/entities/goal" }
+                        }
+                    },
+                    "required": ["name", "goals"]
+                }
+            }
+        },
+        "required": ["userId", "name", "icon", "category", "totalHours", "subSkills"]
+    },
+    "goal": {
+        "title": "Goal",
+        "description": "A specific goal within a sub-skill.",
+        "type": "object",
+        "properties": {
+            "title": { "type": "string" },
+            "specific": { "type": "string" },
+            "measurable": { "type": "array", "items": { "type": "string" } },
+            "deadline": { "type": "string", "format": "date-time" },
+            "status": { "type": "string", "enum": ["Not Started", "In Progress", "Completed"] },
+            "projectId": { "type": "string" }
+        },
+        "required": ["title", "specific", "measurable", "status"]
     }
   },
   "auth": {
@@ -107,6 +149,10 @@
     "/metadata/projectPrefixCounter": {
       "schema": { "$ref": "#/entities/projectPrefixCounter" },
       "description": "Stores the global counter for project prefixes."
+    },
+    "/skills/{skillId}": {
+      "schema": { "$ref": "#/entities/skill" },
+      "description": "Stores individual skill documents for users."
     }
   }
 }

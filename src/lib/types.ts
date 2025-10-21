@@ -33,11 +33,11 @@ export type SubSkill = {
 export type Skill = {
   id:string;
   name: string;
-  icon: LucideIcon;
+  icon: string; // Storing icon name as string for Firestore
   category: string;
   totalHours: number;
-  goals: []; // Kept for legacy data, new structure uses subSkills
   subSkills: SubSkill[];
+  userId: string;
 };
 
 export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';

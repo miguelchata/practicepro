@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import {
   Card,
@@ -10,8 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { skills as initialSkills, projects as initialProjects } from '@/lib/data';
-import type { Goal, Skill, SubSkill } from '@/lib/types';
+import type { Goal, Skill } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -23,6 +22,7 @@ import {
   Calendar,
   CheckCircle2,
   FolderKanban,
+  Trash2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -43,6 +43,21 @@ import {
 } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { useDoc, useProjects } from '@/firebase/firestore/use-collection';
+import { useUpdateSkill, useDeleteSkill } from '@/firebase/firestore/use-add-skill';
+import { Skeleton } from '@/components/ui/skeleton';
+import { iconMap } from '@/lib/icons';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 function formatDeadline(deadline: string | undefined) {
   if (!deadline) return '';
@@ -62,16 +77,37 @@ function formatDeadline(deadline: string | undefined) {
 
 export default function SkillDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { skillId } = params;
+  const { data: skill, loading } = useDoc<Skill>(`skills/${skillId}`);
+  const { data: projects } = useProjects();
+  const updateSkill = useUpdateSkill();
+  const deleteSkill = useDeleteSkill();
 
-  // In a real app, you'd fetch this from a database
-  const initialSkill = initialSkills.find((s) => s.id === skillId);
-  const [projects, setProjects] = useState(initialProjects);
-
-  const [skill, setSkill] = useState<Skill | undefined>(initialSkill);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddGoalDialogOpen, setIsAddGoalDialogOpen] = useState(false);
   const [selectedSubSkills, setSelectedSubSkills] = useState<string[]>([]);
+
+  if (loading) {
+      return (
+          <div className="flex min-h-screen w-full flex-col">
+              <Header title="Loading Skill..." />
+              <main className="flex-1 p-4 md:p-8">
+                  <Skeleton className="h-10 w-48 mb-6" />
+                  <div className="grid gap-6 md:grid-cols-3">
+                      <div className="md:col-span-1 space-y-6">
+                        <Skeleton className="h-40 w-full" />
+                        <Skeleton className="h-32 w-full" />
+                      </div>
+                      <div className="md:col-span-2 space-y-6">
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-64 w-full" />
+                      </div>
+                  </div>
+              </main>
+          </div>
+      )
+  }
 
   if (!skill) {
     return (
@@ -90,24 +126,21 @@ export default function SkillDetailPage() {
     );
   }
 
-  const handleSkillUpdated = (updatedSkillData: Pick<Skill, 'name' | 'category' | 'subSkills'>) => {
-    setSkill(prev => (prev ? { ...prev, ...updatedSkillData } : undefined));
+  const handleSkillUpdated = (updatedSkillData: Partial<Omit<Skill, 'id' | 'userId'>>) => {
+    updateSkill(skill.id, updatedSkillData);
     setIsEditDialogOpen(false);
   };
 
   const handleGoalAdded = (newGoal: Goal) => {
     if (selectedSubSkills.length === 0) return;
 
-    setSkill(prevSkill => {
-      if (!prevSkill) return undefined;
-      const newSubSkills = prevSkill.subSkills.map(sub => {
-        if (selectedSubSkills.includes(sub.name)) {
-          return { ...sub, goals: [...sub.goals, newGoal] };
-        }
-        return sub;
-      });
-      return { ...prevSkill, subSkills: newSubSkills };
+    const newSubSkills = skill.subSkills.map(sub => {
+      if (selectedSubSkills.includes(sub.name)) {
+        return { ...sub, goals: [...sub.goals, newGoal] };
+      }
+      return sub;
     });
+    updateSkill(skill.id, { subSkills: newSubSkills });
     setIsAddGoalDialogOpen(false);
     setSelectedSubSkills([]);
   };
@@ -125,9 +158,15 @@ export default function SkillDetailPage() {
     );
   };
 
+  const handleDeleteSkill = () => {
+    deleteSkill(skill.id).then(() => {
+        router.push('/skills');
+    });
+  }
+
   const allGoals = skill.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name})));
 
-  const { icon: Icon } = skill;
+  const Icon = iconMap[skill.icon] || Target;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -148,23 +187,47 @@ export default function SkillDetailPage() {
           <Badge variant="outline" className="ml-auto sm:ml-0">
             {skill.category}
           </Badge>
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Skill
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Skill</DialogTitle>
-                <DialogDescription>
-                  Update the details for your skill.
-                </DialogDescription>
-              </DialogHeader>
-              <EditSkillForm skill={skill} onSkillUpdated={handleSkillUpdated} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                </Button>
+                </DialogTrigger>
+                <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Skill</DialogTitle>
+                    <DialogDescription>
+                    Update the details for your skill.
+                    </DialogDescription>
+                </DialogHeader>
+                <EditSkillForm skill={skill} onSkillUpdated={handleSkillUpdated} />
+                </DialogContent>
+            </Dialog>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the <strong>{skill.name}</strong> skill and all its associated data. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteSkill} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
 
         {/* Main Content Grid */}
@@ -181,7 +244,7 @@ export default function SkillDetailPage() {
                 </p>
                 <Progress value={(skill.totalHours / 250) * 100} className="mt-2" />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {(skill.totalHours / 250) * 100}% towards mastery (250 hours)
+                  {Math.round((skill.totalHours / 250) * 100)}% towards mastery (250 hours)
                 </p>
               </CardContent>
             </Card>
@@ -225,7 +288,7 @@ export default function SkillDetailPage() {
                 </Dialog>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
-                {skill.subSkills.length > 0 ? (
+                {skill.subSkills && skill.subSkills.length > 0 ? (
                   skill.subSkills.map((sub, index) => (
                     <Badge key={index} variant="secondary" className="text-base py-1 px-3">
                       {sub.name}
@@ -324,7 +387,7 @@ export default function SkillDetailPage() {
                 Define a new goal and link it to one or more sub-skills.
               </DialogDescription>
             </DialogHeader>
-            {skill.subSkills.length > 0 && (
+            {skill.subSkills && skill.subSkills.length > 0 && (
               <div className="space-y-4 py-4">
                 <Label>Link to Sub-Skill(s)</Label>
                 <div className="space-y-2 rounded-md border p-4">

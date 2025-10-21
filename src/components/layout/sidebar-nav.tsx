@@ -36,6 +36,10 @@ export function SidebarNav() {
     if (href.startsWith('/projects')) {
       return pathname.startsWith(href);
     }
+     // Make 'Skills' active for sub-paths as well.
+    if (href.startsWith('/skills')) {
+      return pathname.startsWith(href);
+    }
     return pathname === href;
   };
 

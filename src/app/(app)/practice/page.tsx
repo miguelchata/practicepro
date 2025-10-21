@@ -21,14 +21,16 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
-import { skills } from '@/lib/data';
 import type { Skill } from '@/lib/types';
 import { Timer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSkills } from '@/firebase/firestore/use-collection';
+import { iconMap } from '@/lib/icons';
 
 export default function PracticePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: skills, loading: skillsLoading } = useSkills();
   const [selectedSkill, setSelectedSkill] = useState<Skill | undefined>(undefined);
   const [sessionType, setSessionType] = useState('pomodoro');
   const [intention, setIntention] = useState('');
@@ -98,19 +100,22 @@ export default function PracticePage() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="skill">Select Skill</Label>
-              <Select onValueChange={handleSkillChange} value={selectedSkill?.id}>
+              <Select onValueChange={handleSkillChange} value={selectedSkill?.id} disabled={skillsLoading}>
                 <SelectTrigger id="skill">
-                  <SelectValue placeholder="Choose a skill to practice" />
+                  <SelectValue placeholder={skillsLoading ? "Loading skills..." : "Choose a skill to practice"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {skills.map(skill => (
-                    <SelectItem key={skill.id} value={skill.id}>
-                      <div className="flex items-center gap-2">
-                        <skill.icon className="h-4 w-4" />
-                        <span>{skill.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {skills.map(skill => {
+                    const Icon = iconMap[skill.icon] || Timer;
+                    return (
+                      <SelectItem key={skill.id} value={skill.id}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          <span>{skill.name}</span>
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>

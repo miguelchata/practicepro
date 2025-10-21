@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { onSnapshot, doc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import type { Project } from '@/lib/types';
+import type { Project, Skill } from '@/lib/types';
 
 type DocData<T> = {
   loading: boolean;
@@ -53,4 +53,10 @@ export function useDoc<T extends DocumentData>(docRefPath: string | null): DocDa
 export function useProject(projectId: string | null): DocData<Project> {
   const docPath = projectId ? `projects/${projectId}` : null;
   return useDoc<Project>(docPath);
+}
+
+// Hook to get a single skill by ID
+export function useSkill(skillId: string | null): DocData<Skill> {
+    const docPath = skillId ? `skills/${skillId}` : null;
+    return useDoc<Skill>(docPath);
 }

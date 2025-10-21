@@ -1,8 +1,8 @@
-import type { Achievement, Project, Skill, Stat } from '@/lib/types';
+import type { Achievement, Project, Skill, Stat, Goal } from '@/lib/types';
 import {
   Code,
   Flame,
-  Goal,
+  Goal as GoalIcon,
   Guitar,
   Mic,
   Target,
@@ -13,7 +13,7 @@ export const stats: Stat[] = [
   {
     label: 'Hours Practiced',
     value: '128',
-    icon: Goal,
+    icon: GoalIcon,
   },
   {
     label: 'Sessions Logged',
@@ -81,83 +81,19 @@ export const aiTasks = [
   },
 ];
 
-export const skills: Skill[] = [
-  {
-    id: 'guitar',
-    name: 'Guitar',
-    icon: Guitar,
-    category: 'Music',
-    goals: [], // Legacy
-    subSkills: [
-      {
-        name: 'Fingerpicking',
-        goals: [
-          {
-            title: 'Learn "Landslide"',
-            specific:
-              'Learn Travis Picking pattern for "Landslide" by Fleetwood Mac.',
-            measurable: [
-              'Play the first verse smoothly at 80% of the original tempo.',
-            ],
-            deadline: new Date(
-              Date.now() + 14 * 24 * 60 * 60 * 1000
-            ).toISOString(),
-            status: 'Not Started',
-            projectId: 'album-one',
-          },
-        ],
-      },
-      { name: 'Music Theory', goals: [] },
-      { name: 'Improvisation', goals: [] },
-    ],
-    totalHours: 75,
-  },
-  {
-    id: 'public-speaking',
-    name: 'Public Speaking',
-    icon: Mic,
-    category: 'Communication',
-    goals: [], // Legacy
-    subSkills: [
-      { name: 'Storytelling', goals: [] },
-      { name: 'Body Language', goals: [] },
-      { name: 'Vocal Variety', goals: [] },
-    ],
-    totalHours: 32,
-  },
-  {
-    id: 'python',
-    name: 'Python Programming',
-    icon: Code,
-    category: 'Technology',
-    goals: [], // Legacy
-    subSkills: [
-      { name: 'Data Structures', goals: [] },
-      { name: 'Algorithms', goals: [] },
-      { name: 'Web Scraping', goals: [] },
-      { name: 'APIs', goals: [] },
-    ],
-    totalHours: 210,
-  },
-];
-
-export const projects: Project[] = [
+export const projects: Omit<Project, 'id' | 'userId' | 'userStories'>[] = [
     {
-        id: 'album-one',
         title: 'Acoustic Album',
         description: 'Write and record a 5-song acoustic EP.',
         startDate: new Date('2024-05-01').toISOString(),
         targetDate: new Date('2024-09-30').toISOString(),
         status: 'In Progress',
-        goals: [],
     },
     {
-        id: 'tech-talk-conf',
         title: 'Tech Conference Talk',
         description: 'Prepare and deliver a talk on reactive UI patterns.',
         startDate: new Date('2024-06-15').toISOString(),
         targetDate: new Date('2024-08-20').toISOString(),
         status: 'Not Started',
-        goals: [],
     }
 ];

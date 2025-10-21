@@ -44,6 +44,7 @@ export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Complet
 
 export type Project = {
   id: string;
+  userId: string;
   title: string;
   description: string;
   startDate: string;

@@ -31,7 +31,6 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import type { Project, ProjectStatus } from '@/lib/types';
 
 
@@ -44,11 +43,10 @@ const projectSchema = z.object({
 });
 
 type AddProjectFormProps = {
-    onProjectAdded: (project: Omit<Project, 'id' | 'goals'>) => void;
+    onProjectAdded: (project: Omit<Project, 'id' | 'goals' | 'userId'>) => Promise<void>;
 }
 
 export function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {
-  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
@@ -59,19 +57,14 @@ export function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof projectSchema>) => {
+  const onSubmit = async (values: z.infer<typeof projectSchema>) => {
     const newProject = {
         ...values,
         description: values.description || '',
         startDate: values.startDate.toISOString(),
         targetDate: values.targetDate.toISOString(),
     };
-    onProjectAdded(newProject);
-    
-    toast({
-      title: 'Project Created!',
-      description: `The "${values.title}" project has been successfully created.`,
-    });
+    await onProjectAdded(newProject);
     form.reset();
   };
 
@@ -216,9 +209,9 @@ export function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {
           )}
         />
         
-        <Button type="submit" size="lg" className="w-full">
+        <Button type="submit" size="lg" className="w-full" disabled={form.formState.isSubmitting}>
           <Save className="mr-2 h-5 w-5" />
-          Save Project
+          {form.formState.isSubmitting ? 'Saving...' : 'Save Project'}
         </Button>
       </form>
     </Form>

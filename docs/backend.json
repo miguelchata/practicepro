@@ -16,9 +16,50 @@
         }
       },
       "required": ["displayName", "email"]
+    },
+    "project": {
+      "title": "Project",
+      "description": "Represents a user's project.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this project."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the project."
+        },
+        "description": {
+          "type": "string",
+          "description": "The project's description."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The project's start date."
+        },
+        "targetDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The project's target completion date."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Not Started", "In Progress", "On Hold", "Completed"],
+          "description": "The current status of the project."
+        }
+      },
+      "required": ["userId", "title", "startDate", "targetDate", "status"]
     }
   },
   "auth": {
     "providers": ["email", "google"]
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/project" },
+      "description": "Stores individual project documents."
+    }
   }
 }

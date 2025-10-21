@@ -22,14 +22,18 @@ import { PlusCircle } from 'lucide-react';
 import { AddProjectForm } from '@/components/projects/add-project-form';
 import type { Project } from '@/lib/types';
 import { ProjectCard } from '@/components/projects/project-card';
-import { projects as initialProjects } from '@/lib/data';
+import { useProjects } from '@/firebase/firestore/use-collection';
+import { useAddProject } from '@/firebase/firestore/use-add-project';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const { data: projects, loading } = useProjects();
+  const addProject = useAddProject();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleProjectAdded = (newProject: Omit<Project, 'id' | 'goals'>) => {
-    setProjects(prev => [...prev, { ...newProject, id: `proj-${Date.now()}`, goals: [] }]);
+  const handleProjectAdded = async (newProject: Omit<Project, 'id' | 'goals' | 'userId'>) => {
+    await addProject(newProject);
     setIsDialogOpen(false);
   };
 
@@ -64,7 +68,25 @@ export default function ProjectsPage() {
           </Dialog>
         </div>
 
-        {projects.length === 0 ? (
+        {loading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full mt-2" />
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-10 w-full" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
           <Card className="flex flex-col items-center justify-center p-12 text-center">
             <CardHeader>
               <CardTitle>No Projects Yet</CardTitle>

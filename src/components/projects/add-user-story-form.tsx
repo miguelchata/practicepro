@@ -46,7 +46,9 @@ export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount, ticke
   useEffect(() => {
     const nextId = existingStoriesCount + 1;
     const paddedId = String(nextId).padStart(3, '0');
-    form.setValue('ticketId', `${ticketPrefix}-${paddedId}`);
+    if (ticketPrefix) {
+      form.setValue('ticketId', `${ticketPrefix}-${paddedId}`);
+    }
   }, [existingStoriesCount, ticketPrefix, form]);
 
 
@@ -69,7 +71,7 @@ export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount, ticke
             <FormItem>
               <FormLabel>Ticket ID</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., FR-001" {...field} readOnly />
+                <Input placeholder="e.g., FR-001" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

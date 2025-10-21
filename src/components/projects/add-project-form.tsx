@@ -31,7 +31,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Project, ProjectStatus } from '@/lib/types';
+import type { Project } from '@/lib/types';
 
 
 const projectSchema = z.object({
@@ -43,7 +43,7 @@ const projectSchema = z.object({
 });
 
 type AddProjectFormProps = {
-    onProjectAdded: (project: Omit<Project, 'id' | 'goals' | 'userId'>) => Promise<void>;
+    onProjectAdded: (project: Omit<Project, 'id' | 'userId'>) => Promise<void>;
 }
 
 export function AddProjectForm({ onProjectAdded }: AddProjectFormProps) {

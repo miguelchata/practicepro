@@ -33,7 +33,7 @@ export default function ProjectsPage() {
   const addProject = useAddProject();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleProjectAdded = async (newProject: Omit<Project, 'id' | 'goals' | 'userId'>) => {
+  const handleProjectAdded = async (newProject: Omit<Project, 'id' | 'userId'>) => {
     await addProject(newProject);
     setIsDialogOpen(false);
   };
@@ -48,7 +48,7 @@ export default function ProjectsPage() {
               Your Projects
             </h2>
             <p className="text-muted-foreground">
-              Group your goals into larger projects to track your progress.
+              Group your user stories into larger projects to track your progress.
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -92,7 +92,7 @@ export default function ProjectsPage() {
             <CardHeader>
               <CardTitle>No Projects Yet</CardTitle>
               <CardDescription>
-                Create a project to start organizing your goals.
+                Create a project to start organizing your user stories.
               </CardDescription>
             </CardHeader>
             <CardContent>

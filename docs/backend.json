@@ -51,6 +51,29 @@
         }
       },
       "required": ["userId", "title", "startDate", "targetDate", "status"]
+    },
+    "userStory": {
+      "title": "User Story",
+      "description": "Represents a user story or feature within a project.",
+      "type": "object",
+      "properties": {
+        "ticketId": {
+          "type": "string",
+          "description": "The unique identifier for the story (e.g., FR-001)."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the user story."
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of specific features or requirements for the story."
+        }
+      },
+      "required": ["ticketId", "title", "features"]
     }
   },
   "auth": {
@@ -60,6 +83,10 @@
     "/projects/{projectId}": {
       "schema": { "$ref": "#/entities/project" },
       "description": "Stores individual project documents."
+    },
+    "/projects/{projectId}/userStories/{userStoryId}": {
+      "schema": { "$ref": "#/entities/userStory" },
+      "description": "Stores user stories for a specific project."
     }
   }
 }

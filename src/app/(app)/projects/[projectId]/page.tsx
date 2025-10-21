@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useProject } from '@/firebase/firestore/use-doc';
 import { Header } from '@/components/layout/header';
@@ -21,16 +22,41 @@ import {
   PauseCircle,
   CheckCircle,
   Circle,
+  Ticket,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import type { ProjectStatus } from '@/lib/types';
+import type { ProjectStatus, UserStory } from '@/lib/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { AddUserStoryForm } from '@/components/projects/add-user-story-form';
+import { useAddUserStory } from '@/firebase/firestore/use-add-user-story';
+import { useUserStories } from '@/firebase/firestore/use-collection';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   const { data: project, loading } = useProject(projectId);
-  const router = useRouter();
+  const { data: userStories, loading: storiesLoading } = useUserStories(projectId);
+  const addUserStory = useAddUserStory();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleUserStoryAdded = async (newUserStory: Omit<UserStory, 'id'>) => {
+    await addUserStory(projectId, newUserStory);
+    setIsDialogOpen(false);
+  };
 
   if (loading) {
     return (
@@ -56,7 +82,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="flex min-h-screen w-full flex-col">
         <Header title="Project Not Found" />
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 md:gap-8 md:p-8">
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 md:gap-8 md:p-8">
           <p>The project you are looking for does not exist.</p>
           <Button asChild>
             <Link href="/projects">
@@ -150,20 +176,70 @@ export default function ProjectDetailPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Goals</CardTitle>
+                <CardTitle>User Stories</CardTitle>
                 <CardDescription>
-                  Goals associated with this project.
+                  Features and requirements for this project.
                 </CardDescription>
               </div>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add Goal
-              </Button>
+               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add User Story
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>New User Story</DialogTitle>
+                    <DialogDescription>
+                      Add a new user story to the project.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AddUserStoryForm onUserStoryAdded={handleUserStoryAdded} />
+                </DialogContent>
+              </Dialog>
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              No goals have been added to this project yet.
-            </p>
+            {storiesLoading ? (
+                <div className="space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                </div>
+            ) : userStories.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No user stories have been added to this project yet.
+              </p>
+            ) : (
+                 <Accordion type="multiple" className="w-full">
+                    {userStories.map((story) => (
+                        <AccordionItem value={`story-${story.id}`} key={story.id}>
+                            <AccordionTrigger className="hover:no-underline">
+                                <div className="flex items-start gap-3 relative w-full">
+                                    <Ticket className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1 text-left">
+                                        <p className="font-medium">{story.title}</p>
+                                        <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
+                                            <Badge variant="secondary">{story.ticketId}</Badge>
+                                        </div>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
+                                    <div>
+                                        <h5 className="font-semibold text-foreground">Features</h5>
+                                        <ul className="list-disc list-inside space-y-1 mt-1">
+                                            {story.features.map((feature, i) => (
+                                                <li key={i}>{feature}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            )}
           </CardContent>
         </Card>
       </main>

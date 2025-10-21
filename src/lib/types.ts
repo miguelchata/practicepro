@@ -42,6 +42,13 @@ export type Skill = {
 
 export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
 
+export type UserStory = {
+    id: string;
+    ticketId: string;
+    title: string;
+    features: string[];
+};
+
 export type Project = {
   id: string;
   userId: string;
@@ -50,5 +57,5 @@ export type Project = {
   startDate: string;
   targetDate: string;
   status: ProjectStatus;
-  goals: Goal[];
+  userStories?: UserStory[];
 };

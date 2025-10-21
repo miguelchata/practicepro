@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { onSnapshot, query, collection, where, type Query, type DocumentData, type Firestore } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
-import type { Project } from '@/lib/types';
+import type { Project, UserStory } from '@/lib/types';
 
 type CollectionData<T> = {
   loading: boolean;
@@ -55,4 +55,16 @@ export function useProjects(): CollectionData<Project> {
     ...projects,
     loading: userLoading || projects.loading,
   };
+}
+
+// Hook to get user stories for a project
+export function useUserStories(projectId: string | null): CollectionData<UserStory> {
+  const firestore = useFirestore();
+
+  const userStoriesQuery = useMemo(() => {
+    if (!firestore || !projectId) return null;
+    return query(collection(firestore, `projects/${projectId}/userStories`));
+  }, [firestore, projectId]);
+
+  return useCollection<UserStory>(userStoriesQuery);
 }

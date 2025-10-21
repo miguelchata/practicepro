@@ -78,6 +78,18 @@
         }
       },
       "required": ["ticketId", "title", "features"]
+    },
+    "projectPrefixCounter": {
+      "title": "Project Prefix Counter",
+      "description": "A global counter to ensure unique, sequential prefixes for projects.",
+      "type": "object",
+      "properties": {
+        "lastIndex": {
+          "type": "number",
+          "description": "The last used index for generating a project prefix."
+        }
+      },
+      "required": ["lastIndex"]
     }
   },
   "auth": {
@@ -91,6 +103,10 @@
     "/projects/{projectId}/userStories/{userStoryId}": {
       "schema": { "$ref": "#/entities/userStory" },
       "description": "Stores user stories for a specific project."
+    },
+    "/metadata/projectPrefixCounter": {
+      "schema": { "$ref": "#/entities/projectPrefixCounter" },
+      "description": "Stores the global counter for project prefixes."
     }
   }
 }

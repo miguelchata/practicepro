@@ -5,13 +5,22 @@ import { useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { UserStory } from '@/lib/types';
 
-function generatePrefix() {
+function numberToLetters(num: number): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let prefix = '';
-  for (let i = 0; i < 2; i++) {
-    prefix += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+  let letters = '';
+  let tempNum = num;
+
+  if (tempNum === 0) {
+    return 'AA';
   }
-  return prefix;
+
+  let firstCharIndex = Math.floor(tempNum / 26);
+  let secondCharIndex = tempNum % 26;
+
+  letters += alphabet[firstCharIndex];
+  letters += alphabet[secondCharIndex];
+  
+  return letters;
 }
 
 export function useAddUserStory() {
@@ -40,15 +49,26 @@ export function useAddUserStory() {
         let ticketPrefix = projectDoc.data().ticketPrefix;
 
         if (!ticketPrefix) {
-          // This is the first user story, generate and save a prefix.
-          // A more robust implementation would check for prefix uniqueness across all projects.
-          ticketPrefix = generatePrefix();
+          const metadataRef = doc(firestore, 'metadata', 'projectPrefixCounter');
+          const metadataDoc = await transaction.get(metadataRef);
+          let nextIndex = 0;
+          if (metadataDoc.exists()) {
+            nextIndex = metadataDoc.data().lastIndex + 1;
+          }
+
+          ticketPrefix = numberToLetters(nextIndex);
+          
           transaction.update(projectRef, { ticketPrefix });
+
+          if (metadataDoc.exists()) {
+            transaction.update(metadataRef, { lastIndex: nextIndex });
+          } else {
+            transaction.set(metadataRef, { lastIndex: nextIndex });
+          }
         }
         
         const userStoriesCollectionRef = collection(firestore, 'projects', projectId, 'userStories');
         
-        // The ticketId is now constructed on the client and passed in userStoryData
         transaction.set(doc(userStoriesCollectionRef), userStoryData);
       });
 

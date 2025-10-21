@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { onSnapshot, query, collection, where, type Query, type DocumentData, type Firestore } from 'firebase/firestore';
-import { useFirestore } from '../provider';
+import { useFirestore, useUser } from '@/firebase';
 import type { Project } from '@/lib/types';
 
 type CollectionData<T> = {

@@ -23,6 +23,8 @@ export type Goal = {
   deadline?: string; // Storing as ISO string
   status: GoalStatus;
   projectId?: string;
+  userStoryId?: string;
+  userStoryTicketId?: string;
 };
 
 export type SubSkill = {

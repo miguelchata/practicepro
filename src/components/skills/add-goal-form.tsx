@@ -14,13 +14,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Goal, Project } from '@/lib/types';
+import type { Goal, Project, UserStory } from '@/lib/types';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Ticket } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useUserStories } from '@/firebase/firestore/use-collection';
+import { useEffect } from 'react';
 
 const formSchema = z.object({
   specific: z.string().min(3, {
@@ -31,6 +33,7 @@ const formSchema = z.object({
   }),
   deadline: z.date().optional(),
   projectId: z.string().optional(),
+  userStoryId: z.string().optional(),
 });
 
 type AddGoalFormProps = {
@@ -46,16 +49,29 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
       specific: '',
       measurable: '',
       projectId: '',
+      userStoryId: '',
     },
   });
 
+  const selectedProjectId = form.watch('projectId');
+  const { data: userStories } = useUserStories(selectedProjectId || null);
+
+  useEffect(() => {
+    form.setValue('userStoryId', '');
+  }, [selectedProjectId, form]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
+    const selectedStory = userStories.find(story => story.id === values.userStoryId);
+
     const newGoal: Goal = {
-        ...values,
         title: values.specific, // Use specific as title
+        specific: values.specific,
         measurable: values.measurable.split('\n').filter(m => m.trim() !== ''),
         deadline: values.deadline?.toISOString(),
         status: 'Not Started',
+        projectId: values.projectId,
+        userStoryId: values.userStoryId,
+        userStoryTicketId: selectedStory?.ticketId,
     };
     onGoalAdded(newGoal);
     form.reset();
@@ -64,28 +80,58 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="projectId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Link to Project (Optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {projects.map(project => (
-                    <SelectItem key={project.id} value={project.id}>{project.title}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="projectId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Link to Project (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a project" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {projects.map(project => (
+                        <SelectItem key={project.id} value={project.id}>{project.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+            control={form.control}
+            name="userStoryId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Link to Ticket (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || userStories.length === 0}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a ticket" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {userStories.map(story => (
+                        <SelectItem key={story.id} value={story.id}>
+                            <div className="flex items-center gap-2">
+                                <Ticket className="h-4 w-4 text-muted-foreground" />
+                                <span>{story.ticketId}: {story.title}</span>
+                            </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         <FormField
           control={form.control}
           name="specific"

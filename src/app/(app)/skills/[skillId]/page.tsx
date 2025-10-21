@@ -22,7 +22,8 @@ import {
   Calendar,
   CheckCircle2,
   FolderKanban,
-  Trash2
+  Trash2,
+  Ticket,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -338,6 +339,12 @@ export default function SkillDetailPage() {
                                                       <span className="flex items-center gap-1.5">
                                                         <FolderKanban className="h-4 w-4" />
                                                         {project.title}
+                                                      </span>
+                                                    )}
+                                                    {goal.userStoryTicketId && (
+                                                      <span className="flex items-center gap-1.5">
+                                                          <Ticket className="h-4 w-4" />
+                                                          {goal.userStoryTicketId}
                                                       </span>
                                                     )}
                                                     <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>

@@ -43,7 +43,8 @@ import {
 } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { useDoc, useProjects } from '@/firebase/firestore/use-collection';
+import { useProjects } from '@/firebase/firestore/use-collection';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import { useUpdateSkill, useDeleteSkill } from '@/firebase/firestore/use-add-skill';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconMap } from '@/lib/icons';

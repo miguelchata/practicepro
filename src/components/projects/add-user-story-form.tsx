@@ -3,6 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,9 +28,10 @@ const userStorySchema = z.object({
 
 type AddUserStoryFormProps = {
     onUserStoryAdded: (userStory: Omit<UserStory, 'id'>) => Promise<void>;
+    existingStoriesCount: number;
 }
 
-export function AddUserStoryForm({ onUserStoryAdded }: AddUserStoryFormProps) {
+export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount }: AddUserStoryFormProps) {
 
   const form = useForm<z.infer<typeof userStorySchema>>({
     resolver: zodResolver(userStorySchema),
@@ -39,6 +41,13 @@ export function AddUserStoryForm({ onUserStoryAdded }: AddUserStoryFormProps) {
       features: '',
     },
   });
+  
+  useEffect(() => {
+    const nextId = existingStoriesCount + 1;
+    const paddedId = String(nextId).padStart(3, '0');
+    form.setValue('ticketId', `FR-${paddedId}`);
+  }, [existingStoriesCount, form]);
+
 
   const onSubmit = async (values: z.infer<typeof userStorySchema>) => {
     const newUserStory = {
@@ -59,7 +68,7 @@ export function AddUserStoryForm({ onUserStoryAdded }: AddUserStoryFormProps) {
             <FormItem>
               <FormLabel>Ticket ID</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., FR-001" {...field} />
+                <Input placeholder="e.g., FR-001" {...field} readOnly />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -194,7 +194,10 @@ export default function ProjectDetailPage() {
                       Add a new user story to the project.
                     </DialogDescription>
                   </DialogHeader>
-                  <AddUserStoryForm onUserStoryAdded={handleUserStoryAdded} />
+                  <AddUserStoryForm 
+                    onUserStoryAdded={handleUserStoryAdded} 
+                    existingStoriesCount={userStories.length} 
+                  />
                 </DialogContent>
               </Dialog>
             </div>

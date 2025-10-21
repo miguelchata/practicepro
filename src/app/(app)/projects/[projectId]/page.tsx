@@ -12,8 +12,19 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Edit, PlusCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit,
+  PlusCircle,
+  Calendar,
+  CircleDot,
+  PauseCircle,
+  CheckCircle,
+  Circle,
+} from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import type { ProjectStatus } from '@/lib/types';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -58,12 +69,40 @@ export default function ProjectDetailPage() {
     );
   }
 
+  const getStatusIcon = (status: ProjectStatus) => {
+    switch (status) {
+      case 'Completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'In Progress':
+        return <CircleDot className="h-4 w-4 text-blue-500" />;
+      case 'On Hold':
+        return <PauseCircle className="h-4 w-4 text-yellow-500" />;
+      case 'Not Started':
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
+      default:
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+  
+  const getStatusVariant = (status: ProjectStatus) => {
+    switch (status) {
+      case 'Completed':
+        return 'default';
+      case 'On Hold':
+        return 'secondary';
+      case 'In Progress':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title={project.title} />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center gap-4">
-           <Button variant="outline" size="icon" asChild>
+          <Button variant="outline" size="icon" asChild>
             <Link href="/projects">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -71,6 +110,9 @@ export default function ProjectDetailPage() {
           <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
             {project.title}
           </h1>
+          <Badge variant={getStatusVariant(project.status)} className="ml-auto">
+            {project.status}
+          </Badge>
           <Button asChild>
             <Link href={`/projects/${project.id}/edit`}>
               <Edit className="mr-2 h-4 w-4" />
@@ -83,24 +125,45 @@ export default function ProjectDetailPage() {
             <CardTitle>Project Details</CardTitle>
             <CardDescription>{project.description}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p>Status: {project.status}</p>
-            <p>Start Date: {new Date(project.startDate).toLocaleDateString()}</p>
-            <p>Target Date: {new Date(project.targetDate).toLocaleDateString()}</p>
+          <CardContent className="space-y-3 text-sm">
+             <div className="flex items-center gap-2 text-muted-foreground">
+                {getStatusIcon(project.status)}
+                <span>Status: <strong>{project.status}</strong></span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>
+                Start Date:{' '}
+                <strong>{new Date(project.startDate).toLocaleDateString()}</strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>
+                Target Date:{' '}
+                <strong>{new Date(project.targetDate).toLocaleDateString()}</strong>
+              </span>
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-             <div className="flex items-center justify-between">
-                <div>
-                    <CardTitle>Goals</CardTitle>
-                    <CardDescription>Goals associated with this project.</CardDescription>
-                </div>
-                <Button><PlusCircle className="mr-2 h-4 w-4" /> Add Goal</Button>
-             </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Goals</CardTitle>
+                <CardDescription>
+                  Goals associated with this project.
+                </CardDescription>
+              </div>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Goal
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <p className='text-muted-foreground'>No goals have been added to this project yet.</p>
+            <p className="text-muted-foreground">
+              No goals have been added to this project yet.
+            </p>
           </CardContent>
         </Card>
       </main>

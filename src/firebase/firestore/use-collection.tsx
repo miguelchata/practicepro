@@ -69,6 +69,36 @@ export function useUserStories(projectId: string | null): CollectionData<UserSto
   return useCollection<UserStory>(userStoriesQuery);
 }
 
+
+// Hook to get user stories for a list of projects
+export function useUserStoriesForProjects(projectIds: string[] | null): Record<string, UserStory[]> {
+  const firestore = useFirestore();
+  const [storiesByProject, setStoriesByProject] = useState<Record<string, UserStory[]>>({});
+
+  useEffect(() => {
+    if (!firestore || !projectIds || projectIds.length === 0) {
+      setStoriesByProject({});
+      return;
+    }
+
+    const unsubscribes = projectIds.map(projectId => {
+      const storiesQuery = query(collection(firestore, `projects/${projectId}/userStories`));
+      return onSnapshot(storiesQuery, (snapshot) => {
+        const stories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserStory[];
+        setStoriesByProject(prev => ({
+          ...prev,
+          [projectId]: stories,
+        }));
+      });
+    });
+
+    return () => unsubscribes.forEach(unsub => unsub());
+  }, [firestore, projectIds]);
+
+  return storiesByProject;
+}
+
+
 // Hook to get skills for the current user
 export function useSkills(): CollectionData<Skill> {
   const firestore = useFirestore();
@@ -86,3 +116,5 @@ export function useSkills(): CollectionData<Skill> {
     loading: userLoading || skills.loading,
   };
 }
+
+    

@@ -107,6 +107,34 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
                     </FormItem>
                 )}
               />
+              <FormField
+              control={form.control}
+              name="userStoryId"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Link to Ticket (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || selectedProjectId === 'none' || userStories.length === 0 || storiesLoading}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder={storiesLoading ? "Loading tickets..." : "Select a ticket"} />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {userStories.map(story => (
+                          <SelectItem key={story.id} value={story.id}>
+                              <div className="flex items-center gap-2">
+                                  <Ticket className="h-4 w-4 text-muted-foreground" />
+                                  <span>{story.ticketId}: {story.title}</span>
+                              </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+            />
             <Button onClick={() => setStep(2)} className="w-full">
                 Next
             </Button>
@@ -137,34 +165,7 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
                     </CardContent>
                 </Card>
             )}
-            <FormField
-              control={form.control}
-              name="userStoryId"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Link to Ticket (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || selectedProjectId === 'none' || userStories.length === 0 || storiesLoading}>
-                      <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder={storiesLoading ? "Loading tickets..." : "Select a ticket"} />
-                      </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {userStories.map(story => (
-                          <SelectItem key={story.id} value={story.id}>
-                              <div className="flex items-center gap-2">
-                                  <Ticket className="h-4 w-4 text-muted-foreground" />
-                                  <span>{story.ticketId}: {story.title}</span>
-                              </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
-              )}
-            />
+            
             <FormField
               control={form.control}
               name="specific"
@@ -186,10 +187,10 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
               name="measurable"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Measurable Outcomes</FormLabel>
+                  <FormLabel>Measurable Outcomes (one per line)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="How will you measure progress? List each outcome on a new line."
+                      placeholder="How will you measure progress? e.g., Play the song at full speed without mistakes"
                       {...field}
                     />
                   </FormControl>

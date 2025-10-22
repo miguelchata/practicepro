@@ -52,6 +52,7 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
   });
 
   const selectedProjectId = form.watch('projectId');
+  const selectedUserStoryId = form.watch('userStoryId');
   const { data: userStories, loading: storiesLoading } = useUserStories(selectedProjectId === 'none' ? null : selectedProjectId || null);
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
   }
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const selectedStory = userStories.find(s => s.id === selectedUserStoryId);
 
   return (
     <Form {...form}>
@@ -141,28 +143,33 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
           </div>
         ) : (
           <>
-            {selectedProject && (
+            {selectedStory ? (
                 <Card className="bg-muted/50">
                     <CardHeader>
-                        <CardTitle className="text-lg">{selectedProject.title}</CardTitle>
-                        <CardDescription>Features for this project:</CardDescription>
+                        <CardTitle className="text-lg">{selectedStory.ticketId}: {selectedStory.title}</CardTitle>
+                        <CardDescription>Features for this ticket:</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {storiesLoading ? (
-                            <p>Loading features...</p>
-                        ) : userStories.length > 0 ? (
+                        {selectedStory.features.length > 0 ? (
                             <ul className="space-y-2 text-sm text-muted-foreground">
-                                {userStories.map(story => (
-                                    <li key={story.id} className="flex items-start gap-2">
+                                {selectedStory.features.map((feature, index) => (
+                                    <li key={index} className="flex items-start gap-2">
                                         <List className="h-4 w-4 mt-0.5 flex-shrink-0"/>
-                                        <span><strong>{story.ticketId}:</strong> {story.title}</span>
+                                        <span>{feature}</span>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-sm text-muted-foreground">No features defined for this project yet.</p>
+                            <p className="text-sm text-muted-foreground">No features defined for this ticket yet.</p>
                         )}
                     </CardContent>
+                </Card>
+            ) : selectedProject && (
+                 <Card className="bg-muted/50">
+                    <CardHeader>
+                        <CardTitle className="text-lg">{selectedProject.title}</CardTitle>
+                        <CardDescription>This goal is linked to the project, but not a specific ticket.</CardDescription>
+                    </CardHeader>
                 </Card>
             )}
             

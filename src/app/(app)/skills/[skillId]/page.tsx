@@ -400,7 +400,7 @@ export default function SkillDetailPage() {
                 Define a new goal and link it to one or more sub-skills.
               </DialogDescription>
             </DialogHeader>
-            {skill.subSkills && skill.subSkills.length > 0 && (
+            {skill.subSkills && skill.subSkills.length > 0 && !isAddGoalDialogOpen && (
               <div className="space-y-4 py-4">
                 <Label>Link to Sub-Skill(s)</Label>
                 <div className="space-y-2 rounded-md border p-4">
@@ -419,7 +419,7 @@ export default function SkillDetailPage() {
                 </div>
               </div>
             )}
-            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0} projects={projects} />
+            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0 && isAddGoalDialogOpen} projects={projects} />
           </DialogContent>
         </Dialog>
       </main>

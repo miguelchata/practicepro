@@ -340,18 +340,6 @@ export default function SkillDetailPage() {
                                                         Due {formatDeadline(goal.deadline)}
                                                     </span>
                                                     )}
-                                                    {project && (
-                                                      <span className="flex items-center gap-1.5">
-                                                        <FolderKanban className="h-4 w-4" />
-                                                        {project.title}
-                                                      </span>
-                                                    )}
-                                                    {goal.userStoryTicketId && (
-                                                      <span className="flex items-center gap-1.5">
-                                                          <Ticket className="h-4 w-4" />
-                                                          {goal.userStoryTicketId}
-                                                      </span>
-                                                    )}
                                                     <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
                                                 </div>
                                             </div>
@@ -359,6 +347,25 @@ export default function SkillDetailPage() {
                                     </AccordionTrigger>
                                     <AccordionContent>
                                         <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
+                                            {(project || goal.userStoryTicketId) && (
+                                              <div className="space-y-2">
+                                                {project && (
+                                                  <div className="flex items-center gap-2">
+                                                    <FolderKanban className="h-4 w-4 text-foreground" />
+                                                    <span className="text-foreground font-semibold">Project:</span>
+                                                    <span>{project.title}</span>
+                                                  </div>
+                                                )}
+                                                {goal.userStoryTicketId && (
+                                                  <div className="flex items-center gap-2">
+                                                    <Ticket className="h-4 w-4 text-foreground" />
+                                                     <span className="text-foreground font-semibold">Ticket:</span>
+                                                    <span>{goal.userStoryTicketId}</span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+
                                             <div>
                                                 <h5 className="font-semibold text-foreground">Specific</h5>
                                                 <p>{goal.specific}</p>
@@ -400,7 +407,7 @@ export default function SkillDetailPage() {
                 Define a new goal and link it to one or more sub-skills.
               </DialogDescription>
             </DialogHeader>
-            {skill.subSkills && skill.subSkills.length > 0 && !isAddGoalDialogOpen && (
+            {skill.subSkills && skill.subSkills.length > 0 && (
               <div className="space-y-4 py-4">
                 <Label>Link to Sub-Skill(s)</Label>
                 <div className="space-y-2 rounded-md border p-4">
@@ -419,10 +426,9 @@ export default function SkillDetailPage() {
                 </div>
               </div>
             )}
-            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0 && isAddGoalDialogOpen} projects={projects} />
+            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0} projects={projects} />
           </DialogContent>
         </Dialog>
       </main>
     </div>
   );
-}

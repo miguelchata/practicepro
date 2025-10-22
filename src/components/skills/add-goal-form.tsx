@@ -79,9 +79,11 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
-  if (step === 1) {
-    return (
-        <div className="space-y-4">
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {step === 1 ? (
+          <div className="space-y-4">
              <FormField
                 control={form.control}
                 name="projectId"
@@ -104,109 +106,107 @@ export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProp
                     <FormMessage />
                     </FormItem>
                 )}
-                />
+              />
             <Button onClick={() => setStep(2)} className="w-full">
                 Next
             </Button>
-        </div>
-    )
-  }
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {selectedProject && (
-            <Card className="bg-muted/50">
-                <CardHeader>
-                    <CardTitle className="text-lg">{selectedProject.title}</CardTitle>
-                    <CardDescription>Features for this project:</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {storiesLoading ? (
-                        <p>Loading features...</p>
-                    ) : userStories.length > 0 ? (
-                        <ul className="space-y-2 text-sm text-muted-foreground">
-                            {userStories.map(story => (
-                                <li key={story.id} className="flex items-start gap-2">
-                                    <List className="h-4 w-4 mt-0.5 flex-shrink-0"/>
-                                    <span><strong>{story.ticketId}:</strong> {story.title}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">No features defined for this project yet.</p>
-                    )}
-                </CardContent>
-            </Card>
+          </div>
+        ) : (
+          <>
+            {selectedProject && (
+                <Card className="bg-muted/50">
+                    <CardHeader>
+                        <CardTitle className="text-lg">{selectedProject.title}</CardTitle>
+                        <CardDescription>Features for this project:</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {storiesLoading ? (
+                            <p>Loading features...</p>
+                        ) : userStories.length > 0 ? (
+                            <ul className="space-y-2 text-sm text-muted-foreground">
+                                {userStories.map(story => (
+                                    <li key={story.id} className="flex items-start gap-2">
+                                        <List className="h-4 w-4 mt-0.5 flex-shrink-0"/>
+                                        <span><strong>{story.ticketId}:</strong> {story.title}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No features defined for this project yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+            <FormField
+              control={form.control}
+              name="userStoryId"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Link to Ticket (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || selectedProjectId === 'none' || userStories.length === 0 || storiesLoading}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder={storiesLoading ? "Loading tickets..." : "Select a ticket"} />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {userStories.map(story => (
+                          <SelectItem key={story.id} value={story.id}>
+                              <div className="flex items-center gap-2">
+                                  <Ticket className="h-4 w-4 text-muted-foreground" />
+                                  <span>{story.ticketId}: {story.title}</span>
+                              </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="specific"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Goal</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="What is your specific goal? e.g., 'Learn Travis Picking for Landslide'"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="measurable"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Measurable Outcomes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="How will you measure progress? List each outcome on a new line."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-between gap-2">
+                <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                    Back
+                </Button>
+                <Button type="submit" className="flex-grow" disabled={disabled}>
+                    Add Goal
+                </Button>
+            </div>
+          </>
         )}
-        <FormField
-        control={form.control}
-        name="userStoryId"
-        render={({ field }) => (
-            <FormItem>
-            <FormLabel>Link to Ticket (Optional)</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || selectedProjectId === 'none' || userStories.length === 0 || storiesLoading}>
-                <FormControl>
-                <SelectTrigger>
-                    <SelectValue placeholder={storiesLoading ? "Loading tickets..." : "Select a ticket"} />
-                </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {userStories.map(story => (
-                    <SelectItem key={story.id} value={story.id}>
-                        <div className="flex items-center gap-2">
-                            <Ticket className="h-4 w-4 text-muted-foreground" />
-                            <span>{story.ticketId}: {story.title}</span>
-                        </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-            </Select>
-            <FormMessage />
-            </FormItem>
-        )}
-        />
-        <FormField
-          control={form.control}
-          name="specific"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Goal</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="What is your specific goal? e.g., 'Learn Travis Picking for Landslide'"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-         <FormField
-          control={form.control}
-          name="measurable"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Measurable Outcomes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="How will you measure progress? List each outcome on a new line."
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex justify-between gap-2">
-            <Button type="button" variant="outline" onClick={() => setStep(1)}>
-                Back
-            </Button>
-            <Button type="submit" className="flex-grow" disabled={disabled}>
-                Add Goal
-            </Button>
-        </div>
       </form>
     </Form>
   );

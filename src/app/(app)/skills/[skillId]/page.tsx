@@ -106,6 +106,42 @@ export default function SkillDetailPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddGoalDialogOpen, setIsAddGoalDialogOpen] = useState(false);
   const [selectedSubSkills, setSelectedSubSkills] = useState<string[]>([]);
+  
+  const allGoals = useMemo(() => {
+    return skill?.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name}))) || [];
+  }, [skill]);
+
+  const groupedGoals = useMemo(() => {
+    return allGoals.reduce((acc, goal) => {
+        const projectId = goal.projectId || 'personal';
+
+        if (!acc[projectId]) {
+            acc[projectId] = {
+                project: projects.find(p => p.id === projectId) || null,
+                tickets: {},
+                projectOnlyGoals: []
+            };
+        }
+
+        if (goal.userStoryTicketId && goal.userStoryId) {
+            if (!acc[projectId].tickets[goal.userStoryTicketId]) {
+                const stories = userStoriesByProject[projectId] || [];
+                acc[projectId].tickets[goal.userStoryTicketId] = {
+                    ticket: stories.find(s => s.id === goal.userStoryId) || null,
+                    goals: []
+                };
+            }
+            acc[projectId].tickets[goal.userStoryTicketId].goals.push(goal);
+        } else if (goal.projectId) {
+            acc[projectId].projectOnlyGoals.push(goal);
+        } else {
+             acc[projectId].projectOnlyGoals.push(goal);
+        }
+
+        return acc;
+    }, {} as GroupedGoals);
+  }, [allGoals, projects, userStoriesByProject]);
+
 
   if (loading) {
       return (
@@ -186,39 +222,6 @@ export default function SkillDetailPage() {
         router.push('/skills');
     });
   }
-
-  const allGoals = skill.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name})));
-  
-  const groupedGoals = useMemo(() => {
-    return allGoals.reduce((acc, goal) => {
-        const projectId = goal.projectId || 'personal';
-
-        if (!acc[projectId]) {
-            acc[projectId] = {
-                project: projects.find(p => p.id === projectId) || null,
-                tickets: {},
-                projectOnlyGoals: []
-            };
-        }
-
-        if (goal.userStoryTicketId && goal.userStoryId) {
-            if (!acc[projectId].tickets[goal.userStoryTicketId]) {
-                const stories = userStoriesByProject[projectId] || [];
-                acc[projectId].tickets[goal.userStoryTicketId] = {
-                    ticket: stories.find(s => s.id === goal.userStoryId) || null,
-                    goals: []
-                };
-            }
-            acc[projectId].tickets[goal.userStoryTicketId].goals.push(goal);
-        } else if (goal.projectId) {
-            acc[projectId].projectOnlyGoals.push(goal);
-        } else {
-             acc[projectId].projectOnlyGoals.push(goal);
-        }
-
-        return acc;
-    }, {} as GroupedGoals);
-  }, [allGoals, projects, userStoriesByProject]);
 
   const Icon = iconMap[skill.icon] || Target;
 
@@ -489,5 +492,7 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
         </div>
     </div>
 );
+
+    
 
     

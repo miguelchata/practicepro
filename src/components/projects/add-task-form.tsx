@@ -27,6 +27,7 @@ import {
 } from '../ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { Label } from '../ui/label';
 
 const taskSchema = z.object({
   taskId: z.string().min(1, 'Task ID is required.'),

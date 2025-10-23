@@ -32,13 +32,13 @@ import { useAddTasks } from '@/firebase/firestore/use-update-user-story';
 
 const taskSchema = z.object({
   taskId: z.string().min(1, 'Task ID is required.'),
-  type: z.enum(['Frontend', 'Backend', 'Test', 'DevOps', 'Documentation', 'Bug']),
+  type: z.enum(['Frontend', 'Backend', 'Test', 'DevOps', 'Documentation', 'Bug', 'Integration']),
   task: z.string().min(3, 'Task description must be at least 3 characters long.'),
 });
 
 const jsonTaskSchema = z.object({
   taskId: z.string(),
-  type: z.enum(['Frontend', 'Backend', 'Test', 'DevOps', 'Documentation', 'Bug']),
+  type: z.enum(['Frontend', 'Backend', 'Test', 'DevOps', 'Documentation', 'Bug', 'Integration']),
   task: z.string(),
 });
 
@@ -140,6 +140,7 @@ export function AddTaskForm({ onTaskAdded, onTasksAdded, userStoryTicketId, exis
                             <SelectItem value="DevOps">DevOps</SelectItem>
                             <SelectItem value="Documentation">Documentation</SelectItem>
                             <SelectItem value="Bug">Bug</SelectItem>
+                            <SelectItem value="Integration">Integration</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />

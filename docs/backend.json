@@ -90,7 +90,7 @@
         },
         "type": {
           "type": "string",
-          "enum": ["Frontend", "Backend", "Test", "DevOps", "Documentation", "Bug"],
+          "enum": ["Frontend", "Backend", "Test", "DevOps", "Documentation", "Bug", "Integration"],
           "description": "The category of the task."
         },
         "task": {

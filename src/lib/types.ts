@@ -43,7 +43,7 @@ export type Skill = {
 
 export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
 
-export type TaskType = 'Frontend' | 'Backend' | 'Test' | 'DevOps' | 'Documentation' | 'Bug';
+export type TaskType = 'Frontend' | 'Backend' | 'Test' | 'DevOps' | 'Documentation' | 'Bug' | 'Integration';
 export type TaskStatus = 'To Do' | 'In Progress' | 'Done';
 
 export type Task = {

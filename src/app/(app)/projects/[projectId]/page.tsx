@@ -297,8 +297,8 @@ export default function ProjectDetailPage() {
                         <div className="flex items-start gap-3 relative w-full">
                           <Ticket className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                           <div className="flex-1 text-left">
-                            <p className="font-medium">{story.title}</p>
-                            <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{story.title}</p>
                               <Badge variant="secondary">{story.ticketId}</Badge>
                             </div>
                           </div>

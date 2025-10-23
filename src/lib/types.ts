@@ -20,7 +20,6 @@ export type Goal = {
   title: string;
   specific: string;
   measurable: string[];
-  deadline?: string; // Storing as ISO string
   status: GoalStatus;
   projectId?: string;
   userStoryId?: string;
@@ -44,11 +43,23 @@ export type Skill = {
 
 export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
 
+export type TaskType = 'Frontend' | 'Backend' | 'Test' | 'DevOps' | 'Documentation' | 'Bug';
+export type TaskStatus = 'To Do' | 'In Progress' | 'Done';
+
+export type Task = {
+    id: string;
+    taskId: string;
+    type: TaskType;
+    task: string;
+    status: TaskStatus;
+};
+
 export type UserStory = {
     id: string;
     ticketId: string;
     title: string;
     features: string[];
+    tasks?: Task[];
 };
 
 export type Project = {

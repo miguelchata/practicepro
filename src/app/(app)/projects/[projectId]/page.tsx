@@ -25,10 +25,12 @@ import {
   Ticket,
   MoreVertical,
   Trash2,
+  ListPlus,
+  List,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import type { ProjectStatus, UserStory } from '@/lib/types';
+import type { ProjectStatus, UserStory, Task } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -51,10 +53,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAddUserStory } from '@/firebase/firestore/use-add-user-story';
-import { useUserStories } from '@/firebase/firestore/use-collection';
+import { useUserStories, useTasks } from '@/firebase/firestore/use-collection';
 import {
   useUpdateUserStory,
   useDeleteUserStory,
+  useAddTask,
 } from '@/firebase/firestore/use-update-user-story';
 import {
   Accordion,
@@ -69,6 +72,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { AddTaskForm } from '@/components/projects/add-task-form';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -78,29 +82,43 @@ export default function ProjectDetailPage() {
   const addUserStory = useAddUserStory();
   const updateUserStory = useUpdateUserStory();
   const deleteUserStory = useDeleteUserStory();
+  const addTask = useAddTask();
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = useState(false);
+  const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = useState(false);
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const [selectedStory, setSelectedStory] = useState<UserStory | null>(null);
 
   const handleUserStoryAdded = async (newUserStory: Omit<UserStory, 'id'>) => {
     await addUserStory(projectId, newUserStory);
-    setIsAddDialogOpen(false);
+    setIsAddStoryDialogOpen(false);
   };
   
   const handleEditClick = (story: UserStory) => {
     setSelectedStory(story);
-    setIsEditDialogOpen(true);
+    setIsEditStoryDialogOpen(true);
   };
   
   const handleUserStoryUpdated = async (storyId: string, updatedData: Partial<UserStory>) => {
     await updateUserStory(projectId, storyId, updatedData);
-    setIsEditDialogOpen(false);
+    setIsEditStoryDialogOpen(false);
     setSelectedStory(null);
   };
 
   const handleDeleteStory = (storyId: string) => {
     deleteUserStory(projectId, storyId);
+  };
+
+  const handleAddTaskClick = (story: UserStory) => {
+    setSelectedStory(story);
+    setIsAddTaskDialogOpen(true);
+  };
+
+  const handleTaskAdded = async (newTask: Omit<Task, 'id' | 'status'>) => {
+    if (selectedStory) {
+      await addTask(projectId, selectedStory.id, newTask);
+    }
+    setIsAddTaskDialogOpen(false);
   };
 
   if (loading) {
@@ -228,7 +246,7 @@ export default function ProjectDetailPage() {
                   Features and requirements for this project.
                 </CardDescription>
               </div>
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <Dialog open={isAddStoryDialogOpen} onOpenChange={setIsAddStoryDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add User Story
@@ -289,6 +307,10 @@ export default function ProjectDetailPage() {
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Edit Story</span>
                             </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleAddTaskClick(story)}>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                <span>Add Task</span>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                              <AlertDialogTrigger asChild>
                               <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
@@ -325,6 +347,7 @@ export default function ProjectDetailPage() {
                             ))}
                           </ul>
                         </div>
+                        <TasksList projectId={projectId} storyId={story.id} />
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -335,7 +358,7 @@ export default function ProjectDetailPage() {
         </Card>
 
         {selectedStory && (
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Edit User Story</DialogTitle>
@@ -350,7 +373,59 @@ export default function ProjectDetailPage() {
             </DialogContent>
           </Dialog>
         )}
+
+        {selectedStory && (
+          <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Add New Task</DialogTitle>
+                <DialogDescription>
+                  Add a task for user story: <strong>{selectedStory.ticketId}</strong>
+                </DialogDescription>
+              </DialogHeader>
+              <AddTaskForm
+                onTaskAdded={handleTaskAdded}
+                userStoryTicketId={selectedStory.ticketId}
+                existingTasksCount={selectedStory.tasks?.length || 0}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </main>
+    </div>
+  );
+}
+
+
+function TasksList({ projectId, storyId }: { projectId: string; storyId: string }) {
+  const { data: tasks, loading, error } = useTasks(projectId, storyId);
+
+  if (loading) {
+    return <Skeleton className="h-16 w-full" />;
+  }
+
+  if (error) {
+    return <p className="text-destructive">Error loading tasks.</p>;
+  }
+
+  return (
+    <div>
+      <h5 className="font-semibold text-foreground mt-4">Tasks</h5>
+      {tasks.length === 0 ? (
+        <p className="text-sm text-muted-foreground mt-1">No tasks for this story yet.</p>
+      ) : (
+        <ul className="space-y-2 mt-1">
+          {tasks.map((task) => (
+            <li key={task.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50 border">
+              <List className="h-4 w-4" />
+              <span className="font-mono text-xs">{task.taskId}</span>
+              <Badge variant="secondary">{task.type}</Badge>
+              <span className="flex-1 text-sm">{task.task}</span>
+              <Badge variant={task.status === 'Done' ? 'default' : 'outline'}>{task.status}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

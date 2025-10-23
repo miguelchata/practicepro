@@ -79,6 +79,32 @@
       },
       "required": ["ticketId", "title", "features"]
     },
+    "task": {
+      "title": "Task",
+      "description": "Represents a single development task within a user story.",
+      "type": "object",
+      "properties": {
+        "taskId": {
+          "type": "string",
+          "description": "The unique identifier for the task (e.g., TASK-001)."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Frontend", "Backend", "Test", "DevOps", "Documentation", "Bug"],
+          "description": "The category of the task."
+        },
+        "task": {
+          "type": "string",
+          "description": "A description of the task."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["To Do", "In Progress", "Done"],
+          "description": "The current status of the task."
+        }
+      },
+      "required": ["taskId", "type", "task", "status"]
+    },
     "projectPrefixCounter": {
       "title": "Project Prefix Counter",
       "description": "A global counter to ensure unique, sequential prefixes for projects.",
@@ -127,9 +153,10 @@
             "title": { "type": "string" },
             "specific": { "type": "string" },
             "measurable": { "type": "array", "items": { "type": "string" } },
-            "deadline": { "type": "string", "format": "date-time" },
             "status": { "type": "string", "enum": ["Not Started", "In Progress", "Completed"] },
-            "projectId": { "type": "string" }
+            "projectId": { "type": "string" },
+            "userStoryId": { "type": "string" },
+            "userStoryTicketId": { "type": "string" }
         },
         "required": ["title", "specific", "measurable", "status"]
     }
@@ -145,6 +172,10 @@
     "/projects/{projectId}/userStories/{userStoryId}": {
       "schema": { "$ref": "#/entities/userStory" },
       "description": "Stores user stories for a specific project."
+    },
+    "/projects/{projectId}/userStories/{userStoryId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/task" },
+      "description": "Stores tasks for a specific user story."
     },
     "/metadata/projectPrefixCounter": {
       "schema": { "$ref": "#/entities/projectPrefixCounter" },

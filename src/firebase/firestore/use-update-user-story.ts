@@ -122,3 +122,50 @@ export function useAddTask() {
 
   return addTask;
 }
+
+export function useDeleteTask() {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const deleteTask = async (
+    projectId: string,
+    storyId: string,
+    taskId: string
+  ) => {
+    if (!firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Firestore not available.',
+      });
+      return;
+    }
+
+    try {
+      const taskRef = doc(
+        firestore,
+        'projects',
+        projectId,
+        'userStories',
+        storyId,
+        'tasks',
+        taskId
+      );
+      await deleteDoc(taskRef);
+
+      toast({
+        title: 'Task Deleted',
+        description: 'The task has been successfully deleted.',
+      });
+    } catch (error: any) {
+      console.error('Error deleting task:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Uh oh! Something went wrong.',
+        description: 'There was a problem deleting the task.',
+      });
+    }
+  };
+
+  return deleteTask;
+}

@@ -58,6 +58,7 @@ import {
   useUpdateUserStory,
   useDeleteUserStory,
   useAddTask,
+  useDeleteTask,
 } from '@/firebase/firestore/use-update-user-story';
 import {
   Accordion,
@@ -399,6 +400,11 @@ export default function ProjectDetailPage() {
 
 function TasksList({ projectId, storyId }: { projectId: string; storyId: string }) {
   const { data: tasks, loading, error } = useTasks(projectId, storyId);
+  const deleteTask = useDeleteTask();
+
+  const handleDeleteTask = (taskId: string) => {
+    deleteTask(projectId, storyId, taskId);
+  };
 
   if (loading) {
     return <Skeleton className="h-16 w-full" />;
@@ -422,6 +428,27 @@ function TasksList({ projectId, storyId }: { projectId: string; storyId: string 
               <Badge variant="secondary">{task.type}</Badge>
               <span className="flex-1 text-sm">{task.task}</span>
               <Badge variant={task.status === 'Done' ? 'default' : 'outline'}>{task.status}</Badge>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the task <strong>&quot;{task.task}&quot;</strong>.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDeleteTask(task.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </li>
           ))}
         </ul>

@@ -59,6 +59,7 @@ import {
   useDeleteUserStory,
   useAddTask,
   useDeleteTask,
+  useAddTasks,
 } from '@/firebase/firestore/use-update-user-story';
 import {
   Accordion,
@@ -84,6 +85,7 @@ export default function ProjectDetailPage() {
   const updateUserStory = useUpdateUserStory();
   const deleteUserStory = useDeleteUserStory();
   const addTask = useAddTask();
+  const addTasks = useAddTasks();
 
   const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = useState(false);
   const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = useState(false);
@@ -118,6 +120,13 @@ export default function ProjectDetailPage() {
   const handleTaskAdded = async (newTask: Omit<Task, 'id' | 'status'>) => {
     if (selectedStory) {
       await addTask(projectId, selectedStory.id, newTask);
+    }
+    setIsAddTaskDialogOpen(false);
+  };
+
+  const handleTasksAdded = async (newTasks: Omit<Task, 'id' | 'status'>[]) => {
+    if (selectedStory) {
+        await addTasks(projectId, selectedStory.id, newTasks);
     }
     setIsAddTaskDialogOpen(false);
   };
@@ -386,6 +395,7 @@ export default function ProjectDetailPage() {
               </DialogHeader>
               <AddTaskForm
                 onTaskAdded={handleTaskAdded}
+                onTasksAdded={handleTasksAdded}
                 userStoryTicketId={selectedStory.ticketId}
                 existingTasksCount={selectedStory.tasks?.length || 0}
               />

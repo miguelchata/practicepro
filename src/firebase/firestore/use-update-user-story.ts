@@ -1,6 +1,6 @@
 'use client';
 
-import { doc, updateDoc, deleteDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, addDoc, collection, writeBatch } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { UserStory, Task } from '@/lib/types';
@@ -122,6 +122,60 @@ export function useAddTask() {
 
   return addTask;
 }
+
+export function useAddTasks() {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const addTasks = async (
+    projectId: string,
+    storyId: string,
+    tasksData: Omit<Task, 'id' | 'status'>[]
+  ) => {
+    if (!firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Firestore not available.',
+      });
+      return;
+    }
+
+    try {
+      const batch = writeBatch(firestore);
+      const tasksCollectionRef = collection(
+        firestore,
+        'projects',
+        projectId,
+        'userStories',
+        storyId,
+        'tasks'
+      );
+      
+      tasksData.forEach(taskData => {
+        const docRef = doc(tasksCollectionRef);
+        batch.set(docRef, { ...taskData, status: 'To Do' });
+      });
+
+      await batch.commit();
+
+      toast({
+        title: 'Tasks Added!',
+        description: `${tasksData.length} tasks have been successfully added.`,
+      });
+    } catch (error: any) {
+      console.error('Error adding tasks:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Uh oh! Something went wrong.',
+        description: 'There was a problem adding the tasks.',
+      });
+    }
+  };
+
+  return addTasks;
+}
+
 
 export function useDeleteTask() {
   const firestore = useFirestore();

@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Save } from 'lucide-react';
-import type { Task, TaskStatus, TaskType } from '@/lib/types';
+import type { Task } from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -28,6 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '../ui/label';
+import { useAddTasks } from '@/firebase/firestore/use-update-user-story';
 
 const taskSchema = z.object({
   taskId: z.string().min(1, 'Task ID is required.'),
@@ -41,13 +42,17 @@ const jsonTaskSchema = z.object({
   task: z.string(),
 });
 
+const jsonTasksSchema = z.union([jsonTaskSchema, z.array(jsonTaskSchema)]);
+
+
 type AddTaskFormProps = {
     onTaskAdded: (task: Omit<Task, 'id' | 'status'>) => Promise<void>;
+    onTasksAdded: (tasks: Omit<Task, 'id' | 'status'>[]) => Promise<void>;
     userStoryTicketId: string;
     existingTasksCount: number;
 }
 
-export function AddTaskForm({ onTaskAdded, userStoryTicketId, existingTasksCount }: AddTaskFormProps) {
+export function AddTaskForm({ onTaskAdded, onTasksAdded, userStoryTicketId, existingTasksCount }: AddTaskFormProps) {
   const { toast } = useToast();
   const [jsonInput, setJsonInput] = useState('');
   
@@ -78,14 +83,17 @@ export function AddTaskForm({ onTaskAdded, userStoryTicketId, existingTasksCount
   const handleJsonSubmit = async () => {
     try {
       const parsedJson = JSON.parse(jsonInput);
-      const validatedJson = jsonTaskSchema.parse(parsedJson);
-      await onTaskAdded(validatedJson);
+      const validatedJson = jsonTasksSchema.parse(parsedJson);
+
+      const tasksToAdd = Array.isArray(validatedJson) ? validatedJson : [validatedJson];
+
+      await onTasksAdded(tasksToAdd);
       setJsonInput('');
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Invalid JSON',
-        description: 'The provided JSON is either malformed or does not match the required schema.',
+        description: 'The provided JSON is either malformed or does not match the required schema for a single task or an array of tasks.',
       });
     }
   };
@@ -168,10 +176,10 @@ export function AddTaskForm({ onTaskAdded, userStoryTicketId, existingTasksCount
       <TabsContent value="json">
         <div className="space-y-4 pt-4">
             <div className="space-y-2">
-                <Label htmlFor="json-input">Task JSON</Label>
+                <Label htmlFor="json-input">Task JSON (Single Object or Array)</Label>
                 <Textarea
                     id="json-input"
-                    placeholder={`{\n  "taskId": "TASK-001",\n  "type": "Frontend",\n  "task": "Create the button component"\n}`}
+                    placeholder={`[\n  {\n    "taskId": "TASK-001",\n    "type": "Frontend",\n    "task": "Create the button component"\n  }\n]`}
                     rows={8}
                     value={jsonInput}
                     onChange={(e) => setJsonInput(e.target.value)}

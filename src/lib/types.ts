@@ -54,12 +54,15 @@ export type Task = {
     status: TaskStatus;
 };
 
+export type UserStoryStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Need Review' | 'Done';
+
 export type UserStory = {
     id: string;
     ticketId: string;
     title: string;
     features: string[];
     tasks?: Task[];
+    status: UserStoryStatus;
 };
 
 export type Project = {

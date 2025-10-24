@@ -18,12 +18,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Save } from 'lucide-react';
 import type { UserStory } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 
 const userStorySchema = z.object({
   ticketId: z.string().min(1, 'Ticket ID is required.'),
   title: z.string().min(3, 'Title must be at least 3 characters long.'),
   features: z.string().min(3, 'At least one feature is required.'),
+  status: z.enum(['Backlog', 'To Do', 'In Progress', 'Need Review', 'Done']),
 });
 
 type AddUserStoryFormProps = {
@@ -40,6 +42,7 @@ export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount, ticke
       ticketId: '',
       title: '',
       features: '',
+      status: 'Backlog',
     },
   });
   
@@ -104,6 +107,31 @@ export function AddUserStoryForm({ onUserStoryAdded, existingStoriesCount, ticke
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Backlog">Backlog</SelectItem>
+                  <SelectItem value="To Do">To Do</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Need Review">Need Review</SelectItem>
+                  <SelectItem value="Done">Done</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

@@ -75,9 +75,14 @@
             "type": "string"
           },
           "description": "A list of specific features or requirements for the story."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Backlog", "To Do", "In Progress", "Need Review", "Done"],
+          "description": "The current status of the user story."
         }
       },
-      "required": ["ticketId", "title", "features"]
+      "required": ["ticketId", "title", "features", "status"]
     },
     "task": {
       "title": "Task",

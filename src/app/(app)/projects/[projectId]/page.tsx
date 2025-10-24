@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useProject } from '@/firebase/firestore/use-doc';
 import { Header } from '@/components/layout/header';
@@ -22,15 +22,10 @@ import {
   PauseCircle,
   CheckCircle,
   Circle,
-  Ticket,
-  MoreVertical,
-  Trash2,
-  ListPlus,
-  List,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import type { ProjectStatus, UserStory, Task } from '@/lib/types';
+import type { ProjectStatus, UserStory, UserStoryStatus } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -40,41 +35,18 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { AddUserStoryForm } from '@/components/projects/add-user-story-form';
-import { EditUserStoryForm } from '@/components/projects/edit-user-story-form';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { useAddUserStory } from '@/firebase/firestore/use-add-user-story';
-import { useUserStories, useTasks } from '@/firebase/firestore/use-collection';
-import {
-  useUpdateUserStory,
-  useDeleteUserStory,
-  useAddTask,
-  useDeleteTask,
-  useAddTasks,
-} from '@/firebase/firestore/use-update-user-story';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { AddTaskForm } from '@/components/projects/add-task-form';
+import { useUserStories } from '@/firebase/firestore/use-collection';
+import { useUpdateUserStory } from '@/firebase/firestore/use-update-user-story';
+import { UserStoryCard } from '@/components/projects/user-story-card';
+
+const KANBAN_COLUMNS: UserStoryStatus[] = [
+  'Backlog',
+  'To Do',
+  'In Progress',
+  'Need Review',
+  'Done',
+];
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -83,52 +55,36 @@ export default function ProjectDetailPage() {
   const { data: userStories, loading: storiesLoading } = useUserStories(projectId);
   const addUserStory = useAddUserStory();
   const updateUserStory = useUpdateUserStory();
-  const deleteUserStory = useDeleteUserStory();
-  const addTask = useAddTask();
-  const addTasks = useAddTasks();
 
   const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = useState(false);
-  const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = useState(false);
-  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
-  const [selectedStory, setSelectedStory] = useState<UserStory | null>(null);
+
+  const storiesByStatus = useMemo(() => {
+    const grouped: Record<UserStoryStatus, UserStory[]> = {
+      Backlog: [],
+      'To Do': [],
+      'In Progress': [],
+      'Need Review': [],
+      Done: [],
+    };
+    userStories.forEach((story) => {
+      if (story.status) {
+        grouped[story.status].push(story);
+      } else {
+        grouped.Backlog.push(story); // Default to backlog
+      }
+    });
+    return grouped;
+  }, [userStories]);
 
   const handleUserStoryAdded = async (newUserStory: Omit<UserStory, 'id'>) => {
     await addUserStory(projectId, newUserStory);
     setIsAddStoryDialogOpen(false);
   };
   
-  const handleEditClick = (story: UserStory) => {
-    setSelectedStory(story);
-    setIsEditStoryDialogOpen(true);
-  };
-  
-  const handleUserStoryUpdated = async (storyId: string, updatedData: Partial<UserStory>) => {
-    await updateUserStory(projectId, storyId, updatedData);
-    setIsEditStoryDialogOpen(false);
-    setSelectedStory(null);
-  };
-
-  const handleDeleteStory = (storyId: string) => {
-    deleteUserStory(projectId, storyId);
-  };
-
-  const handleAddTaskClick = (story: UserStory) => {
-    setSelectedStory(story);
-    setIsAddTaskDialogOpen(true);
-  };
-
-  const handleTaskAdded = async (newTask: Omit<Task, 'id' | 'status'>) => {
-    if (selectedStory) {
-      await addTask(projectId, selectedStory.id, newTask);
+  const handleDragEnd = (story: UserStory, newStatus: UserStoryStatus) => {
+    if (story.status !== newStatus) {
+      updateUserStory(projectId, story.id, { status: newStatus });
     }
-    setIsAddTaskDialogOpen(false);
-  };
-
-  const handleTasksAdded = async (newTasks: Omit<Task, 'id' | 'status'>[]) => {
-    if (selectedStory) {
-        await addTasks(projectId, selectedStory.id, newTasks);
-    }
-    setIsAddTaskDialogOpen(false);
   };
 
   if (loading) {
@@ -247,222 +203,86 @@ export default function ProjectDetailPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>User Stories</CardTitle>
-                <CardDescription>
-                  Features and requirements for this project.
-                </CardDescription>
-              </div>
-              <Dialog open={isAddStoryDialogOpen} onOpenChange={setIsAddStoryDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add User Story
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>New User Story</DialogTitle>
-                    <DialogDescription>
-                      Add a new user story to the project.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <AddUserStoryForm
-                    onUserStoryAdded={handleUserStoryAdded}
-                    existingStoriesCount={userStories.length}
-                    ticketPrefix={project.ticketPrefix || ''}
-                  />
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {storiesLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ) : userStories.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                No user stories have been added to this project yet.
-              </p>
-            ) : (
-              <Accordion type="multiple" className="w-full">
-                {userStories.map((story) => (
-                  <AccordionItem value={`story-${story.id}`} key={story.id}>
-                    <div className="flex items-center pr-4">
-                      <AccordionTrigger className="hover:no-underline flex-1">
-                        <div className="flex items-start gap-3 relative w-full">
-                          <Ticket className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                          <div className="flex-1 text-left">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">{story.title}</p>
-                              <Badge variant="secondary">{story.ticketId}</Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </AccordionTrigger>
-
-                      <AlertDialog>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => handleEditClick(story)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit Story</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleAddTaskClick(story)}>
-                                <ListPlus className="mr-2 h-4 w-4" />
-                                <span>Add Task</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                             <AlertDialogTrigger asChild>
-                              <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Delete Story</span>
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                         <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the user story <strong>&quot;{story.title}&quot;</strong>.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteStory(story.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-
-                    <AccordionContent>
-                      <div className="pl-8 pr-4 space-y-4 text-muted-foreground">
-                        <div>
-                          <h5 className="font-semibold text-foreground">Features</h5>
-                          <ul className="list-disc list-inside space-y-1 mt-1">
-                            {story.features.map((feature, i) => (
-                              <li key={i}>{feature}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <TasksList projectId={projectId} storyId={story.id} />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            )}
-          </CardContent>
-        </Card>
-
-        {selectedStory && (
-          <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight font-headline">User Stories</h2>
+            <p className="text-muted-foreground">
+              Drag and drop stories to change their status.
+            </p>
+          </div>
+          <Dialog open={isAddStoryDialogOpen} onOpenChange={setIsAddStoryDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add User Story
+              </Button>
+            </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Edit User Story</DialogTitle>
+                <DialogTitle>New User Story</DialogTitle>
                 <DialogDescription>
-                  Update the details for your user story.
+                  Add a new user story to the project.
                 </DialogDescription>
               </DialogHeader>
-              <EditUserStoryForm
-                story={selectedStory}
-                onUserStoryUpdated={handleUserStoryUpdated}
+              <AddUserStoryForm
+                onUserStoryAdded={handleUserStoryAdded}
+                existingStoriesCount={userStories.length}
+                ticketPrefix={project.ticketPrefix || ''}
               />
             </DialogContent>
           </Dialog>
-        )}
-
-        {selectedStory && (
-          <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
-            <DialogContent className="max-w-xl">
-              <DialogHeader>
-                <DialogTitle>Add New Task</DialogTitle>
-                <DialogDescription>
-                  Add a task for user story: <strong>{selectedStory.ticketId}</strong>
-                </DialogDescription>
-              </DialogHeader>
-              <AddTaskForm
-                onTaskAdded={handleTaskAdded}
-                onTasksAdded={handleTasksAdded}
-                userStoryTicketId={selectedStory.ticketId}
-                existingTasksCount={selectedStory.tasks?.length || 0}
-              />
-            </DialogContent>
-          </Dialog>
+        </div>
+        
+        {storiesLoading ? (
+            <div className="grid grid-cols-5 gap-4">
+              {KANBAN_COLUMNS.map(col => (
+                  <div key={col} className="p-2 bg-muted rounded-lg">
+                    <Skeleton className="h-6 w-3/4 mb-4" />
+                    <Skeleton className="h-24 w-full" />
+                  </div>
+              ))}
+            </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start">
+            {KANBAN_COLUMNS.map((status) => (
+              <div
+                key={status}
+                className="rounded-lg bg-muted/50 p-3"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => {
+                  const storyData = window.localStorage.getItem('draggingStory');
+                  if (storyData) {
+                    const story: UserStory = JSON.parse(storyData);
+                    handleDragEnd(story, status);
+                    window.localStorage.removeItem('draggingStory');
+                  }
+                }}
+              >
+                <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
+                  <span>{status}</span>
+                  <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
+                    {storiesByStatus[status].length}
+                  </span>
+                </h3>
+                <div className="space-y-3">
+                  {storiesByStatus[status].map((story) => (
+                    <UserStoryCard
+                      key={story.id}
+                      story={story}
+                      projectId={projectId}
+                    />
+                  ))}
+                  {storiesByStatus[status].length === 0 && (
+                    <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                      Drop stories here
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </main>
-    </div>
-  );
-}
-
-
-function TasksList({ projectId, storyId }: { projectId: string; storyId: string }) {
-  const { data: tasks, loading, error } = useTasks(projectId, storyId);
-  const deleteTask = useDeleteTask();
-
-  const handleDeleteTask = (taskId: string) => {
-    deleteTask(projectId, storyId, taskId);
-  };
-
-  if (loading) {
-    return <Skeleton className="h-16 w-full" />;
-  }
-
-  if (error) {
-    return <p className="text-destructive">Error loading tasks.</p>;
-  }
-
-  return (
-    <div>
-      <h5 className="font-semibold text-foreground mt-4">Tasks</h5>
-      {tasks.length === 0 ? (
-        <p className="text-sm text-muted-foreground mt-1">No tasks for this story yet.</p>
-      ) : (
-        <ul className="space-y-2 mt-1">
-          {tasks.map((task) => (
-            <li key={task.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/50 border">
-              <List className="h-4 w-4" />
-              <span className="font-mono text-xs">{task.taskId}</span>
-              <Badge variant="secondary">{task.type}</Badge>
-              <span className="flex-1 text-sm">{task.task}</span>
-              <Badge variant={task.status === 'Done' ? 'default' : 'outline'}>{task.status}</Badge>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the task <strong>&quot;{task.task}&quot;</strong>.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDeleteTask(task.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

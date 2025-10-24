@@ -89,26 +89,26 @@
       "description": "Represents a single development task within a user story.",
       "type": "object",
       "properties": {
-        "taskId": {
+        "title": {
           "type": "string",
-          "description": "The unique identifier for the task (e.g., TASK-001)."
+          "description": "The title of the task."
         },
-        "type": {
-          "type": "string",
-          "enum": ["Frontend", "Backend", "Test", "DevOps", "Documentation", "Bug", "Integration"],
-          "description": "The category of the task."
-        },
-        "task": {
+        "description": {
           "type": "string",
           "description": "A description of the task."
         },
+        "priority": {
+            "type": "string",
+            "enum": ["Low", "Medium", "High", "Urgent"],
+            "description": "The priority of the task."
+        },
         "status": {
           "type": "string",
-          "enum": ["To Do", "In Progress", "Done"],
+          "enum": ["Backlog", "To Do", "In Progress", "Done"],
           "description": "The current status of the task."
         }
       },
-      "required": ["taskId", "type", "task", "status"]
+      "required": ["title", "description", "priority", "status"]
     },
     "projectPrefixCounter": {
       "title": "Project Prefix Counter",
@@ -174,13 +174,9 @@
       "schema": { "$ref": "#/entities/project" },
       "description": "Stores individual project documents."
     },
-    "/projects/{projectId}/userStories/{userStoryId}": {
-      "schema": { "$ref": "#/entities/userStory" },
-      "description": "Stores user stories for a specific project."
-    },
-    "/projects/{projectId}/userStories/{userStoryId}/tasks/{taskId}": {
+    "/projects/{projectId}/tasks/{taskId}": {
       "schema": { "$ref": "#/entities/task" },
-      "description": "Stores tasks for a specific user story."
+      "description": "Stores tasks for a specific project."
     },
     "/metadata/projectPrefixCounter": {
       "schema": { "$ref": "#/entities/projectPrefixCounter" },

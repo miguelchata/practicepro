@@ -43,14 +43,14 @@ export type Skill = {
 
 export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
 
-export type TaskType = 'Frontend' | 'Backend' | 'Test' | 'DevOps' | 'Documentation' | 'Bug' | 'Integration';
-export type TaskStatus = 'To Do' | 'In Progress' | 'Done';
+export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+export type TaskStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Done';
 
 export type Task = {
     id: string;
-    taskId: string;
-    type: TaskType;
-    task: string;
+    title: string;
+    description: string;
+    priority: TaskPriority;
     status: TaskStatus;
 };
 
@@ -73,6 +73,6 @@ export type Project = {
   startDate: string;
   targetDate: string;
   status: ProjectStatus;
-  userStories?: UserStory[];
+  tasks?: Task[];
   ticketPrefix?: string;
 };

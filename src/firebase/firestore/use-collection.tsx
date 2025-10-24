@@ -69,14 +69,14 @@ export function useUserStories(projectId: string | null): CollectionData<UserSto
   return useCollection<UserStory>(userStoriesQuery);
 }
 
-// Hook to get tasks for a user story
-export function useTasks(projectId: string | null, storyId: string | null): CollectionData<Task> {
+// Hook to get tasks for a project
+export function useTasks(projectId: string | null): CollectionData<Task> {
     const firestore = useFirestore();
 
     const tasksQuery = useMemo(() => {
-        if (!firestore || !projectId || !storyId) return null;
-        return query(collection(firestore, `projects/${projectId}/userStories/${storyId}/tasks`));
-    }, [firestore, projectId, storyId]);
+        if (!firestore || !projectId) return null;
+        return query(collection(firestore, `projects/${projectId}/tasks`));
+    }, [firestore, projectId]);
 
     return useCollection<Task>(tasksQuery);
 }
@@ -128,5 +128,3 @@ export function useSkills(): CollectionData<Skill> {
     loading: userLoading || skills.loading,
   };
 }
-
-    

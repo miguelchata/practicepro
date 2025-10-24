@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import type { ProjectStatus, UserStory, UserStoryStatus } from '@/lib/types';
+import type { ProjectStatus, Task, TaskStatus } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -34,13 +34,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AddUserStoryForm } from '@/components/projects/add-user-story-form';
-import { useAddUserStory } from '@/firebase/firestore/use-add-user-story';
-import { useUserStories } from '@/firebase/firestore/use-collection';
-import { useUpdateUserStory } from '@/firebase/firestore/use-update-user-story';
-import { UserStoryCard } from '@/components/projects/user-story-card';
+import { AddTaskForm } from '@/components/projects/add-task-form';
+import { useAddTask } from '@/firebase/firestore/use-add-task';
+import { useTasks } from '@/firebase/firestore/use-collection';
+import { useUpdateTask } from '@/firebase/firestore/use-update-task';
+import { TaskCard } from '@/components/projects/task-card';
 
-const KANBAN_COLUMNS: UserStoryStatus[] = [
+const KANBAN_COLUMNS: TaskStatus[] = [
   'Backlog',
   'To Do',
   'In Progress',
@@ -51,37 +51,37 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   const { data: project, loading } = useProject(projectId);
-  const { data: userStories, loading: storiesLoading } = useUserStories(projectId);
-  const addUserStory = useAddUserStory();
-  const updateUserStory = useUpdateUserStory();
+  const { data: tasks, loading: tasksLoading } = useTasks(projectId);
+  const addTask = useAddTask();
+  const updateTask = useUpdateTask();
 
-  const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = useState(false);
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
 
-  const storiesByStatus = useMemo(() => {
-    const grouped: Record<UserStoryStatus, UserStory[]> = {
+  const tasksByStatus = useMemo(() => {
+    const grouped: Record<TaskStatus, Task[]> = {
       Backlog: [],
       'To Do': [],
       'In Progress': [],
       Done: [],
     };
-    userStories.forEach((story) => {
-      if (story.status) {
-        grouped[story.status].push(story);
+    tasks.forEach((task) => {
+      if (task.status) {
+        grouped[task.status].push(task);
       } else {
-        grouped.Backlog.push(story); // Default to backlog
+        grouped.Backlog.push(task); // Default to backlog
       }
     });
     return grouped;
-  }, [userStories]);
+  }, [tasks]);
 
-  const handleUserStoryAdded = async (newUserStory: Omit<UserStory, 'id'>) => {
-    await addUserStory(projectId, newUserStory);
-    setIsAddStoryDialogOpen(false);
+  const handleTaskAdded = async (newTask: Omit<Task, 'id'>) => {
+    await addTask(projectId, newTask);
+    setIsAddTaskDialogOpen(false);
   };
   
-  const handleDragEnd = (story: UserStory, newStatus: UserStoryStatus) => {
-    if (story.status !== newStatus) {
-      updateUserStory(projectId, story.id, { status: newStatus });
+  const handleDragEnd = (task: Task, newStatus: TaskStatus) => {
+    if (task.status !== newStatus) {
+      updateTask(projectId, task.id, { status: newStatus });
     }
   };
 
@@ -204,34 +204,33 @@ export default function ProjectDetailPage() {
         
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight font-headline">Story Board</h2>
+            <h2 className="text-2xl font-bold tracking-tight font-headline">Task Board</h2>
             <p className="text-muted-foreground">
-              Drag and drop stories to manage your project's workflow.
+              Drag and drop tasks to manage your project's workflow.
             </p>
           </div>
-          <Dialog open={isAddStoryDialogOpen} onOpenChange={setIsAddStoryDialogOpen}>
+          <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add User Story
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Task
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>New User Story</DialogTitle>
+                <DialogTitle>New Task</DialogTitle>
                 <DialogDescription>
-                  Add a new user story to the project.
+                  Add a new task to the project.
                 </DialogDescription>
               </DialogHeader>
-              <AddUserStoryForm
-                onUserStoryAdded={handleUserStoryAdded}
-                existingStoriesCount={userStories.length}
-                ticketPrefix={project.ticketPrefix || ''}
+              <AddTaskForm
+                onTaskAdded={handleTaskAdded}
+                existingTasksCount={tasks.length}
               />
             </DialogContent>
           </Dialog>
         </div>
         
-        {storiesLoading ? (
+        {tasksLoading ? (
             <div className="grid grid-cols-4 gap-4">
               {KANBAN_COLUMNS.map(col => (
                   <div key={col} className="p-2 bg-muted rounded-lg">
@@ -248,31 +247,31 @@ export default function ProjectDetailPage() {
                 className="rounded-lg bg-muted/50 p-3"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => {
-                  const storyData = window.localStorage.getItem('draggingStory');
-                  if (storyData) {
-                    const story: UserStory = JSON.parse(storyData);
-                    handleDragEnd(story, status);
-                    window.localStorage.removeItem('draggingStory');
+                  const taskData = window.localStorage.getItem('draggingTask');
+                  if (taskData) {
+                    const task: Task = JSON.parse(taskData);
+                    handleDragEnd(task, status);
+                    window.localStorage.removeItem('draggingTask');
                   }
                 }}
               >
                 <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
                   <span>{status}</span>
                   <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
-                    {storiesByStatus[status].length}
+                    {tasksByStatus[status].length}
                   </span>
                 </h3>
                 <div className="space-y-3">
-                  {storiesByStatus[status].map((story) => (
-                    <UserStoryCard
-                      key={story.id}
-                      story={story}
+                  {tasksByStatus[status].map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
                       projectId={projectId}
                     />
                   ))}
-                  {storiesByStatus[status].length === 0 && (
+                  {tasksByStatus[status].length === 0 && (
                     <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                      Drop stories here
+                      Drop tasks here
                     </div>
                   )}
                 </div>

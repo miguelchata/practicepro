@@ -204,9 +204,9 @@ export default function ProjectDetailPage() {
         
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight font-headline">User Stories</h2>
+            <h2 className="text-2xl font-bold tracking-tight font-headline">Story Board</h2>
             <p className="text-muted-foreground">
-              Drag and drop stories to change their status.
+              Drag and drop stories to manage your project's workflow.
             </p>
           </div>
           <Dialog open={isAddStoryDialogOpen} onOpenChange={setIsAddStoryDialogOpen}>

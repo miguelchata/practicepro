@@ -78,7 +78,7 @@
         },
         "status": {
           "type": "string",
-          "enum": ["Backlog", "To Do", "In Progress", "Need Review", "Done"],
+          "enum": ["Backlog", "To Do", "In Progress", "Done"],
           "description": "The current status of the user story."
         }
       },

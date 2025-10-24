@@ -54,7 +54,7 @@ export type Task = {
     status: TaskStatus;
 };
 
-export type UserStoryStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Need Review' | 'Done';
+export type UserStoryStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Done';
 
 export type UserStory = {
     id: string;

@@ -44,7 +44,6 @@ const KANBAN_COLUMNS: UserStoryStatus[] = [
   'Backlog',
   'To Do',
   'In Progress',
-  'Need Review',
   'Done',
 ];
 
@@ -63,7 +62,6 @@ export default function ProjectDetailPage() {
       Backlog: [],
       'To Do': [],
       'In Progress': [],
-      'Need Review': [],
       Done: [],
     };
     userStories.forEach((story) => {
@@ -234,7 +232,7 @@ export default function ProjectDetailPage() {
         </div>
         
         {storiesLoading ? (
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               {KANBAN_COLUMNS.map(col => (
                   <div key={col} className="p-2 bg-muted rounded-lg">
                     <Skeleton className="h-6 w-3/4 mb-4" />
@@ -243,7 +241,7 @@ export default function ProjectDetailPage() {
               ))}
             </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
             {KANBAN_COLUMNS.map((status) => (
               <div
                 key={status}

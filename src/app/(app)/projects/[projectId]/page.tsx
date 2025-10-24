@@ -35,10 +35,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { AddTaskForm } from '@/components/projects/add-task-form';
-import { useAddTask } from '@/firebase/firestore/use-add-task';
 import { useTasks } from '@/firebase/firestore/use-collection';
 import { useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { TaskCard } from '@/components/projects/task-card';
+import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 
 const KANBAN_COLUMNS: TaskStatus[] = [
   'Backlog',
@@ -52,7 +52,7 @@ export default function ProjectDetailPage() {
   const projectId = params.projectId as string;
   const { data: project, loading } = useProject(projectId);
   const { data: tasks, loading: tasksLoading } = useTasks(projectId);
-  const addTask = useAddTask();
+  const addTasks = useAddTasks();
   const updateTask = useUpdateTask();
 
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
@@ -74,8 +74,8 @@ export default function ProjectDetailPage() {
     return grouped;
   }, [tasks]);
 
-  const handleTaskAdded = async (newTask: Omit<Task, 'id'>) => {
-    await addTask(projectId, newTask);
+  const handleTaskAdded = async (newTasks: Omit<Task, 'id'> | Omit<Task, 'id'>[]) => {
+    await addTasks(projectId, newTasks);
     setIsAddTaskDialogOpen(false);
   };
   
@@ -219,7 +219,7 @@ export default function ProjectDetailPage() {
               <DialogHeader>
                 <DialogTitle>New Task</DialogTitle>
                 <DialogDescription>
-                  Add a new task to the project.
+                  Add a new task to the project via the form or by using JSON.
                 </DialogDescription>
               </DialogHeader>
               <AddTaskForm

@@ -81,17 +81,17 @@ export function TaskCard({ task, projectId }: TaskCardProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setIsDetailsOpen(true)}>
+                  <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); setIsDetailsOpen(true); }}>
                     <Ticket className="mr-2 h-4 w-4" />
                     <span>View Details</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onSelect={(e) => e.stopPropagation()}>
                     <Edit className="mr-2 h-4 w-4" />
                     <span>Edit Task</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <AlertDialogTrigger asChild>
-                    <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                    <DropdownMenuItem className="text-destructive" onSelect={(e) => e.stopPropagation()}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       <span>Delete Task</span>
                     </DropdownMenuItem>

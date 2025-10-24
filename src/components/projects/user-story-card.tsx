@@ -5,9 +5,7 @@ import type { Task, UserStory } from '@/lib/types';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -44,12 +42,6 @@ import {
     DialogHeader,
     DialogTitle,
   } from '@/components/ui/dialog';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { AddTaskForm } from './add-task-form';
 import { useAddTask, useAddTasks, useDeleteTask, useUpdateUserStory, useDeleteUserStory } from '@/firebase/firestore/use-update-user-story';
 import { useTasks } from '@/firebase/firestore/use-collection';
@@ -167,13 +159,13 @@ export function UserStoryCard({ story, projectId }: UserStoryCardProps) {
     <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl">
             <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-                <Badge variant="outline">{story.ticketId}</Badge> 
-                <span>{story.title}</span>
-            </DialogTitle>
-            <DialogDescription>
-                <Badge>{story.status}</Badge>
-            </DialogDescription>
+                <div className="flex items-start justify-between">
+                    <DialogTitle className="flex items-center gap-2">
+                        <Badge variant="outline">{story.ticketId}</Badge> 
+                        <span>{story.title}</span>
+                    </DialogTitle>
+                    <Badge>{story.status}</Badge>
+                </div>
             </DialogHeader>
             <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-6">
                 <div>

@@ -26,7 +26,7 @@ const taskObjectSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters long.'),
   description: z.string().min(3, 'Description is required.'),
   priority: z.enum(['Low', 'Medium', 'High', 'Urgent']),
-  status: z.enum(['Backlog', 'To Do', 'In Progress', 'Done']),
+  status: z.enum(['Backlog', 'In Progress', 'Done']),
 });
 
 const taskSchema = z.union([
@@ -161,7 +161,6 @@ export function AddTaskForm({ onTaskAdded, existingTasksCount }: AddTaskFormProp
                             </FormControl>
                             <SelectContent>
                             <SelectItem value="Backlog">Backlog</SelectItem>
-                            <SelectItem value="To Do">To Do</SelectItem>
                             <SelectItem value="In Progress">In Progress</SelectItem>
                             <SelectItem value="Done">Done</SelectItem>
                             </SelectContent>
@@ -185,7 +184,7 @@ export function AddTaskForm({ onTaskAdded, existingTasksCount }: AddTaskFormProp
                     <Label htmlFor="json-input">Task JSON (Single Object or Array)</Label>
                     <Textarea
                         id="json-input"
-                        placeholder={`{\n  "title": "Create button component",\n  "description": "Button with all variants",\n  "priority": "High",\n  "status": "To Do"\n}`}
+                        placeholder={`{\n  "title": "Create button component",\n  "description": "Button with all variants",\n  "priority": "High",\n  "status": "Backlog"\n}`}
                         value={jsonInput}
                         onChange={(e) => setJsonInput(e.target.value)}
                         rows={10}

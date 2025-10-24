@@ -104,7 +104,7 @@
         },
         "status": {
           "type": "string",
-          "enum": ["Backlog", "To Do", "In Progress", "Done"],
+          "enum": ["Backlog", "In Progress", "Done"],
           "description": "The current status of the task."
         }
       },

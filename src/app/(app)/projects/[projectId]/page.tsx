@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import type { ProjectStatus, Task, TaskStatus } from '@/lib/types';
+import type { ProjectStatus, Task, TaskPriority, TaskStatus } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -42,10 +42,17 @@ import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 
 const KANBAN_COLUMNS: TaskStatus[] = [
   'Backlog',
-  'To Do',
   'In Progress',
   'Done',
 ];
+
+const priorityOrder: Record<TaskPriority, number> = {
+  Urgent: 4,
+  High: 3,
+  Medium: 2,
+  Low: 1,
+};
+
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -60,7 +67,6 @@ export default function ProjectDetailPage() {
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
       Backlog: [],
-      'To Do': [],
       'In Progress': [],
       Done: [],
     };
@@ -71,6 +77,10 @@ export default function ProjectDetailPage() {
         grouped.Backlog.push(task); // Default to backlog
       }
     });
+
+    // Sort the backlog column by priority
+    grouped.Backlog.sort((a, b) => (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0));
+
     return grouped;
   }, [tasks]);
 
@@ -240,7 +250,7 @@ export default function ProjectDetailPage() {
               ))}
             </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {KANBAN_COLUMNS.map((status) => (
               <div
                 key={status}

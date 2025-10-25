@@ -41,7 +41,6 @@ import { useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { TaskCard } from '@/components/projects/task-card';
 import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 import { TaskDetailView } from '@/components/projects/task-detail-view';
-import { cn } from '@/lib/utils';
 
 const KANBAN_COLUMNS: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 
@@ -212,96 +211,94 @@ export default function ProjectDetailPage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight font-headline">
-              Task Board
-            </h2>
-            <p className="text-muted-foreground">
-              Drag and drop tasks to manage your project's workflow.
-            </p>
-          </div>
-          <Dialog
-            open={isAddTaskDialogOpen}
-            onOpenChange={setIsAddTaskDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>New Task</DialogTitle>
-                <DialogDescription>
-                  Add a new task to the project via the form or by using JSON.
-                </DialogDescription>
-              </DialogHeader>
-              <AddTaskForm
-                onTaskAdded={handleTaskAdded}
-                existingTasksCount={tasks.length}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 items-start col-span-1", selectedTask ? 'lg:col-span-2 lg:grid-cols-3' : 'lg:col-span-3 lg:grid-cols-3')}>
-            {tasksLoading ? (
-              KANBAN_COLUMNS.map((col) => (
-                <div key={col} className="p-2 bg-muted rounded-lg">
-                  <Skeleton className="h-6 w-3/4 mb-4" />
-                  <Skeleton className="h-24 w-full" />
-                </div>
-              ))
-            ) : (
-              KANBAN_COLUMNS.map((status) => (
-                <div
-                  key={status}
-                  className="rounded-lg bg-muted/50 p-3"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => {
-                    const taskData = window.localStorage.getItem('draggingTask');
-                    if (taskData) {
-                      const task: Task = JSON.parse(taskData);
-                      handleDragEnd(task, status);
-                      window.localStorage.removeItem('draggingTask');
-                    }
-                  }}
-                >
-                  <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
-                    <span>{status}</span>
-                    <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
-                      {tasksByStatus[status].length}
-                    </span>
-                  </h3>
-                  <div className="space-y-3">
-                    {tasksByStatus[status].map((task) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        projectId={projectId}
-                        onTaskSelected={setSelectedTask}
-                        isSelected={selectedTask?.id === task.id}
-                      />
-                    ))}
-                    {tasksByStatus[status].length === 0 && (
-                      <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                        Drop tasks here
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-           {selectedTask && (
-              <div className="col-span-1 lg:col-span-1">
-                <TaskDetailView task={selectedTask} onClose={() => setSelectedTask(null)} />
+        
+        {selectedTask ? (
+            <TaskDetailView task={selectedTask} onClose={() => setSelectedTask(null)} />
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight font-headline">
+                  Task Board
+                </h2>
+                <p className="text-muted-foreground">
+                  Drag and drop tasks to manage your project's workflow.
+                </p>
               </div>
-            )}
-        </div>
+              <Dialog
+                open={isAddTaskDialogOpen}
+                onOpenChange={setIsAddTaskDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>New Task</DialogTitle>
+                    <DialogDescription>
+                      Add a new task to the project via the form or by using JSON.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AddTaskForm
+                    onTaskAdded={handleTaskAdded}
+                    existingTasksCount={tasks.length}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                {tasksLoading ? (
+                  KANBAN_COLUMNS.map((col) => (
+                    <div key={col} className="p-2 bg-muted rounded-lg">
+                      <Skeleton className="h-6 w-3/4 mb-4" />
+                      <Skeleton className="h-24 w-full" />
+                    </div>
+                  ))
+                ) : (
+                  KANBAN_COLUMNS.map((status) => (
+                    <div
+                      key={status}
+                      className="rounded-lg bg-muted/50 p-3"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => {
+                        const taskData = window.localStorage.getItem('draggingTask');
+                        if (taskData) {
+                          const task: Task = JSON.parse(taskData);
+                          handleDragEnd(task, status);
+                          window.localStorage.removeItem('draggingTask');
+                        }
+                      }}
+                    >
+                      <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
+                        <span>{status}</span>
+                        <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
+                          {tasksByStatus[status].length}
+                        </span>
+                      </h3>
+                      <div className="space-y-3">
+                        {tasksByStatus[status].map((task) => (
+                          <TaskCard
+                            key={task.id}
+                            task={task}
+                            projectId={projectId}
+                            onTaskSelected={setSelectedTask}
+                          />
+                        ))}
+                        {tasksByStatus[status].length === 0 && (
+                          <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                            Drop tasks here
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

@@ -28,16 +28,14 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useDeleteTask } from '@/firebase/firestore/use-update-task';
-import { cn } from '@/lib/utils';
 
 type TaskCardProps = {
   task: Task;
   projectId: string;
   onTaskSelected: (task: Task) => void;
-  isSelected: boolean;
 };
 
-export function TaskCard({ task, projectId, onTaskSelected, isSelected }: TaskCardProps) {
+export function TaskCard({ task, projectId, onTaskSelected }: TaskCardProps) {
   const deleteTask = useDeleteTask();
 
   const handleDelete = () => {
@@ -58,10 +56,7 @@ export function TaskCard({ task, projectId, onTaskSelected, isSelected }: TaskCa
         e.dataTransfer.effectAllowed = 'move';
         window.localStorage.setItem('draggingTask', JSON.stringify(task));
       }}
-      className={cn(
-        'cursor-pointer transition-all hover:shadow-md',
-        isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-card'
-      )}
+      className="cursor-pointer transition-shadow hover:shadow-md bg-card"
       onClick={() => onTaskSelected(task)}
     >
       <CardContent className="p-3 space-y-2">

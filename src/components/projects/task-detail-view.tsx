@@ -26,7 +26,7 @@ export function TaskDetailView({ task, onClose }: TaskDetailViewProps) {
   } as const;
 
   return (
-    <Card className="sticky top-24">
+    <Card>
       <CardHeader>
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg font-headline flex-1 pr-8">{task.title}</CardTitle>

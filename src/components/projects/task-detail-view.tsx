@@ -75,7 +75,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                         <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                     <DropdownMenuItem onSelect={() => setIsEditing(true)}>
                         <Edit className="mr-2 h-4 w-4" />
                         <span>Edit Task</span>
@@ -110,8 +110,9 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
             </Button>
           </div>
         </div>
-        <CardDescription>
+        <CardDescription className="flex items-center gap-2">
             <Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge>
+            <Badge variant="outline">{task.status}</Badge>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -122,10 +123,6 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                 <div>
                 <h5 className="font-semibold text-foreground mb-2">Description</h5>
                 <p className="text-sm text-muted-foreground">{task.description}</p>
-                </div>
-                <div className="mt-4">
-                    <h5 className="font-semibold text-foreground mb-2">Status</h5>
-                    <Badge variant="outline">{task.status}</Badge>
                 </div>
             </>
         )}

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, MoreVertical, Edit, Trash2, Play, Square } from 'lucide-react';
+import { X, MoreVertical, Edit, Trash2, Play, Square, CheckCircle, Pause } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +34,7 @@ import { useDeleteTask, useUpdateTask } from '@/firebase/firestore/use-update-ta
 import { EditTaskForm } from './edit-task-form';
 import { Separator } from '../ui/separator';
 
+type TimerState = 'idle' | 'running' | 'paused' | 'finished';
 
 type TaskDetailViewProps = {
   task: Task;
@@ -45,33 +46,38 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const deleteTask = useDeleteTask();
   const updateTask = useUpdateTask();
   const [isEditing, setIsEditing] = useState(false);
-  const [isTiming, setIsTiming] = useState(false);
+
+  const getInitialTimerState = (): TimerState => {
+    if (task.endDatetime) return 'finished';
+    if (task.startDatetime) return 'paused'; // Assume paused if start exists but not end
+    return 'idle';
+  };
+
+  const [timerState, setTimerState] = useState<TimerState>(getInitialTimerState);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [accumulatedDuration, setAccumulatedDuration] = useState(task.duration || 0);
   const [displayDuration, setDisplayDuration] = useState(task.duration || 0);
 
   useEffect(() => {
+    setAccumulatedDuration(task.duration || 0);
     setDisplayDuration(task.duration || 0);
-  }, [task.duration]);
+    setTimerState(getInitialTimerState());
+  }, [task]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (isTiming && startTime) {
+    if (timerState === 'running' && startTime) {
       timer = setInterval(() => {
         const elapsed = Math.round((Date.now() - startTime) / 1000);
-        setDisplayDuration((task.duration || 0) + elapsed);
+        setDisplayDuration(accumulatedDuration + elapsed);
       }, 1000);
-    } else {
-      if (timer) {
-        clearInterval(timer);
-      }
     }
     return () => {
       if (timer) {
         clearInterval(timer);
       }
     };
-  }, [isTiming, startTime, task.duration]);
-
+  }, [timerState, startTime, accumulatedDuration]);
 
   const handleDelete = () => {
     deleteTask(projectId, task.id);
@@ -84,33 +90,51 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   };
   
   const handleToggleTimer = () => {
-    if (isTiming) {
-      // Finish timer
-      const endTime = new Date();
-      const duration = startTime ? Math.round((endTime.getTime() - startTime) / 1000) : 0;
-      const finalDuration = (task.duration || 0) + duration;
-      updateTask(projectId, task.id, { 
-          endDatetime: endTime.toISOString(),
-          duration: finalDuration,
-      });
-      setIsTiming(false);
+    if (timerState === 'running') { // Pause
+      const elapsed = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+      const newAccumulated = accumulatedDuration + elapsed;
+      setAccumulatedDuration(newAccumulated);
+      updateTask(projectId, task.id, { duration: newAccumulated });
+      setTimerState('paused');
       setStartTime(null);
-      setDisplayDuration(finalDuration);
-    } else {
-      // Start timer
-      const newStartTime = new Date();
-      setStartTime(newStartTime.getTime());
-      updateTask(projectId, task.id, { startDatetime: newStartTime.toISOString() });
-      setIsTiming(true);
+    } else { // Start or Resume
+      const newStartTime = Date.now();
+      setStartTime(newStartTime);
+      setTimerState('running');
+      if (timerState === 'idle') {
+        updateTask(projectId, task.id, { startDatetime: new Date(newStartTime).toISOString() });
+      }
     }
+  };
+
+  const handleFinishTimer = () => {
+    let finalDuration = accumulatedDuration;
+    if (timerState === 'running' && startTime) {
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        finalDuration += elapsed;
+    }
+    const endDatetime = new Date().toISOString();
+    updateTask(projectId, task.id, {
+        duration: finalDuration,
+        endDatetime: endDatetime,
+    });
+    setTimerState('finished');
+    setStartTime(null);
+    setDisplayDuration(finalDuration);
   };
   
   const formatDuration = (totalSeconds: number) => {
+    if (totalSeconds < 0) totalSeconds = 0;
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return `${hours}h ${minutes}m ${seconds}s`;
+    return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
   }
+
+  const formatDate = (isoString: string | undefined) => {
+    if (!isoString) return 'N/A';
+    return new Date(isoString).toLocaleString();
+  };
 
   const priorityVariant = {
     Low: 'secondary',
@@ -167,7 +191,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
             </Button>
           </div>
         </div>
-        <CardDescription className="flex items-center gap-2">
+        <CardDescription className="flex items-center gap-2 pt-1">
             <Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge>
             <Badge variant="outline">{task.status}</Badge>
         </CardDescription>
@@ -189,14 +213,31 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                             <p className="font-mono text-lg font-semibold">{formatDuration(displayDuration)}</p>
                             <p className="text-xs text-muted-foreground">Total time logged</p>
                         </div>
-                        <Button
-                            variant={isTiming ? 'destructive' : 'default'}
-                            onClick={handleToggleTimer}
-                        >
-                            {isTiming ? <Square className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                            {isTiming ? 'Finish Timer' : 'Start Timer'}
-                        </Button>
+                        {timerState !== 'finished' && (
+                          <div className="flex gap-2">
+                             <Button
+                                variant={timerState === 'running' ? 'secondary' : 'default'}
+                                onClick={handleToggleTimer}
+                                size="sm"
+                              >
+                                {timerState === 'running' ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                                {timerState === 'running' ? 'Pause' : 'Start'}
+                              </Button>
+                              {(timerState === 'running' || timerState === 'paused') && (
+                                <Button variant="destructive" onClick={handleFinishTimer} size="sm">
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Finish
+                                </Button>
+                              )}
+                          </div>
+                        )}
                     </div>
+                     {timerState === 'finished' && (
+                        <div className="text-xs text-muted-foreground space-y-1 border-t pt-3 mt-3">
+                            <p><strong>Started:</strong> {formatDate(task.startDatetime)}</p>
+                            <p><strong>Finished:</strong> {formatDate(task.endDatetime)}</p>
+                        </div>
+                    )}
                 </div>
             </>
         )}

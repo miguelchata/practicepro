@@ -41,6 +41,7 @@ import { useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { TaskCard } from '@/components/projects/task-card';
 import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 import { TaskDetailView } from '@/components/projects/task-detail-view';
+import { cn } from '@/lib/utils';
 
 const KANBAN_COLUMNS: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 

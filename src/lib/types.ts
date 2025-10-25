@@ -46,18 +46,23 @@ export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Complet
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 export type TaskStatus = 'Backlog' | 'In Progress' | 'Done';
 
+export type WorkLog = {
+    id: string;
+    startDatetime: string;
+    endDatetime?: string;
+    duration: number; // in seconds
+}
+
 export type Task = {
     id: string;
     title: string;
     description: string;
     priority: TaskPriority;
     status: TaskStatus;
-    startDatetime?: string;
-    endDatetime?: string;
-    duration?: number;
+    workLogs?: WorkLog[];
 };
 
-export type UserStoryStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Done';
+export type UserStoryStatus = 'Backlog' | 'In Progress' | 'Done';
 
 export type UserStory = {
     id: string;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { Task } from '@/lib/types';
+import { useState, useEffect, useMemo } from 'react';
+import type { Task, WorkLog } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -34,7 +34,7 @@ import { useDeleteTask, useUpdateTask } from '@/firebase/firestore/use-update-ta
 import { EditTaskForm } from './edit-task-form';
 import { Separator } from '../ui/separator';
 
-type TimerState = 'idle' | 'running' | 'paused' | 'finished';
+type TimerState = 'idle' | 'running' | 'paused';
 
 type TaskDetailViewProps = {
   task: Task;
@@ -47,37 +47,43 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const updateTask = useUpdateTask();
   const [isEditing, setIsEditing] = useState(false);
 
-  const getInitialTimerState = (): TimerState => {
-    if (task.endDatetime) return 'finished';
-    if (task.startDatetime) return 'paused'; // Assume paused if start exists but not end
-    return 'idle';
-  };
+  const [timerState, setTimerState] = useState<TimerState>('idle');
+  const [activeLogId, setActiveLogId] = useState<string | null>(null);
+  const [displayDuration, setDisplayDuration] = useState(0);
 
-  const [timerState, setTimerState] = useState<TimerState>(getInitialTimerState);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [accumulatedDuration, setAccumulatedDuration] = useState(task.duration || 0);
-  const [displayDuration, setDisplayDuration] = useState(task.duration || 0);
-
-  useEffect(() => {
-    setAccumulatedDuration(task.duration || 0);
-    setDisplayDuration(task.duration || 0);
-    setTimerState(getInitialTimerState());
-  }, [task]);
+  const activeLog = useMemo(() => {
+    if (!activeLogId) return null;
+    return task.workLogs?.find(log => log.id === activeLogId && !log.endDatetime) || null;
+  }, [task.workLogs, activeLogId]);
+  
+  const totalDuration = useMemo(() => {
+    return task.workLogs?.reduce((acc, log) => acc + log.duration, 0) || 0;
+  }, [task.workLogs]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (timerState === 'running' && startTime) {
+
+    if (timerState === 'running' && activeLog) {
+      const startTime = new Date(activeLog.startDatetime).getTime();
+      const initialDuration = activeLog.duration || 0;
+
       timer = setInterval(() => {
         const elapsed = Math.round((Date.now() - startTime) / 1000);
-        setDisplayDuration(accumulatedDuration + elapsed);
+        setDisplayDuration(initialDuration + elapsed);
       }, 1000);
+    } else if (activeLog) {
+        setDisplayDuration(activeLog.duration);
+    } else {
+        setDisplayDuration(0);
     }
+  
     return () => {
       if (timer) {
         clearInterval(timer);
       }
     };
-  }, [timerState, startTime, accumulatedDuration]);
+  }, [timerState, activeLog]);
+
 
   const handleDelete = () => {
     deleteTask(projectId, task.id);
@@ -91,36 +97,42 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   
   const handleToggleTimer = () => {
     if (timerState === 'running') { // Pause
-      const elapsed = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
-      const newAccumulated = accumulatedDuration + elapsed;
-      setAccumulatedDuration(newAccumulated);
-      updateTask(projectId, task.id, { duration: newAccumulated });
-      setTimerState('paused');
-      setStartTime(null);
-    } else { // Start or Resume
-      const newStartTime = Date.now();
-      setStartTime(newStartTime);
-      setTimerState('running');
-      if (timerState === 'idle') {
-        updateTask(projectId, task.id, { startDatetime: new Date(newStartTime).toISOString() });
+      if(activeLog) {
+        const newDuration = displayDuration;
+        const updatedLogs = task.workLogs?.map(log => 
+            log.id === activeLog.id ? {...log, duration: newDuration} : log
+        ) || [];
+        updateTask(projectId, task.id, { workLogs: updatedLogs });
       }
+      setTimerState('paused');
+    } else { // Start or Resume
+      if (!activeLog) { // Start new log
+          const newLogId = Date.now().toString();
+          const newLog: WorkLog = {
+              id: newLogId,
+              startDatetime: new Date().toISOString(),
+              duration: 0,
+          };
+          const updatedLogs = [...(task.workLogs || []), newLog];
+          updateTask(projectId, task.id, { workLogs: updatedLogs });
+          setActiveLogId(newLogId);
+      }
+      setTimerState('running');
     }
   };
 
   const handleFinishTimer = () => {
-    let finalDuration = accumulatedDuration;
-    if (timerState === 'running' && startTime) {
-        const elapsed = Math.round((Date.now() - startTime) / 1000);
-        finalDuration += elapsed;
-    }
-    const endDatetime = new Date().toISOString();
-    updateTask(projectId, task.id, {
-        duration: finalDuration,
-        endDatetime: endDatetime,
-    });
-    setTimerState('finished');
-    setStartTime(null);
-    setDisplayDuration(finalDuration);
+     if (activeLog) {
+        const endDatetime = new Date().toISOString();
+        const newDuration = displayDuration;
+        const updatedLogs = task.workLogs?.map(log => 
+            log.id === activeLog.id ? {...log, duration: newDuration, endDatetime } : log
+        ) || [];
+        updateTask(projectId, task.id, { workLogs: updatedLogs });
+     }
+    setTimerState('idle');
+    setActiveLogId(null);
+    setDisplayDuration(0);
   };
   
   const formatDuration = (totalSeconds: number) => {
@@ -131,9 +143,11 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
   }
 
-  const formatDate = (isoString: string | undefined) => {
+  const formatDate = (isoString: string | undefined, format: 'date' | 'time') => {
     if (!isoString) return 'N/A';
-    return new Date(isoString).toLocaleString();
+    const date = new Date(isoString);
+    if(format === 'date') return date.toLocaleDateString();
+    return date.toLocaleTimeString();
   };
 
   const priorityVariant = {
@@ -152,12 +166,12 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
              <AlertDialog>
                 <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={(e) => {e.stopPropagation();}}>
                         <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+                    <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); setIsEditing(true); }}>
                         <Edit className="mr-2 h-4 w-4" />
                         <span>Edit Task</span>
                     </DropdownMenuItem>
@@ -211,33 +225,46 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                     <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
                         <div>
                             <p className="font-mono text-lg font-semibold">{formatDuration(displayDuration)}</p>
-                            <p className="text-xs text-muted-foreground">Total time logged</p>
+                            <p className="text-xs text-muted-foreground">Active session</p>
                         </div>
-                        {timerState !== 'finished' && (
-                          <div className="flex gap-2">
-                             <Button
-                                variant={timerState === 'running' ? 'secondary' : 'default'}
-                                onClick={handleToggleTimer}
-                                size="sm"
-                              >
-                                {timerState === 'running' ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                                {timerState === 'running' ? 'Pause' : 'Start'}
-                              </Button>
-                              {(timerState === 'running' || timerState === 'paused') && (
-                                <Button variant="destructive" onClick={handleFinishTimer} size="sm">
-                                  <CheckCircle className="mr-2 h-4 w-4" />
-                                  Finish
-                                </Button>
-                              )}
-                          </div>
+                        <div className="flex gap-2">
+                            <Button
+                            variant={timerState === 'running' ? 'secondary' : 'default'}
+                            onClick={handleToggleTimer}
+                            size="sm"
+                            >
+                            {timerState === 'running' ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                            {timerState === 'running' ? 'Pause' : 'Start'}
+                            </Button>
+                            {(timerState === 'running' || timerState === 'paused') && (
+                            <Button variant="outline" onClick={handleFinishTimer} size="sm">
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Finish
+                            </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h6 className="text-sm font-semibold text-foreground">Work Logs ({formatDuration(totalDuration)})</h6>
+                        {task.workLogs && task.workLogs.length > 0 ? (
+                           <div className="space-y-2 rounded-md border p-2">
+                             {task.workLogs.toReversed().map(log => (
+                                <div key={log.id} className="text-xs text-muted-foreground p-2 rounded-md bg-background hover:bg-muted/50">
+                                    <div className='flex justify-between items-center font-medium text-foreground'>
+                                        <span>{formatDate(log.startDatetime, 'date')}</span>
+                                        <Badge variant={log.endDatetime ? "secondary" : "default"}>{log.endDatetime ? formatDuration(log.duration) : "In Progress"}</Badge>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                        <span>{formatDate(log.startDatetime, 'time')} - {log.endDatetime ? formatDate(log.endDatetime, 'time') : '...'}</span>
+                                    </div>
+                                </div>
+                            ))}
+                           </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground text-center py-4">No work sessions logged yet.</p>
                         )}
                     </div>
-                     {timerState === 'finished' && (
-                        <div className="text-xs text-muted-foreground space-y-1 border-t pt-3 mt-3">
-                            <p><strong>Started:</strong> {formatDate(task.startDatetime)}</p>
-                            <p><strong>Finished:</strong> {formatDate(task.endDatetime)}</p>
-                        </div>
-                    )}
                 </div>
             </>
         )}

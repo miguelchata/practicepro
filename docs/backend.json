@@ -78,7 +78,7 @@
         },
         "status": {
           "type": "string",
-          "enum": ["Backlog", "To Do", "In Progress", "Done"],
+          "enum": ["Backlog", "In Progress", "Done"],
           "description": "The current status of the user story."
         }
       },
@@ -107,22 +107,37 @@
           "enum": ["Backlog", "In Progress", "Done"],
           "description": "The current status of the task."
         },
-        "startDatetime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The start date and time of the task timer."
-        },
-        "endDatetime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The end date and time of the task timer."
-        },
-        "duration": {
-            "type": "number",
-            "description": "The duration of the task in seconds."
+        "workLogs": {
+            "type": "array",
+            "description": "An array of work log entries for this task.",
+            "items": {
+                "$ref": "#/entities/workLog"
+            }
         }
       },
       "required": ["title", "description", "priority", "status"]
+    },
+    "workLog": {
+        "title": "Work Log",
+        "description": "Represents a single work session for a task.",
+        "type": "object",
+        "properties": {
+            "startDatetime": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The start date and time of the work session."
+            },
+            "endDatetime": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The end date and time of the work session."
+            },
+            "duration": {
+                "type": "number",
+                "description": "The duration of the work session in seconds."
+            }
+        },
+        "required": ["startDatetime", "duration"]
     },
     "projectPrefixCounter": {
       "title": "Project Prefix Counter",

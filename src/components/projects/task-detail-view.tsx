@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Task } from '@/lib/types';
 import {
   Card,
@@ -47,6 +47,31 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const [isEditing, setIsEditing] = useState(false);
   const [isTiming, setIsTiming] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [displayDuration, setDisplayDuration] = useState(task.duration || 0);
+
+  useEffect(() => {
+    setDisplayDuration(task.duration || 0);
+  }, [task.duration]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isTiming && startTime) {
+      timer = setInterval(() => {
+        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        setDisplayDuration((task.duration || 0) + elapsed);
+      }, 1000);
+    } else {
+      if (timer) {
+        clearInterval(timer);
+      }
+    }
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [isTiming, startTime, task.duration]);
+
 
   const handleDelete = () => {
     deleteTask(projectId, task.id);
@@ -63,12 +88,14 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
       // Finish timer
       const endTime = new Date();
       const duration = startTime ? Math.round((endTime.getTime() - startTime) / 1000) : 0;
+      const finalDuration = (task.duration || 0) + duration;
       updateTask(projectId, task.id, { 
           endDatetime: endTime.toISOString(),
-          duration: (task.duration || 0) + duration,
+          duration: finalDuration,
       });
       setIsTiming(false);
       setStartTime(null);
+      setDisplayDuration(finalDuration);
     } else {
       // Start timer
       const newStartTime = new Date();
@@ -159,7 +186,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                     <h5 className="font-semibold text-foreground">Time Tracker</h5>
                     <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
                         <div>
-                            <p className="font-mono text-lg font-semibold">{task.duration ? formatDuration(task.duration) : '0h 0m 0s'}</p>
+                            <p className="font-mono text-lg font-semibold">{formatDuration(displayDuration)}</p>
                             <p className="text-xs text-muted-foreground">Total time logged</p>
                         </div>
                         <Button

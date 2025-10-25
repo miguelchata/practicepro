@@ -22,6 +22,7 @@ import {
   PauseCircle,
   CheckCircle,
   Circle,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -39,12 +40,9 @@ import { useTasks } from '@/firebase/firestore/use-collection';
 import { useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { TaskCard } from '@/components/projects/task-card';
 import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
+import { TaskDetailView } from '@/components/projects/task-detail-view';
 
-const KANBAN_COLUMNS: TaskStatus[] = [
-  'Backlog',
-  'In Progress',
-  'Done',
-];
+const KANBAN_COLUMNS: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 
 const priorityOrder: Record<TaskPriority, number> = {
   Urgent: 4,
@@ -52,7 +50,6 @@ const priorityOrder: Record<TaskPriority, number> = {
   Medium: 2,
   Low: 1,
 };
-
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -63,6 +60,7 @@ export default function ProjectDetailPage() {
   const updateTask = useUpdateTask();
 
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -71,7 +69,7 @@ export default function ProjectDetailPage() {
       Done: [],
     };
     tasks.forEach((task) => {
-      if (task.status) {
+      if (task.status && grouped[task.status]) {
         grouped[task.status].push(task);
       } else {
         grouped.Backlog.push(task); // Default to backlog
@@ -79,16 +77,21 @@ export default function ProjectDetailPage() {
     });
 
     // Sort the backlog column by priority
-    grouped.Backlog.sort((a, b) => (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0));
+    grouped.Backlog.sort(
+      (a, b) =>
+        (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0)
+    );
 
     return grouped;
   }, [tasks]);
 
-  const handleTaskAdded = async (newTasks: Omit<Task, 'id'> | Omit<Task, 'id'>[]) => {
+  const handleTaskAdded = async (
+    newTasks: Omit<Task, 'id'> | Omit<Task, 'id'>[]
+  ) => {
     await addTasks(projectId, newTasks);
     setIsAddTaskDialogOpen(false);
   };
-  
+
   const handleDragEnd = (task: Task, newStatus: TaskStatus) => {
     if (task.status !== newStatus) {
       updateTask(projectId, task.id, { status: newStatus });
@@ -100,15 +103,11 @@ export default function ProjectDetailPage() {
       <div className="flex min-h-screen w-full flex-col">
         <Header title="Loading Project..." />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-40 w-full" />
           <div className="grid gap-6 md:grid-cols-3">
-            <div className="md:col-span-2 space-y-6">
-              <Skeleton className="h-64 w-full" />
-              <Skeleton className="h-48 w-full" />
-            </div>
-            <div className="space-y-6">
-              <Skeleton className="h-96 w-full" />
-            </div>
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
           </div>
         </main>
       </div>
@@ -170,25 +169,26 @@ export default function ProjectDetailPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
-            {project.title}
-          </h1>
-          <Badge variant={getStatusVariant(project.status)} className="ml-auto">
-            {project.status}
-          </Badge>
-          <Button asChild>
-            <Link href={`/projects/${project.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Project
-            </Link>
-          </Button>
         </div>
+
         <Card>
-          <CardHeader>
-            <CardTitle>Project Details</CardTitle>
-            <CardDescription>{project.description}</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
+                {project.title}
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                {project.description}
+              </p>
+            </div>
+            <Button asChild>
+              <Link href={`/projects/${project.id}/edit`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Project
+              </Link>
+            </Button>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
+          <CardContent className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 border-t pt-4 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               {getStatusIcon(project.status)}
               <span>
@@ -211,15 +211,20 @@ export default function ProjectDetailPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight font-headline">Task Board</h2>
+            <h2 className="text-2xl font-bold tracking-tight font-headline">
+              Task Board
+            </h2>
             <p className="text-muted-foreground">
               Drag and drop tasks to manage your project's workflow.
             </p>
           </div>
-          <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
+          <Dialog
+            open={isAddTaskDialogOpen}
+            onOpenChange={setIsAddTaskDialogOpen}
+          >
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Task
@@ -239,56 +244,63 @@ export default function ProjectDetailPage() {
             </DialogContent>
           </Dialog>
         </div>
-        
-        {tasksLoading ? (
-            <div className="grid grid-cols-4 gap-4">
-              {KANBAN_COLUMNS.map(col => (
-                  <div key={col} className="p-2 bg-muted rounded-lg">
-                    <Skeleton className="h-6 w-3/4 mb-4" />
-                    <Skeleton className="h-24 w-full" />
-                  </div>
-              ))}
-            </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-            {KANBAN_COLUMNS.map((status) => (
-              <div
-                key={status}
-                className="rounded-lg bg-muted/50 p-3"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => {
-                  const taskData = window.localStorage.getItem('draggingTask');
-                  if (taskData) {
-                    const task: Task = JSON.parse(taskData);
-                    handleDragEnd(task, status);
-                    window.localStorage.removeItem('draggingTask');
-                  }
-                }}
-              >
-                <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
-                  <span>{status}</span>
-                  <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
-                    {tasksByStatus[status].length}
-                  </span>
-                </h3>
-                <div className="space-y-3">
-                  {tasksByStatus[status].map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      projectId={projectId}
-                    />
-                  ))}
-                  {tasksByStatus[status].length === 0 && (
-                    <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                      Drop tasks here
-                    </div>
-                  )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 items-start col-span-1", selectedTask ? 'lg:col-span-2 lg:grid-cols-3' : 'lg:col-span-3 lg:grid-cols-3')}>
+            {tasksLoading ? (
+              KANBAN_COLUMNS.map((col) => (
+                <div key={col} className="p-2 bg-muted rounded-lg">
+                  <Skeleton className="h-6 w-3/4 mb-4" />
+                  <Skeleton className="h-24 w-full" />
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              KANBAN_COLUMNS.map((status) => (
+                <div
+                  key={status}
+                  className="rounded-lg bg-muted/50 p-3"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    const taskData = window.localStorage.getItem('draggingTask');
+                    if (taskData) {
+                      const task: Task = JSON.parse(taskData);
+                      handleDragEnd(task, status);
+                      window.localStorage.removeItem('draggingTask');
+                    }
+                  }}
+                >
+                  <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
+                    <span>{status}</span>
+                    <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
+                      {tasksByStatus[status].length}
+                    </span>
+                  </h3>
+                  <div className="space-y-3">
+                    {tasksByStatus[status].map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        projectId={projectId}
+                        onTaskSelected={setSelectedTask}
+                        isSelected={selectedTask?.id === task.id}
+                      />
+                    ))}
+                    {tasksByStatus[status].length === 0 && (
+                      <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                        Drop tasks here
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-        )}
+           {selectedTask && (
+              <div className="col-span-1 lg:col-span-1">
+                <TaskDetailView task={selectedTask} onClose={() => setSelectedTask(null)} />
+              </div>
+            )}
+        </div>
       </main>
     </div>
   );

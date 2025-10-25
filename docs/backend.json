@@ -106,6 +106,20 @@
           "type": "string",
           "enum": ["Backlog", "In Progress", "Done"],
           "description": "The current status of the task."
+        },
+        "startDatetime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The start date and time of the task timer."
+        },
+        "endDatetime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The end date and time of the task timer."
+        },
+        "duration": {
+            "type": "number",
+            "description": "The duration of the task in seconds."
         }
       },
       "required": ["title", "description", "priority", "status"]

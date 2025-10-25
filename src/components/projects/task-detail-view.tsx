@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { X, MoreVertical, Edit, Trash2, Play, Square } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useDeleteTask, useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { EditTaskForm } from './edit-task-form';
+import { Separator } from '../ui/separator';
 
 
 type TaskDetailViewProps = {
@@ -44,6 +45,8 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const deleteTask = useDeleteTask();
   const updateTask = useUpdateTask();
   const [isEditing, setIsEditing] = useState(false);
+  const [isTiming, setIsTiming] = useState(false);
+  const [startTime, setStartTime] = useState<number | null>(null);
 
   const handleDelete = () => {
     deleteTask(projectId, task.id);
@@ -54,6 +57,33 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     await updateTask(projectId, task.id, updatedData);
     setIsEditing(false);
   };
+  
+  const handleToggleTimer = () => {
+    if (isTiming) {
+      // Finish timer
+      const endTime = new Date();
+      const duration = startTime ? Math.round((endTime.getTime() - startTime) / 1000) : 0;
+      updateTask(projectId, task.id, { 
+          endDatetime: endTime.toISOString(),
+          duration: (task.duration || 0) + duration,
+      });
+      setIsTiming(false);
+      setStartTime(null);
+    } else {
+      // Start timer
+      const newStartTime = new Date();
+      setStartTime(newStartTime.getTime());
+      updateTask(projectId, task.id, { startDatetime: newStartTime.toISOString() });
+      setIsTiming(true);
+    }
+  };
+  
+  const formatDuration = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
 
   const priorityVariant = {
     Low: 'secondary',
@@ -82,7 +112,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                        <DropdownMenuItem className="text-destructive" onSelect={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             <span>Delete Task</span>
                         </DropdownMenuItem>
@@ -115,14 +145,31 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
             <Badge variant="outline">{task.status}</Badge>
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {isEditing ? (
             <EditTaskForm task={task} onTaskUpdated={handleTaskUpdated} onCancel={() => setIsEditing(false)} />
         ) : (
             <>
-                <div>
-                <h5 className="font-semibold text-foreground mb-2">Description</h5>
-                <p className="text-sm text-muted-foreground">{task.description}</p>
+                <div className="space-y-1">
+                  <h5 className="font-semibold text-foreground">Description</h5>
+                  <p className="text-sm text-muted-foreground">{task.description}</p>
+                </div>
+                <Separator />
+                 <div className="space-y-3">
+                    <h5 className="font-semibold text-foreground">Time Tracker</h5>
+                    <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+                        <div>
+                            <p className="font-mono text-lg font-semibold">{task.duration ? formatDuration(task.duration) : '0h 0m 0s'}</p>
+                            <p className="text-xs text-muted-foreground">Total time logged</p>
+                        </div>
+                        <Button
+                            variant={isTiming ? 'destructive' : 'default'}
+                            onClick={handleToggleTimer}
+                        >
+                            {isTiming ? <Square className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                            {isTiming ? 'Finish Timer' : 'Start Timer'}
+                        </Button>
+                    </div>
                 </div>
             </>
         )}

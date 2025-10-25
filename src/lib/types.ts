@@ -52,6 +52,9 @@ export type Task = {
     description: string;
     priority: TaskPriority;
     status: TaskStatus;
+    startDatetime?: string;
+    endDatetime?: string;
+    duration?: number;
 };
 
 export type UserStoryStatus = 'Backlog' | 'To Do' | 'In Progress' | 'Done';

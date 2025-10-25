@@ -41,6 +41,7 @@ import { useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { TaskCard } from '@/components/projects/task-card';
 import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 import { TaskDetailView } from '@/components/projects/task-detail-view';
+import { cn } from '@/lib/utils';
 
 const KANBAN_COLUMNS: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 
@@ -146,19 +147,6 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const getStatusVariant = (status: ProjectStatus) => {
-    switch (status) {
-      case 'Completed':
-        return 'default';
-      case 'On Hold':
-        return 'secondary';
-      case 'In Progress':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
-
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title={project.title} />
@@ -213,7 +201,7 @@ export default function ProjectDetailPage() {
         </Card>
         
         {selectedTask ? (
-            <TaskDetailView task={selectedTask} onClose={() => setSelectedTask(null)} />
+            <TaskDetailView task={selectedTask} projectId={projectId} onClose={() => setSelectedTask(null)} />
         ) : (
           <>
             <div className="flex items-center justify-between">

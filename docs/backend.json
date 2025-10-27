@@ -135,6 +135,10 @@
             "duration": {
                 "type": "number",
                 "description": "The duration of the work session in seconds."
+            },
+            "description": {
+                "type": "string",
+                "description": "A description of the work done during the session."
             }
         },
         "required": ["startDatetime", "duration"]

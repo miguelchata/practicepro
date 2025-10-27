@@ -51,6 +51,7 @@ export type WorkLog = {
     startDatetime: string;
     endDatetime?: string;
     duration: number; // in seconds
+    description?: string;
 }
 
 export type Task = {

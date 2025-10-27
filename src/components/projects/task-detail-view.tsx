@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, MoreVertical, Edit, Trash2, Play, Square, CheckCircle, Pause } from 'lucide-react';
+import { X, MoreVertical, Edit, Trash2, Play, Pause, CheckCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,9 @@ import {
 import { useDeleteTask, useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { EditTaskForm } from './edit-task-form';
 import { Separator } from '../ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Label } from '../ui/label';
+import { Textarea } from '../ui/textarea';
 
 type TimerState = 'idle' | 'running' | 'paused';
 
@@ -46,6 +49,8 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const deleteTask = useDeleteTask();
   const updateTask = useUpdateTask();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoggingWork, setIsLoggingWork] = useState(false);
+  const [logDescription, setLogDescription] = useState('');
 
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [activeLogId, setActiveLogId] = useState<string | null>(null);
@@ -66,22 +71,20 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
       setActiveLogId(unfinishedLog.id);
       setTimerState('paused');
       setDisplayDuration(unfinishedLog.duration);
+    } else {
+        setTimerState('idle');
+        setActiveLogId(null);
+        setDisplayDuration(0);
     }
   }, [task.workLogs]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-
+  
     if (timerState === 'running' && activeLog) {
-      const startTime = new Date(activeLog.startDatetime).getTime();
-      const initialDuration = activeLog.duration || 0;
-
-      // When resuming a paused timer, we need to calculate elapsed time since it was last paused, not from the very beginning
-      const lastPauseTime = Date.now();
-      const elapsedSinceLastStart = (lastPauseTime - startTime); // this is incorrect if paused multiple times
-      
       const sessionStartTime = Date.now();
-
+      const initialDuration = activeLog.duration || 0;
+  
       timer = setInterval(() => {
         const elapsed = Math.round((Date.now() - sessionStartTime) / 1000);
         setDisplayDuration(initialDuration + elapsed);
@@ -132,13 +135,24 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   };
 
   const handleFinishTimer = () => {
-     if (activeLogId && activeLog) {
-        const endDatetime = new Date().toISOString();
-        const updatedLogs = task.workLogs?.map(log => 
-            log.id === activeLogId ? {...log, duration: displayDuration, endDatetime } : log
-        ) || [];
-        updateTask(projectId, task.id, { workLogs: updatedLogs });
-     }
+    if (timerState === 'running' || timerState === 'paused') {
+        if(timerState === 'running') {
+            setTimerState('paused'); // Pause it first to stop the interval
+        }
+        setIsLoggingWork(true); // Open the description dialog
+    }
+  };
+
+  const handleSaveLog = () => {
+    if (activeLogId && activeLog) {
+       const endDatetime = new Date().toISOString();
+       const updatedLogs = task.workLogs?.map(log => 
+           log.id === activeLogId ? {...log, duration: displayDuration, endDatetime, description: logDescription } : log
+       ) || [];
+       updateTask(projectId, task.id, { workLogs: updatedLogs });
+    }
+    setIsLoggingWork(false);
+    setLogDescription('');
     setTimerState('idle');
     setActiveLogId(null);
     setDisplayDuration(0);
@@ -167,6 +181,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   } as const;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between">
@@ -264,6 +279,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                                         <span>{formatDate(log.startDatetime, 'date')}</span>
                                         <Badge variant={log.endDatetime ? "secondary" : "default"}>{log.endDatetime ? formatDuration(log.duration) : "In Progress"}</Badge>
                                     </div>
+                                    {log.description && <p className="text-sm my-1">{log.description}</p>}
                                     <div className="flex justify-between items-center mt-1">
                                         <span>{formatDate(log.startDatetime, 'time')} - {log.endDatetime ? formatDate(log.endDatetime, 'time') : '...'}</span>
                                     </div>
@@ -279,5 +295,27 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={isLoggingWork} onOpenChange={setIsLoggingWork}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Log your work</DialogTitle>
+                <DialogDescription>
+                    Add a brief description of what you accomplished during this session.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-2">
+                <Label htmlFor="log-description">Description</Label>
+                <Textarea
+                    id="log-description"
+                    value={logDescription}
+                    onChange={(e) => setLogDescription(e.target.value)}
+                    placeholder="e.g., Refactored the authentication hook and fixed a bug in the login form."
+                />
+            </div>
+            <Button onClick={handleSaveLog}>Save Log</Button>
+        </DialogContent>
+    </Dialog>
+    </>
   );
 }

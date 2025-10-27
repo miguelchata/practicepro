@@ -99,7 +99,6 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     if (timerStatus === 'running') {
       // Pausing the timer
       setTimerStatus('paused');
-      setPauseCount(prev => prev + 1);
     } else { // idle or paused
       setTimerStatus('running');
       if (timerStatus === 'idle') {
@@ -114,6 +113,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
 
   const handleFinishTimer = () => {
     setTimerStatus('paused'); // Pause the timer before opening dialog
+    setPauseCount(prev => prev + 1);
     setIsLogDialogOpen(true);
   };
   
@@ -415,3 +415,5 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     </>
   );
 }
+
+    

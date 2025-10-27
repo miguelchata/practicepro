@@ -172,19 +172,37 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
 
   const formatDuration = (seconds: number) => {
     if (seconds < 0) seconds = 0;
-    if (seconds < 60) return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-  
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
-  
-    const parts = [];
-    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-    if (remainingSeconds > 0 && hours === 0) parts.push(`${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`);
     
-    return parts.join(', ');
-  };
+    const parts = [];
+    if (hours > 0) parts.push(`${hours} h`);
+    if (minutes > 0) parts.push(`${minutes} m`);
+
+    if (seconds < 60) {
+        parts.push(`${remainingSeconds} s`);
+    } else if (hours === 0 && minutes > 0 && remainingSeconds > 0) {
+        // If under an hour, but over a minute, show seconds.
+        // This part is a bit tricky based on the prompt.
+        // The prompt says: "if time is more than minute show only x h, y m"
+        // And "x h, y m, z s"
+        // Let's stick to the more concise version. If it has minutes, don't show seconds.
+    }
+    
+    if (hours > 0 && minutes > 0) {
+        return `${hours} h, ${minutes} m`;
+    }
+    if (hours > 0) {
+        return `${hours} h`;
+    }
+    if (minutes > 0) {
+        return `${minutes} m, ${remainingSeconds} s`;
+    }
+    return `${remainingSeconds} s`;
+};
+  
 
   const handleDelete = () => {
     if (!task) return;

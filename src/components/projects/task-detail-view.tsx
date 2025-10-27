@@ -207,10 +207,9 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     }
 
     if (seconds >= 60 && hours === 0) {
-      if (minutes > 0) parts.push(`${minutes} m`);
-      return parts.join(', ');
+      if (minutes > 0) return `${minutes} m`;
     }
-
+    
     if (parts.length > 0) {
         return parts.join(', ');
     }
@@ -346,6 +345,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
             </>
         )}
         <Separator />
+        
         {task.status !== 'Done' && (
           <div className="space-y-4">
               <h5 className="font-semibold text-foreground">Time Tracker</h5>
@@ -386,41 +386,41 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
                       </div>
                   </div>
               )}
-              
-              <div className="space-y-3">
-                  <h6 className="font-semibold">Work Logs {totalDuration > 0 ? `(${formatDuration(totalDuration)})` : ''}</h6>
-                  {task.workLogs && task.workLogs.length > 0 ? (
-                      <ul className="space-y-3">
-                          {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
-                              const logDate = new Date(log.date + 'T00:00:00');
-                            
-                              return (
-                                log.endTime && (
-                                  <li key={log.id} className="rounded-lg border p-3">
-                                      <div className="flex justify-between items-start">
-                                          <div>
-                                              <p className="font-medium">{logDate.toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                              <p className="text-xs text-muted-foreground">
-                                                  {log.startTime} - {log.endTime}
-                                              </p>
-                                          </div>
-                                          <div className="text-right">
-                                              <p className="font-semibold">{formatDuration(log.duration)}</p>
-                                              {log.pauseCount && log.pauseCount > 0 && <p className='text-xs text-amber-600'>{log.pauseCount} {log.pauseCount === 1 ? 'pause' : 'pauses'}</p>}
-                                          </div>
-                                      </div>
-                                      {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
-                                  </li>
-                                )
-                              )
-                          })}
-                      </ul>
-                  ) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">No work sessions logged yet.</p>
-                  )}
-              </div>
           </div>
         )}
+        
+        <div className="space-y-3">
+            <h6 className="font-semibold">Work Logs {totalDuration > 0 ? `(${formatDuration(totalDuration)})` : ''}</h6>
+            {task.workLogs && task.workLogs.length > 0 ? (
+                <ul className="space-y-3">
+                    {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
+                        const logDate = new Date(log.date + 'T00:00:00');
+                      
+                        return (
+                          log.endTime && (
+                            <li key={log.id} className="rounded-lg border p-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-medium">{logDate.toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {log.startTime} - {log.endTime}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-semibold">{formatDuration(log.duration)}</p>
+                                        {log.pauseCount && log.pauseCount > 0 && <p className='text-xs text-amber-600'>{log.pauseCount} {log.pauseCount === 1 ? 'pause' : 'pauses'}</p>}
+                                    </div>
+                                </div>
+                                {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
+                            </li>
+                          )
+                        )
+                    })}
+                </ul>
+            ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No work sessions logged yet.</p>
+            )}
+        </div>
       </CardContent>
     </Card>
     <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>

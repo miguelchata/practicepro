@@ -244,7 +244,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
 
         <div className="space-y-4">
             <h5 className="font-semibold text-foreground">Time Tracker</h5>
-            {timerStatus === 'idle' && !task.workLogs?.some(log => !log.endDatetime) && (
+            {timerStatus === 'idle' ? (
                  <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
                     <div>
                         <p className="font-mono text-lg font-semibold">{formatDuration(totalDuration)}</p>
@@ -255,9 +255,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                         Start
                     </Button>
                 </div>
-            )}
-           
-            {(timerStatus === 'running' || timerStatus === 'paused') && (
+            ) : (
                 <div className="rounded-lg border border-primary/50 bg-primary/10 p-4">
                     <div className="flex items-center justify-between">
                          <div>

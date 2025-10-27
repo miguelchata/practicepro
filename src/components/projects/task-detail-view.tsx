@@ -135,7 +135,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
       description: logDescription,
       lostTime: lostTimeSec,
     };
-
+    
     const updatedLogs = [...(task.workLogs || []), newLog];
 
     await updateTask(projectId, task.id, { workLogs: updatedLogs });
@@ -166,10 +166,24 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
 
 
   const formatDuration = (seconds: number) => {
-    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-    return `${h}h ${m}m ${s}s`;
+    if (seconds < 60) {
+      return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+    }
+    const parts = [];
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    if (h > 0) {
+        parts.push(`${h} hour${h > 1 ? 's' : ''}`);
+    }
+    if (m > 0) {
+        parts.push(`${m} minute${m > 1 ? 's' : ''}`);
+    }
+    if (s > 0 && h === 0) { // Only show seconds if duration is less than an hour
+        parts.push(`${s} second${s > 1 ? 's' : ''}`);
+    }
+    return parts.join(', ');
   };
 
   const handleDelete = () => {

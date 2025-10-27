@@ -100,6 +100,9 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
       // Pausing the timer
       setTimerStatus('paused');
     } else { // idle or paused
+      if (timerStatus === 'paused') {
+          // This means we are resuming
+      }
       setTimerStatus('running');
       if (timerStatus === 'idle') {
         // Starting a new session
@@ -191,6 +194,9 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
        const parts = [];
        if (hours > 0) parts.push(`${hours} h`);
        if (minutes > 0) parts.push(`${minutes} m`);
+       if (parts.length < 2 && remainingSeconds > 0 && hours === 0) {
+           parts.push(`${remainingSeconds} s`)
+       }
        return parts.join(', ');
     }
     
@@ -320,8 +326,8 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
             {timerStatus === 'idle' ? (
                  <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
                     <div>
-                        <p className="font-mono text-lg font-semibold">{formatDuration(totalDuration)}</p>
-                        <p className="text-xs text-muted-foreground">Total time logged</p>
+                        <p className="font-mono text-lg font-semibold">{todaysLog ? formatDuration(todaysLog.duration) : formatDuration(0)}</p>
+                        <p className="text-xs text-muted-foreground">{todaysLog ? "Today's total" : 'Total time logged'}</p>
                     </div>
                     {todaysLog ? (
                       <Button onClick={() => handleContinueSession(todaysLog)}>
@@ -415,5 +421,3 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     </>
   );
 }
-
-    

@@ -146,9 +146,9 @@
                 "type": "string",
                 "description": "A description of the work done during the session."
             },
-            "lostTime": {
+            "pauseCount": {
                 "type": "number",
-                "description": "The total time the timer was paused in seconds."
+                "description": "The number of times the timer was paused."
             }
         },
         "required": ["id", "date", "startTime", "endTime", "duration"]

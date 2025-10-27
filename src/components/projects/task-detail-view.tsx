@@ -57,13 +57,13 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
   const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle');
   const [elapsedTime, setElapsedTime] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
-  const [pauseStartTime, setPauseStartTime] = useState<number | null>(null);
-  const [totalPausedTime, setTotalPausedTime] = useState(0);
+  const [pauseCount, setPauseCount] = useState(0);
+
 
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [logDescription, setLogDescription] = useState('');
   
-  const [continuedLogId, setContinuedLogId] = useState<number | null>(null);
+  const [continuedLog, setContinuedLog] = useState<WorkLog | null>(null);
 
   const totalDuration = useMemo(() => {
     return task?.workLogs?.reduce((acc, log) => acc + log.duration, 0) || 0;
@@ -96,74 +96,56 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
 
 
   const handleStartPauseTimer = () => {
-    const now = Date.now();
-
     if (timerStatus === 'running') {
       // Pausing the timer
       setTimerStatus('paused');
-      setPauseStartTime(now);
+      setPauseCount(prev => prev + 1);
     } else { // idle or paused
       setTimerStatus('running');
       if (timerStatus === 'idle') {
         // Starting a new session
         setElapsedTime(0);
-        setTotalPausedTime(0);
-        setSessionStartTime(now);
-        setContinuedLogId(null);
-      } else { // Resuming from pause
-        if(pauseStartTime) {
-          setTotalPausedTime(prev => prev + (now - pauseStartTime));
-          setPauseStartTime(null);
-        }
+        setPauseCount(0);
+        setSessionStartTime(Date.now());
+        setContinuedLog(null);
       }
     }
   };
 
   const handleFinishTimer = () => {
     setTimerStatus('paused'); // Pause the timer before opening dialog
-    if(timerStatus === 'running' && pauseStartTime === null){
-        setPauseStartTime(Date.now());
-    }
     setIsLogDialogOpen(true);
   };
   
   const handleSaveLog = async () => {
-    if (!sessionStartTime || !task) return;
+    if (!task) return;
   
-    let finalPausedTime = totalPausedTime;
     const endTime = new Date();
-  
-    if (pauseStartTime) {
-      finalPausedTime += endTime.getTime() - pauseStartTime;
-    }
-  
-    const startTime = new Date(sessionStartTime);
-  
     const finalDurationSec = Math.round(elapsedTime);
-    const lostTimeSec = Math.round(finalPausedTime / 1000);
   
-    // Force date creation in local timezone to avoid UTC conversion issues
-    const year = startTime.getFullYear();
-    const month = (startTime.getMonth() + 1).toString().padStart(2, '0');
-    const day = startTime.getDate().toString().padStart(2, '0');
-    const localDateString = `${year}-${month}-${day}`;
-
-    if (continuedLogId) {
+    if (continuedLog) {
       // Update the existing log
       const updatedLogs = (task.workLogs || []).map(log => {
-        if (log.id === continuedLogId) {
+        if (log.id === continuedLog.id) {
           return {
             ...log,
             endTime: endTime.toTimeString().split(' ')[0],
             duration: finalDurationSec,
             description: logDescription,
-            lostTime: lostTimeSec,
+            pauseCount: pauseCount,
           };
         }
         return log;
       });
       await updateTask(projectId, task.id, { workLogs: updatedLogs });
     } else {
+       if (!sessionStartTime) return;
+       const startTime = new Date(sessionStartTime);
+       const year = startTime.getFullYear();
+       const month = (startTime.getMonth() + 1).toString().padStart(2, '0');
+       const day = startTime.getDate().toString().padStart(2, '0');
+       const localDateString = `${year}-${month}-${day}`;
+
       // Add a new log
       const newLog: WorkLog = {
         id: endTime.getTime(),
@@ -172,7 +154,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
         endTime: endTime.toTimeString().split(' ')[0],
         duration: finalDurationSec,
         description: logDescription,
-        lostTime: lostTimeSec,
+        pauseCount: pauseCount,
       };
       const updatedLogs = [...(task.workLogs || []), newLog];
       await updateTask(projectId, task.id, { workLogs: updatedLogs });
@@ -181,10 +163,9 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     setTimerStatus('idle');
     setElapsedTime(0);
     setSessionStartTime(null);
-    setPauseStartTime(null);
-    setTotalPausedTime(0);
+    setPauseCount(0);
     setLogDescription('');
-    setContinuedLogId(null);
+    setContinuedLog(null);
     setIsLogDialogOpen(false);
   };
   
@@ -192,12 +173,10 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     if (!task) return;
     
     // Set up the timer to continue from where it left off
-    const now = Date.now();
-    setSessionStartTime(now - (logToContinue.duration * 1000));
     setElapsedTime(logToContinue.duration);
-    setTotalPausedTime(logToContinue.lostTime || 0 * 1000);
     setLogDescription(logToContinue.description || '');
-    setContinuedLogId(logToContinue.id);
+    setContinuedLog(logToContinue);
+    setPauseCount(logToContinue.pauseCount || 0);
     setTimerStatus('running'); // Immediately start the timer
   };
 
@@ -208,20 +187,14 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
     
-    const parts = [];
-    if (hours > 0) parts.push(`${hours} h`);
-    if (minutes > 0) parts.push(`${minutes} m`);
-    if (seconds < 60) {
-        parts.push(`${remainingSeconds} s`);
-    } else if (minutes > 0 && remainingSeconds > 0 && hours === 0) {
-        parts.push(`${remainingSeconds} s`);
+    if (seconds >= 60) {
+       const parts = [];
+       if (hours > 0) parts.push(`${hours} h`);
+       if (minutes > 0) parts.push(`${minutes} m`);
+       return parts.join(', ');
     }
     
-    if (hours > 0 && minutes > 0) {
-        return `${hours} h, ${minutes} m`;
-    }
-    
-    return parts.join(', ') || '0 s';
+    return `${remainingSeconds} s`;
 };
 
   const handleDelete = () => {
@@ -367,7 +340,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
                     <div className="flex items-center justify-between">
                          <div>
                             <p className="font-mono text-2xl font-bold text-primary">{formatDuration(elapsedTime)}</p>
-                            <p className="text-xs text-primary/80">Active session</p>
+                            <p className="text-xs text-primary/80">Active session {pauseCount > 0 ? `(${pauseCount} pauses)` : ''}</p>
                         </div>
                         <div className="flex gap-2">
                             <Button variant="outline" size="icon" onClick={handleStartPauseTimer}>
@@ -383,13 +356,11 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
             )}
             
             <div className="space-y-3">
-                 <h6 className="font-semibold">Work Logs ({totalDuration > 0 ? formatDuration(totalDuration) : ''})</h6>
+                 <h6 className="font-semibold">Work Logs {totalDuration > 0 ? `(${formatDuration(totalDuration)})` : ''}</h6>
                 {task.workLogs && task.workLogs.length > 0 ? (
                     <ul className="space-y-3">
                         {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
-                            // The date from firestore is a string 'YYYY-MM-DD', create a new Date from it, but account for timezone
-                            // by parsing it as UTC then displaying in local time.
-                            const logDate = new Date(`${log.date}T00:00:00Z`);
+                            const logDate = new Date(log.date + 'T00:00:00');
                            
                             return (
                                log.endTime && (
@@ -403,7 +374,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
                                         </div>
                                         <div className="text-right">
                                             <p className="font-semibold">{formatDuration(log.duration)}</p>
-                                            {log.lostTime && log.lostTime > 0 && <p className='text-xs text-amber-600'>Paused: {formatDuration(log.lostTime)}</p>}
+                                            {log.pauseCount && log.pauseCount > 0 && <p className='text-xs text-amber-600'>{log.pauseCount} {log.pauseCount === 1 ? 'pause' : 'pauses'}</p>}
                                         </div>
                                     </div>
                                     {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
@@ -444,5 +415,3 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     </>
   );
 }
-
-    

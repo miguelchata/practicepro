@@ -36,16 +36,19 @@ import { Separator } from '../ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { useDoc } from '@/firebase/firestore/use-doc';
+import { Skeleton } from '../ui/skeleton';
 
 type TimerStatus = 'idle' | 'running' | 'paused';
 
 type TaskDetailViewProps = {
-  task: Task;
+  taskId: string;
   projectId: string;
   onClose: () => void;
 };
 
-export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps) {
+export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewProps) {
+  const { data: task, loading: taskLoading } = useDoc<Task>(`projects/${projectId}/tasks/${taskId}`);
   const deleteTask = useDeleteTask();
   const updateTask = useUpdateTask();
   const [isEditing, setIsEditing] = useState(false);
@@ -61,8 +64,8 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const [logDescription, setLogDescription] = useState('');
 
   const totalDuration = useMemo(() => {
-    return task.workLogs?.reduce((acc, log) => acc + log.duration, 0) || 0;
-  }, [task.workLogs]);
+    return task?.workLogs?.reduce((acc, log) => acc + log.duration, 0) || 0;
+  }, [task?.workLogs]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -108,8 +111,8 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     setIsLogDialogOpen(true);
   };
   
-  const handleSaveLog = () => {
-    if (!sessionStartTime) return;
+  const handleSaveLog = async () => {
+    if (!sessionStartTime || !task) return;
 
     let finalPausedTime = totalPausedTime;
     const endTime = new Date();
@@ -135,7 +138,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
 
     const updatedLogs = [...(task.workLogs || []), newLog];
 
-    updateTask(projectId, task.id, { workLogs: updatedLogs });
+    await updateTask(projectId, task.id, { workLogs: updatedLogs });
     
     // Reset state
     setTimerStatus('idle');
@@ -147,10 +150,11 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     setIsLogDialogOpen(false);
   };
   
-  const handleContinueSession = (logToContinue: WorkLog) => {
+  const handleContinueSession = async (logToContinue: WorkLog) => {
+    if (!task) return;
     // Remove the old log
     const updatedLogs = (task.workLogs || []).filter(log => log.id !== logToContinue.id);
-    updateTask(projectId, task.id, { workLogs: updatedLogs });
+    await updateTask(projectId, task.id, { workLogs: updatedLogs });
     
     // Set up the timer to continue from where it left off
     setSessionStartTime(Date.now() - (logToContinue.duration * 1000) - (logToContinue.lostTime * 1000));
@@ -169,14 +173,48 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   };
 
   const handleDelete = () => {
+    if (!task) return;
     deleteTask(projectId, task.id);
     onClose();
   };
 
   const handleTaskUpdated = async (updatedData: Partial<Task>) => {
+    if (!task) return;
     await updateTask(projectId, task.id, updatedData);
     setIsEditing(false);
   };
+
+  if (taskLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (!task) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Task not found</CardTitle>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7 absolute top-4 right-4">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <p>This task may have been deleted.</p>
+        </CardContent>
+      </Card>
+    );
+  }
   
   const priorityVariant = {
     Low: 'secondary',

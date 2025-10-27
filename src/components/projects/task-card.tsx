@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 type TaskCardProps = {
   task: Task;
   projectId: string;
-  onTaskSelected: (task: Task) => void;
+  onTaskSelected: (taskId: string) => void;
 };
 
 export function TaskCard({ task, onTaskSelected }: TaskCardProps) {
@@ -31,7 +31,7 @@ export function TaskCard({ task, onTaskSelected }: TaskCardProps) {
         window.localStorage.setItem('draggingTask', JSON.stringify(task));
       }}
       className="cursor-pointer transition-shadow hover:shadow-md bg-card"
-      onClick={() => onTaskSelected(task)}
+      onClick={() => onTaskSelected(task.id)}
     >
       <CardContent className="p-3 space-y-2">
         <div className="flex justify-between items-center">

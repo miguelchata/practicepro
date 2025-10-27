@@ -61,7 +61,7 @@ export default function ProjectDetailPage() {
   const updateTask = useUpdateTask();
 
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -200,8 +200,8 @@ export default function ProjectDetailPage() {
           </CardContent>
         </Card>
         
-        {selectedTask ? (
-            <TaskDetailView task={selectedTask} projectId={projectId} onClose={() => setSelectedTask(null)} />
+        {selectedTaskId ? (
+            <TaskDetailView taskId={selectedTaskId} projectId={projectId} onClose={() => setSelectedTaskId(null)} />
         ) : (
           <>
             <div className="flex items-center justify-between">
@@ -272,7 +272,7 @@ export default function ProjectDetailPage() {
                             key={task.id}
                             task={task}
                             projectId={projectId}
-                            onTaskSelected={setSelectedTask}
+                            onTaskSelected={setSelectedTaskId}
                           />
                         ))}
                         {tasksByStatus[status].length === 0 && (

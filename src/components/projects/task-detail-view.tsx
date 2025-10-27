@@ -38,11 +38,6 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 
 type TimerStatus = 'idle' | 'running' | 'paused';
-type LocalWorkLog = {
-    id: number,
-    startTime: number, // timestamp
-    pauses: { start: number; end?: number }[];
-}
 
 type TaskDetailViewProps = {
   task: Task;
@@ -58,7 +53,10 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   // Timer state
   const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle');
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [activeLog, setActiveLog] = useState<LocalWorkLog | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
+  const [pauseStartTime, setPauseStartTime] = useState<number | null>(null);
+  const [totalPausedTime, setTotalPausedTime] = useState(0);
+
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [logDescription, setLogDescription] = useState('');
 
@@ -85,85 +83,54 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     if (timerStatus === 'running') {
       // Pausing the timer
       setTimerStatus('paused');
-      setActiveLog(prevLog => {
-        if (!prevLog) return null;
-        
-        return {
-          ...prevLog,
-          pauses: [...(prevLog.pauses || []), { start: now }]
-        };
-      });
-
+      setPauseStartTime(now);
     } else { // idle or paused
-      // Starting or Resuming the timer
       setTimerStatus('running');
       if (timerStatus === 'idle') {
         // Starting a new session
         setElapsedTime(0);
-        setActiveLog({
-            id: now,
-            startTime: now,
-            pauses: []
-        });
+        setTotalPausedTime(0);
+        setSessionStartTime(now);
       } else { // Resuming from pause
-        setActiveLog(prevLog => {
-            if (!prevLog || !prevLog.pauses) return prevLog;
-            const lastPauseIndex = prevLog.pauses.length - 1;
-            const lastPause = prevLog.pauses[lastPauseIndex];
-
-            if (lastPause && !lastPause.end) {
-                const updatedPauses = [...prevLog.pauses];
-                updatedPauses[lastPauseIndex] = { ...lastPause, end: now };
-                return { ...prevLog, pauses: updatedPauses };
-            }
-            return prevLog;
-        });
+        if(pauseStartTime) {
+          setTotalPausedTime(prev => prev + (now - pauseStartTime));
+          setPauseStartTime(null);
+        }
       }
     }
   };
 
   const handleFinishTimer = () => {
     setTimerStatus('paused'); // Pause the timer before opening dialog
+    if(timerStatus === 'running' && pauseStartTime === null){
+        setPauseStartTime(Date.now());
+    }
     setIsLogDialogOpen(true);
   };
   
   const handleSaveLog = () => {
-    if (!activeLog) return;
+    if (!sessionStartTime) return;
 
+    let finalPausedTime = totalPausedTime;
     const endTime = new Date();
-    
-    // Finalize any open pause if user clicks "Finish" while timer is running
-    const finalizedPauses = activeLog.pauses.map(p => {
-        if (p.start && !p.end) {
-            return { ...p, end: endTime.getTime() };
-        }
-        return p;
-    });
 
-    const startTime = new Date(activeLog.startTime);
-    const startMs = startTime.getTime();
-    const endMs = endTime.getTime();
-    
-    const pauseDurationMs = finalizedPauses.reduce((acc, p) => {
-        if (p.start && p.end) {
-            return acc + (p.end - p.start);
-        }
-        return acc;
-    }, 0);
+    if (pauseStartTime) { // If it was paused when finish was clicked
+      finalPausedTime += (endTime.getTime() - pauseStartTime);
+    }
 
-    const totalSessionMs = endMs - startMs;
-    const finalDurationSec = Math.round((totalSessionMs - pauseDurationMs) / 1000);
-    const lostTimeSec = Math.round(pauseDurationMs / 1000);
+    const startTime = new Date(sessionStartTime);
+    
+    const finalDurationSec = Math.round(elapsedTime);
+    const lostTimeSec = Math.round(finalPausedTime / 1000);
 
     const newLog: WorkLog = {
-      id: activeLog.id,
-      date: startTime.toISOString().split('T')[0], // YYYY-MM-DD
-      startTime: startTime.toTimeString().split(' ')[0], // HH:MM:SS
-      endTime: endTime.toTimeString().split(' ')[0], // HH:MM:SS
-      duration: finalDurationSec > 0 ? finalDurationSec : 0,
+      id: endTime.getTime(),
+      date: startTime.toISOString().split('T')[0],
+      startTime: startTime.toTimeString().split(' ')[0],
+      endTime: endTime.toTimeString().split(' ')[0],
+      duration: finalDurationSec,
       description: logDescription,
       lostTime: lostTimeSec,
-      pauses: finalizedPauses,
     };
 
     const updatedLogs = [...(task.workLogs || []), newLog];
@@ -173,7 +140,9 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     // Reset state
     setTimerStatus('idle');
     setElapsedTime(0);
-    setActiveLog(null);
+    setSessionStartTime(null);
+    setPauseStartTime(null);
+    setTotalPausedTime(0);
     setLogDescription('');
     setIsLogDialogOpen(false);
   };

@@ -149,16 +149,6 @@
             "lostTime": {
                 "type": "number",
                 "description": "The total time the timer was paused in seconds."
-            },
-            "pauses": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "start": { "type": "number" },
-                  "end": { "type": "number" }
-                }
-              }
             }
         },
         "required": ["id", "date", "startTime", "endTime", "duration"]
@@ -214,7 +204,8 @@
             "status": { "type": "string", "enum": ["Not Started", "In Progress", "Completed"] },
             "projectId": { "type": "string" },
             "userStoryId": { "type": "string" },
-            "userStoryTicketId": { "type": "string" }
+            "userStoryTicketId": { "type": "string" },
+            "deadline": { "type": "string", "format": "date-time" }
         },
         "required": ["title", "specific", "measurable", "status"]
     }

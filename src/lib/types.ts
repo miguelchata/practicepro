@@ -24,6 +24,7 @@ export type Goal = {
   projectId?: string;
   userStoryId?: string;
   userStoryTicketId?: string;
+  deadline?: string;
 };
 
 export type SubSkill = {
@@ -54,7 +55,6 @@ export type WorkLog = {
     duration: number; // in seconds
     description?: string;
     lostTime?: number; // in seconds
-    pauses?: { start: number; end?: number }[];
 }
 
 export type Task = {

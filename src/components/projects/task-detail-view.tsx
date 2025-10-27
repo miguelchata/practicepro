@@ -62,9 +62,24 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
 
   const [isLogDialogOpen, setIsLogDialogOpen] = useState(false);
   const [logDescription, setLogDescription] = useState('');
+  
+  const [continuedLogId, setContinuedLogId] = useState<number | null>(null);
 
   const totalDuration = useMemo(() => {
     return task?.workLogs?.reduce((acc, log) => acc + log.duration, 0) || 0;
+  }, [task?.workLogs]);
+
+  const todaysLog = useMemo(() => {
+    if (!task?.workLogs) return null;
+
+    const today = new Date();
+    const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    const logsFromToday = task.workLogs.filter(log => log.date === todayDateString);
+    if (logsFromToday.length === 0) return null;
+
+    // Return the most recent log from today
+    return logsFromToday.sort((a, b) => b.id - a.id)[0];
   }, [task?.workLogs]);
 
   useEffect(() => {
@@ -94,6 +109,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
         setElapsedTime(0);
         setTotalPausedTime(0);
         setSessionStartTime(now);
+        setContinuedLogId(null);
       } else { // Resuming from pause
         if(pauseStartTime) {
           setTotalPausedTime(prev => prev + (now - pauseStartTime));
@@ -131,20 +147,36 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     const month = (startTime.getMonth() + 1).toString().padStart(2, '0');
     const day = startTime.getDate().toString().padStart(2, '0');
     const localDateString = `${year}-${month}-${day}`;
-  
-    const newLog: WorkLog = {
-      id: endTime.getTime(),
-      date: localDateString,
-      startTime: startTime.toTimeString().split(' ')[0],
-      endTime: endTime.toTimeString().split(' ')[0],
-      duration: finalDurationSec,
-      description: logDescription,
-      lostTime: lostTimeSec,
-    };
-  
-    const updatedLogs = [...(task.workLogs || []), newLog];
-  
-    await updateTask(projectId, task.id, { workLogs: updatedLogs });
+
+    if (continuedLogId) {
+      // Update the existing log
+      const updatedLogs = (task.workLogs || []).map(log => {
+        if (log.id === continuedLogId) {
+          return {
+            ...log,
+            endTime: endTime.toTimeString().split(' ')[0],
+            duration: finalDurationSec,
+            description: logDescription,
+            lostTime: lostTimeSec,
+          };
+        }
+        return log;
+      });
+      await updateTask(projectId, task.id, { workLogs: updatedLogs });
+    } else {
+      // Add a new log
+      const newLog: WorkLog = {
+        id: endTime.getTime(),
+        date: localDateString,
+        startTime: startTime.toTimeString().split(' ')[0],
+        endTime: endTime.toTimeString().split(' ')[0],
+        duration: finalDurationSec,
+        description: logDescription,
+        lostTime: lostTimeSec,
+      };
+      const updatedLogs = [...(task.workLogs || []), newLog];
+      await updateTask(projectId, task.id, { workLogs: updatedLogs });
+    }
   
     setTimerStatus('idle');
     setElapsedTime(0);
@@ -152,23 +184,22 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     setPauseStartTime(null);
     setTotalPausedTime(0);
     setLogDescription('');
+    setContinuedLogId(null);
     setIsLogDialogOpen(false);
   };
   
-  const handleContinueSession = async (logToContinue: WorkLog) => {
+  const handleContinueSession = (logToContinue: WorkLog) => {
     if (!task) return;
-    // Remove the old log
-    const updatedLogs = (task.workLogs || []).filter(log => log.id !== logToContinue.id);
-    await updateTask(projectId, task.id, { workLogs: updatedLogs });
     
     // Set up the timer to continue from where it left off
-    setSessionStartTime(Date.now() - (logToContinue.duration * 1000) - (logToContinue.lostTime * 1000));
+    const now = Date.now();
+    setSessionStartTime(now - (logToContinue.duration * 1000));
     setElapsedTime(logToContinue.duration);
-    setTotalPausedTime(logToContinue.lostTime * 1000);
+    setTotalPausedTime(logToContinue.lostTime || 0 * 1000);
     setLogDescription(logToContinue.description || '');
+    setContinuedLogId(logToContinue.id);
     setTimerStatus('running'); // Immediately start the timer
   };
-
 
   const formatDuration = (seconds: number) => {
     if (seconds < 0) seconds = 0;
@@ -180,29 +211,18 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     const parts = [];
     if (hours > 0) parts.push(`${hours} h`);
     if (minutes > 0) parts.push(`${minutes} m`);
-
     if (seconds < 60) {
         parts.push(`${remainingSeconds} s`);
-    } else if (hours === 0 && minutes > 0 && remainingSeconds > 0) {
-        // If under an hour, but over a minute, show seconds.
-        // This part is a bit tricky based on the prompt.
-        // The prompt says: "if time is more than minute show only x h, y m"
-        // And "x h, y m, z s"
-        // Let's stick to the more concise version. If it has minutes, don't show seconds.
+    } else if (minutes > 0 && remainingSeconds > 0 && hours === 0) {
+        parts.push(`${remainingSeconds} s`);
     }
     
     if (hours > 0 && minutes > 0) {
         return `${hours} h, ${minutes} m`;
     }
-    if (hours > 0) {
-        return `${hours} h`;
-    }
-    if (minutes > 0) {
-        return `${minutes} m, ${remainingSeconds} s`;
-    }
-    return `${remainingSeconds} s`;
+    
+    return parts.join(', ') || '0 s';
 };
-  
 
   const handleDelete = () => {
     if (!task) return;
@@ -330,10 +350,17 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
                         <p className="font-mono text-lg font-semibold">{formatDuration(totalDuration)}</p>
                         <p className="text-xs text-muted-foreground">Total time logged</p>
                     </div>
-                    <Button onClick={handleStartPauseTimer}>
-                        <Play className="mr-2 h-4 w-4" />
-                        Start
-                    </Button>
+                    {todaysLog ? (
+                      <Button onClick={() => handleContinueSession(todaysLog)}>
+                          <History className="mr-2 h-4 w-4" />
+                          Continue
+                      </Button>
+                    ) : (
+                      <Button onClick={handleStartPauseTimer}>
+                          <Play className="mr-2 h-4 w-4" />
+                          Start
+                      </Button>
+                    )}
                 </div>
             ) : (
                 <div className="rounded-lg border border-primary/50 bg-primary/10 p-4">
@@ -356,24 +383,20 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
             )}
             
             <div className="space-y-3">
-                <h6 className="font-semibold">Work Logs ({formatDuration(totalDuration)})</h6>
+                 <h6 className="font-semibold">Work Logs ({totalDuration > 0 ? formatDuration(totalDuration) : ''})</h6>
                 {task.workLogs && task.workLogs.length > 0 ? (
                     <ul className="space-y-3">
                         {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
                             // The date from firestore is a string 'YYYY-MM-DD', create a new Date from it, but account for timezone
                             // by parsing it as UTC then displaying in local time.
                             const logDate = new Date(`${log.date}T00:00:00Z`);
-                            const localToday = new Date();
-                            const isToday = logDate.getFullYear() === localToday.getFullYear() &&
-                                            logDate.getMonth() === localToday.getMonth() &&
-                                            logDate.getDate() === localToday.getDate();
-
+                           
                             return (
                                log.endTime && (
                                 <li key={log.id} className="rounded-lg border p-3">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="font-medium">{new Date(log.date).toLocaleDateString(undefined, { timeZone: 'UTC' })}</p>
+                                            <p className="font-medium">{logDate.toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {log.startTime} - {log.endTime}
                                             </p>
@@ -384,14 +407,6 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
                                         </div>
                                     </div>
                                     {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
-                                    {isToday && timerStatus === 'idle' && (
-                                        <div className="mt-2 pt-2 border-t flex justify-end">
-                                            <Button variant="ghost" size="sm" onClick={() => handleContinueSession(log)}>
-                                                <History className="mr-2 h-4 w-4" />
-                                                Continue
-                                            </Button>
-                                        </div>
-                                    )}
                                 </li>
                                )
                             )
@@ -429,3 +444,5 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     </>
   );
 }
+
+    

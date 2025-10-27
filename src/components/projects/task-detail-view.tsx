@@ -113,34 +113,39 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
   
   const handleSaveLog = async () => {
     if (!sessionStartTime || !task) return;
-
+  
     let finalPausedTime = totalPausedTime;
     const endTime = new Date();
-
-    if (pauseStartTime) { // If it was paused when finish was clicked
-      finalPausedTime += (endTime.getTime() - pauseStartTime);
+  
+    if (pauseStartTime) {
+      finalPausedTime += endTime.getTime() - pauseStartTime;
     }
-
+  
     const startTime = new Date(sessionStartTime);
-    
+  
     const finalDurationSec = Math.round(elapsedTime);
     const lostTimeSec = Math.round(finalPausedTime / 1000);
-
+  
+    // Force date creation in local timezone to avoid UTC conversion issues
+    const year = startTime.getFullYear();
+    const month = (startTime.getMonth() + 1).toString().padStart(2, '0');
+    const day = startTime.getDate().toString().padStart(2, '0');
+    const localDateString = `${year}-${month}-${day}`;
+  
     const newLog: WorkLog = {
       id: endTime.getTime(),
-      date: startTime.toISOString().split('T')[0],
+      date: localDateString,
       startTime: startTime.toTimeString().split(' ')[0],
       endTime: endTime.toTimeString().split(' ')[0],
       duration: finalDurationSec,
       description: logDescription,
       lostTime: lostTimeSec,
     };
-    
+  
     const updatedLogs = [...(task.workLogs || []), newLog];
-
+  
     await updateTask(projectId, task.id, { workLogs: updatedLogs });
-    
-    // Reset state
+  
     setTimerStatus('idle');
     setElapsedTime(0);
     setSessionStartTime(null);
@@ -166,23 +171,18 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
 
 
   const formatDuration = (seconds: number) => {
-    if (seconds < 60) {
-      return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-    }
+    if (seconds < 0) seconds = 0;
+    if (seconds < 60) return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+  
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+  
     const parts = [];
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-
-    if (h > 0) {
-        parts.push(`${h} hour${h > 1 ? 's' : ''}`);
-    }
-    if (m > 0) {
-        parts.push(`${m} minute${m > 1 ? 's' : ''}`);
-    }
-    if (s > 0 && h === 0) { // Only show seconds if duration is less than an hour
-        parts.push(`${s} second${s > 1 ? 's' : ''}`);
-    }
+    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+    if (remainingSeconds > 0 && hours === 0) parts.push(`${remainingSeconds} second${remainingSeconds > 1 ? 's' : ''}`);
+    
     return parts.join(', ');
   };
 
@@ -342,13 +342,20 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
                 {task.workLogs && task.workLogs.length > 0 ? (
                     <ul className="space-y-3">
                         {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
-                            const isToday = new Date(log.date).toDateString() === new Date().toDateString();
+                            // The date from firestore is a string 'YYYY-MM-DD', create a new Date from it, but account for timezone
+                            // by parsing it as UTC then displaying in local time.
+                            const logDate = new Date(`${log.date}T00:00:00Z`);
+                            const localToday = new Date();
+                            const isToday = logDate.getFullYear() === localToday.getFullYear() &&
+                                            logDate.getMonth() === localToday.getMonth() &&
+                                            logDate.getDate() === localToday.getDate();
+
                             return (
                                log.endTime && (
                                 <li key={log.id} className="rounded-lg border p-3">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="font-medium">{new Date(log.date).toLocaleDateString()}</p>
+                                            <p className="font-medium">{new Date(log.date).toLocaleDateString(undefined, { timeZone: 'UTC' })}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {log.startTime} - {log.endTime}
                                             </p>

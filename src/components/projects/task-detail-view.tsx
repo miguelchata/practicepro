@@ -119,7 +119,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   };
   
   const handleSaveLog = () => {
-    const endDatetime = new Date().toISOString();
+    const endDatetime = new Date();
     const activeLog = (task.workLogs || []).find(log => log.id === activeLogId);
     
     if (!activeLog) return;
@@ -127,20 +127,21 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     // Finalize any open pause
     const finalizedPauses = (activeLog.pauses || []).map(p => {
         if (p.start && !p.end) {
-            return { ...p, end: Date.now() };
+            return { ...p, end: endDatetime.getTime() };
         }
         return p;
     });
 
-    let pauseDurationMs = 0;
-    finalizedPauses.forEach(p => {
-        if (p.start && p.end) {
-            pauseDurationMs += (p.end - p.start);
-        }
-    });
-
     const startMs = new Date(activeLog.startDatetime).getTime();
-    const endMs = new Date(endDatetime).getTime();
+    const endMs = endDatetime.getTime();
+    
+    const pauseDurationMs = finalizedPauses.reduce((acc, p) => {
+        if (p.start && p.end) {
+            return acc + (p.end - p.start);
+        }
+        return acc;
+    }, 0);
+
     const totalSessionMs = endMs - startMs;
     const finalDurationSec = Math.round((totalSessionMs - pauseDurationMs) / 1000);
     const lostTimeSec = Math.round(pauseDurationMs / 1000);
@@ -149,7 +150,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
         log.id === activeLogId 
             ? { 
                 ...log, 
-                endDatetime, 
+                endDatetime: endDatetime.toISOString(),
                 duration: finalDurationSec, 
                 description: logDescription, 
                 lostTime: lostTimeSec,
@@ -349,3 +350,5 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     </>
   );
 }
+
+    

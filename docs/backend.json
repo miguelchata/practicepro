@@ -106,13 +106,6 @@
           "type": "string",
           "enum": ["Backlog", "In Progress", "Done"],
           "description": "The current status of the task."
-        },
-        "workLogs": {
-            "type": "array",
-            "description": "An array of work log entries for this task.",
-            "items": {
-                "$ref": "#/entities/workLog"
-            }
         }
       },
       "required": ["title", "description", "priority", "status"]

@@ -60,7 +60,6 @@ export type Task = {
     description: string;
     priority: TaskPriority;
     status: TaskStatus;
-    workLogs?: WorkLog[];
 };
 
 export type UserStoryStatus = 'Backlog' | 'In Progress' | 'Done';

@@ -37,8 +37,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 
-type TimerState = 'idle' | 'running' | 'paused';
-
 type TaskDetailViewProps = {
   task: Task;
   projectId: string;
@@ -49,55 +47,6 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const deleteTask = useDeleteTask();
   const updateTask = useUpdateTask();
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoggingWork, setIsLoggingWork] = useState(false);
-  const [logDescription, setLogDescription] = useState('');
-
-  const [timerState, setTimerState] = useState<TimerState>('idle');
-  const [activeLogId, setActiveLogId] = useState<string | null>(null);
-  const [displayDuration, setDisplayDuration] = useState(0);
-
-  const activeLog = useMemo(() => {
-    if (!activeLogId) return null;
-    return task.workLogs?.find(log => log.id === activeLogId) || null;
-  }, [task.workLogs, activeLogId]);
-  
-  const totalDuration = useMemo(() => {
-    return task.workLogs?.reduce((acc, log) => acc + log.duration, 0) || 0;
-  }, [task.workLogs]);
-  
-  useEffect(() => {
-    const unfinishedLog = task.workLogs?.find(log => !log.endDatetime);
-    if(unfinishedLog) {
-      setActiveLogId(unfinishedLog.id);
-      setTimerState('paused');
-      setDisplayDuration(unfinishedLog.duration);
-    } else {
-        setTimerState('idle');
-        setActiveLogId(null);
-        setDisplayDuration(0);
-    }
-  }, [task.workLogs]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-  
-    if (timerState === 'running' && activeLog) {
-      const sessionStartTime = Date.now();
-      const initialDuration = activeLog.duration || 0;
-  
-      timer = setInterval(() => {
-        const elapsed = Math.round((Date.now() - sessionStartTime) / 1000);
-        setDisplayDuration(initialDuration + elapsed);
-      }, 1000);
-    }
-  
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [timerState, activeLog]);
-
 
   const handleDelete = () => {
     deleteTask(projectId, task.id);
@@ -109,70 +58,6 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     setIsEditing(false);
   };
   
-  const handleToggleTimer = () => {
-    if (timerState === 'running') { // Pause
-      if(activeLog) {
-        const updatedLogs = task.workLogs?.map(log => 
-            log.id === activeLog.id ? {...log, duration: displayDuration} : log
-        ) || [];
-        updateTask(projectId, task.id, { workLogs: updatedLogs });
-      }
-      setTimerState('paused');
-    } else { // Start or Resume
-      if (!activeLogId || activeLog?.endDatetime) { // Start new log
-          const newLogId = Date.now().toString();
-          const newLog: WorkLog = {
-              id: newLogId,
-              startDatetime: new Date().toISOString(),
-              duration: 0,
-          };
-          const updatedLogs = [...(task.workLogs || []), newLog];
-          updateTask(projectId, task.id, { workLogs: updatedLogs });
-          setActiveLogId(newLogId);
-      }
-      setTimerState('running');
-    }
-  };
-
-  const handleFinishTimer = () => {
-    if (timerState === 'running' || timerState === 'paused') {
-        if(timerState === 'running') {
-            setTimerState('paused'); // Pause it first to stop the interval
-        }
-        setIsLoggingWork(true); // Open the description dialog
-    }
-  };
-
-  const handleSaveLog = () => {
-    if (activeLogId && activeLog) {
-       const endDatetime = new Date().toISOString();
-       const updatedLogs = task.workLogs?.map(log => 
-           log.id === activeLogId ? {...log, duration: displayDuration, endDatetime, description: logDescription } : log
-       ) || [];
-       updateTask(projectId, task.id, { workLogs: updatedLogs });
-    }
-    setIsLoggingWork(false);
-    setLogDescription('');
-    setTimerState('idle');
-    setActiveLogId(null);
-    setDisplayDuration(0);
-  };
-  
-  const formatDuration = (totalSeconds: number) => {
-    if (totalSeconds < 0) totalSeconds = 0;
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-  }
-
-  const formatDate = (isoString: string | undefined, format: 'date' | 'time') => {
-    if (!isoString) return 'N/A';
-    const date = new Date(isoString);
-    if(format === 'date') return date.toLocaleDateString();
-    return date.toLocaleTimeString();
-  };
-
   const priorityVariant = {
     Low: 'secondary',
     Medium: 'outline',
@@ -243,79 +128,10 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                   <h5 className="font-semibold text-foreground">Description</h5>
                   <p className="text-sm text-muted-foreground">{task.description}</p>
                 </div>
-                <Separator />
-                 <div className="space-y-3">
-                    <h5 className="font-semibold text-foreground">Time Tracker</h5>
-                    <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
-                        <div>
-                            <p className="font-mono text-lg font-semibold">{formatDuration(displayDuration)}</p>
-                            <p className="text-xs text-muted-foreground">Active session</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button
-                            variant={timerState === 'running' ? 'secondary' : 'default'}
-                            onClick={handleToggleTimer}
-                            size="sm"
-                            >
-                            {timerState === 'running' ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                            {timerState === 'running' ? 'Pause' : 'Start'}
-                            </Button>
-                            {(timerState === 'running' || timerState === 'paused') && (
-                            <Button variant="outline" onClick={handleFinishTimer} size="sm">
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Finish
-                            </Button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <h6 className="text-sm font-semibold text-foreground">Work Logs ({formatDuration(totalDuration)})</h6>
-                        {task.workLogs && task.workLogs.length > 0 ? (
-                           <div className="space-y-2 rounded-md border p-2">
-                             {task.workLogs.toReversed().map(log => (
-                                <div key={log.id} className="text-xs text-muted-foreground p-2 rounded-md bg-background hover:bg-muted/50">
-                                    <div className='flex justify-between items-center font-medium text-foreground'>
-                                        <span>{formatDate(log.startDatetime, 'date')}</span>
-                                        <Badge variant={log.endDatetime ? "secondary" : "default"}>{log.endDatetime ? formatDuration(log.duration) : "In Progress"}</Badge>
-                                    </div>
-                                    {log.description && <p className="text-sm my-1">{log.description}</p>}
-                                    <div className="flex justify-between items-center mt-1">
-                                        <span>{formatDate(log.startDatetime, 'time')} - {log.endDatetime ? formatDate(log.endDatetime, 'time') : '...'}</span>
-                                    </div>
-                                </div>
-                            ))}
-                           </div>
-                        ) : (
-                            <p className="text-xs text-muted-foreground text-center py-4">No work sessions logged yet.</p>
-                        )}
-                    </div>
-                </div>
             </>
         )}
       </CardContent>
     </Card>
-
-    <Dialog open={isLoggingWork} onOpenChange={setIsLoggingWork}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Log your work</DialogTitle>
-                <DialogDescription>
-                    Add a brief description of what you accomplished during this session.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-2">
-                <Label htmlFor="log-description">Description</Label>
-                <Textarea
-                    id="log-description"
-                    value={logDescription}
-                    onChange={(e) => setLogDescription(e.target.value)}
-                    placeholder="e.g., Refactored the authentication hook and fixed a bug in the login form."
-                />
-            </div>
-            <Button onClick={handleSaveLog}>Save Log</Button>
-        </DialogContent>
-    </Dialog>
     </>
   );
 }

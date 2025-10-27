@@ -47,11 +47,13 @@ export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 export type TaskStatus = 'Backlog' | 'In Progress' | 'Done';
 
 export type WorkLog = {
-    id: string;
+    id: number;
     startDatetime: string;
     endDatetime?: string;
     duration: number; // in seconds
     description?: string;
+    lostTime?: number; // in seconds
+    pauses?: { start: number; end?: number }[];
 }
 
 export type Task = {
@@ -60,6 +62,7 @@ export type Task = {
     description: string;
     priority: TaskPriority;
     status: TaskStatus;
+    workLogs?: WorkLog[];
 };
 
 export type UserStoryStatus = 'Backlog' | 'In Progress' | 'Done';

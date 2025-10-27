@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { X, MoreVertical, Edit, Trash2, Play, Pause, CheckCircle } from 'lucide-react';
+import { X, MoreVertical, Edit, Trash2, Play, Pause, CheckCircle, History } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -146,6 +146,19 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     setLogDescription('');
     setIsLogDialogOpen(false);
   };
+  
+  const handleContinueSession = (logToContinue: WorkLog) => {
+    // Remove the old log
+    const updatedLogs = (task.workLogs || []).filter(log => log.id !== logToContinue.id);
+    updateTask(projectId, task.id, { workLogs: updatedLogs });
+    
+    // Set up the timer to continue from where it left off
+    setSessionStartTime(Date.now() - (logToContinue.duration * 1000) - (logToContinue.lostTime * 1000));
+    setElapsedTime(logToContinue.duration);
+    setTotalPausedTime(logToContinue.lostTime * 1000);
+    setLogDescription(logToContinue.description || '');
+    setTimerStatus('running'); // Immediately start the timer
+  };
 
 
   const formatDuration = (seconds: number) => {
@@ -276,25 +289,36 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                 <h6 className="font-semibold">Work Logs ({formatDuration(totalDuration)})</h6>
                 {task.workLogs && task.workLogs.length > 0 ? (
                     <ul className="space-y-3">
-                        {task.workLogs.sort((a,b) => b.id - a.id).map((log) => (
-                           log.endTime && (
-                            <li key={log.id} className="rounded-lg border p-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-medium">{new Date(log.date).toLocaleDateString()}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {log.startTime} - {log.endTime}
-                                        </p>
+                        {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
+                            const isToday = new Date(log.date).toDateString() === new Date().toDateString();
+                            return (
+                               log.endTime && (
+                                <li key={log.id} className="rounded-lg border p-3">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-medium">{new Date(log.date).toLocaleDateString()}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {log.startTime} - {log.endTime}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-semibold">{formatDuration(log.duration)}</p>
+                                            {log.lostTime && log.lostTime > 0 && <p className='text-xs text-amber-600'>Paused: {formatDuration(log.lostTime)}</p>}
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-semibold">{formatDuration(log.duration)}</p>
-                                        {log.lostTime && log.lostTime > 0 && <p className='text-xs text-amber-600'>Paused: {formatDuration(log.lostTime)}</p>}
-                                    </div>
-                                </div>
-                                {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
-                            </li>
-                           )
-                        ))}
+                                    {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
+                                    {isToday && timerStatus === 'idle' && (
+                                        <div className="mt-2 pt-2 border-t flex justify-end">
+                                            <Button variant="ghost" size="sm" onClick={() => handleContinueSession(log)}>
+                                                <History className="mr-2 h-4 w-4" />
+                                                Continue
+                                            </Button>
+                                        </div>
+                                    )}
+                                </li>
+                               )
+                            )
+                        })}
                     </ul>
                 ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">No work sessions logged yet.</p>

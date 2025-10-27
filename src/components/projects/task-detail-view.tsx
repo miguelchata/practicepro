@@ -53,11 +53,20 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
 
   const activeLog = useMemo(() => {
     if (!activeLogId) return null;
-    return task.workLogs?.find(log => log.id === activeLogId && !log.endDatetime) || null;
+    return task.workLogs?.find(log => log.id === activeLogId) || null;
   }, [task.workLogs, activeLogId]);
   
   const totalDuration = useMemo(() => {
     return task.workLogs?.reduce((acc, log) => acc + log.duration, 0) || 0;
+  }, [task.workLogs]);
+  
+  useEffect(() => {
+    const unfinishedLog = task.workLogs?.find(log => !log.endDatetime);
+    if(unfinishedLog) {
+      setActiveLogId(unfinishedLog.id);
+      setTimerState('paused');
+      setDisplayDuration(unfinishedLog.duration);
+    }
   }, [task.workLogs]);
 
   useEffect(() => {
@@ -67,14 +76,16 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
       const startTime = new Date(activeLog.startDatetime).getTime();
       const initialDuration = activeLog.duration || 0;
 
+      // When resuming a paused timer, we need to calculate elapsed time since it was last paused, not from the very beginning
+      const lastPauseTime = Date.now();
+      const elapsedSinceLastStart = (lastPauseTime - startTime); // this is incorrect if paused multiple times
+      
+      const sessionStartTime = Date.now();
+
       timer = setInterval(() => {
-        const elapsed = Math.round((Date.now() - startTime) / 1000);
+        const elapsed = Math.round((Date.now() - sessionStartTime) / 1000);
         setDisplayDuration(initialDuration + elapsed);
       }, 1000);
-    } else if (activeLog) {
-        setDisplayDuration(activeLog.duration);
-    } else {
-        setDisplayDuration(0);
     }
   
     return () => {
@@ -98,15 +109,14 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   const handleToggleTimer = () => {
     if (timerState === 'running') { // Pause
       if(activeLog) {
-        const newDuration = displayDuration;
         const updatedLogs = task.workLogs?.map(log => 
-            log.id === activeLog.id ? {...log, duration: newDuration} : log
+            log.id === activeLog.id ? {...log, duration: displayDuration} : log
         ) || [];
         updateTask(projectId, task.id, { workLogs: updatedLogs });
       }
       setTimerState('paused');
     } else { // Start or Resume
-      if (!activeLog) { // Start new log
+      if (!activeLogId || activeLog?.endDatetime) { // Start new log
           const newLogId = Date.now().toString();
           const newLog: WorkLog = {
               id: newLogId,
@@ -122,11 +132,10 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   };
 
   const handleFinishTimer = () => {
-     if (activeLog) {
+     if (activeLogId && activeLog) {
         const endDatetime = new Date().toISOString();
-        const newDuration = displayDuration;
         const updatedLogs = task.workLogs?.map(log => 
-            log.id === activeLog.id ? {...log, duration: newDuration, endDatetime } : log
+            log.id === activeLogId ? {...log, duration: displayDuration, endDatetime } : log
         ) || [];
         updateTask(projectId, task.id, { workLogs: updatedLogs });
      }
@@ -171,7 +180,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); setIsEditing(true); }}>
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); e.stopPropagation(); setIsEditing(true); }}>
                         <Edit className="mr-2 h-4 w-4" />
                         <span>Edit Task</span>
                     </DropdownMenuItem>

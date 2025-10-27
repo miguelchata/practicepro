@@ -100,9 +100,6 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
       // Pausing the timer
       setTimerStatus('paused');
     } else { // idle or paused
-      if (timerStatus === 'paused') {
-          // This means we are resuming
-      }
       setTimerStatus('running');
       if (timerStatus === 'idle') {
         // Starting a new session
@@ -126,9 +123,19 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     const endTime = new Date();
     const finalDurationSec = Math.round(elapsedTime);
   
+    let updatedLogs: WorkLog[];
+    
+    const updateData: Partial<Task> = {};
+
+    // Check if this is the first log and the status is 'Backlog'
+    if ((!task.workLogs || task.workLogs.length === 0) && task.status === 'Backlog') {
+        updateData.status = 'In Progress';
+    }
+
+
     if (continuedLog) {
       // Update the existing log
-      const updatedLogs = (task.workLogs || []).map(log => {
+      updatedLogs = (task.workLogs || []).map(log => {
         if (log.id === continuedLog.id) {
           return {
             ...log,
@@ -140,7 +147,6 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
         }
         return log;
       });
-      await updateTask(projectId, task.id, { workLogs: updatedLogs });
     } else {
        if (!sessionStartTime) return;
        const startTime = new Date(sessionStartTime);
@@ -159,9 +165,11 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
         description: logDescription,
         pauseCount: pauseCount,
       };
-      const updatedLogs = [...(task.workLogs || []), newLog];
-      await updateTask(projectId, task.id, { workLogs: updatedLogs });
+      updatedLogs = [...(task.workLogs || []), newLog];
     }
+
+    updateData.workLogs = updatedLogs;
+    await updateTask(projectId, task.id, updateData);
   
     setTimerStatus('idle');
     setElapsedTime(0);
@@ -190,16 +198,18 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
     
-    if (seconds >= 60) {
-       const parts = [];
-       if (hours > 0) parts.push(`${hours} h`);
-       if (minutes > 0) parts.push(`${minutes} m`);
-       if (parts.length < 2 && remainingSeconds > 0 && hours === 0) {
-           parts.push(`${remainingSeconds} s`)
-       }
-       return parts.join(', ');
-    }
+    const parts = [];
+    if (hours > 0) parts.push(`${hours} h`);
+    if (minutes > 0) parts.push(`${minutes} m`);
     
+    if (seconds < 60) {
+        return `${remainingSeconds} s`;
+    }
+
+    if (parts.length > 0) {
+        return parts.join(', ');
+    }
+
     return `${remainingSeconds} s`;
 };
 
@@ -326,8 +336,8 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
             {timerStatus === 'idle' ? (
                  <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
                     <div>
-                        <p className="font-mono text-lg font-semibold">{todaysLog ? formatDuration(todaysLog.duration) : formatDuration(0)}</p>
-                        <p className="text-xs text-muted-foreground">{todaysLog ? "Today's total" : 'Total time logged'}</p>
+                        <p className="font-mono text-lg font-semibold">{totalDuration > 0 ? formatDuration(totalDuration) : "0 s"}</p>
+                        <p className="text-xs text-muted-foreground">Total time logged</p>
                     </div>
                     {todaysLog ? (
                       <Button onClick={() => handleContinueSession(todaysLog)}>

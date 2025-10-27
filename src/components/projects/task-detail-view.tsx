@@ -112,7 +112,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
   };
 
   const handleFinishTimer = () => {
-    setTimerStatus('paused'); // Pause the timer before opening dialog
+    setTimerStatus('paused');
     setPauseCount(prev => prev + 1);
     setIsLogDialogOpen(true);
   };
@@ -206,12 +206,17 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
         return `${remainingSeconds} s`;
     }
 
+    if (seconds >= 60 && hours === 0) {
+      if (minutes > 0) parts.push(`${minutes} m`);
+      return parts.join(', ');
+    }
+
     if (parts.length > 0) {
         return parts.join(', ');
     }
 
     return `${remainingSeconds} s`;
-};
+  };
 
   const handleDelete = () => {
     if (!task) return;
@@ -223,6 +228,11 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     if (!task) return;
     await updateTask(projectId, task.id, updatedData);
     setIsEditing(false);
+  };
+
+  const handleFinishTask = async () => {
+    if (!task) return;
+    await updateTask(projectId, task.id, { status: 'Done' });
   };
 
   if (taskLoading) {
@@ -283,6 +293,12 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
                         <Edit className="mr-2 h-4 w-4" />
                         <span>Edit Task</span>
                     </DropdownMenuItem>
+                    {task.status !== 'Done' && (
+                       <DropdownMenuItem onSelect={handleFinishTask}>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          <span>Finish Task</span>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <AlertDialogTrigger asChild>
                         <DropdownMenuItem className="text-destructive" onSelect={(e) => { e.preventDefault(); e.stopPropagation(); }}>
@@ -330,81 +346,81 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
             </>
         )}
         <Separator />
-
-        <div className="space-y-4">
-            <h5 className="font-semibold text-foreground">Time Tracker</h5>
-            {timerStatus === 'idle' ? (
-                 <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
-                    <div>
-                        <p className="font-mono text-lg font-semibold">{totalDuration > 0 ? formatDuration(totalDuration) : "0 s"}</p>
-                        <p className="text-xs text-muted-foreground">Total time logged</p>
-                    </div>
-                    {todaysLog ? (
-                      <Button onClick={() => handleContinueSession(todaysLog)}>
-                          <History className="mr-2 h-4 w-4" />
-                          Continue
-                      </Button>
-                    ) : (
-                      <Button onClick={handleStartPauseTimer}>
-                          <Play className="mr-2 h-4 w-4" />
-                          Start
-                      </Button>
-                    )}
-                </div>
-            ) : (
-                <div className="rounded-lg border border-primary/50 bg-primary/10 p-4">
-                    <div className="flex items-center justify-between">
-                         <div>
-                            <p className="font-mono text-2xl font-bold text-primary">{formatDuration(elapsedTime)}</p>
-                            <p className="text-xs text-primary/80">Active session {pauseCount > 0 ? `(${pauseCount} pauses)` : ''}</p>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="icon" onClick={handleStartPauseTimer}>
-                                {timerStatus === 'running' ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                            </Button>
-                             <Button variant="secondary" onClick={handleFinishTimer}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Finish
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
-            <div className="space-y-3">
-                 <h6 className="font-semibold">Work Logs {totalDuration > 0 ? `(${formatDuration(totalDuration)})` : ''}</h6>
-                {task.workLogs && task.workLogs.length > 0 ? (
-                    <ul className="space-y-3">
-                        {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
-                            const logDate = new Date(log.date + 'T00:00:00');
-                           
-                            return (
-                               log.endTime && (
-                                <li key={log.id} className="rounded-lg border p-3">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="font-medium">{logDate.toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {log.startTime} - {log.endTime}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-semibold">{formatDuration(log.duration)}</p>
-                                            {log.pauseCount && log.pauseCount > 0 && <p className='text-xs text-amber-600'>{log.pauseCount} {log.pauseCount === 1 ? 'pause' : 'pauses'}</p>}
-                                        </div>
-                                    </div>
-                                    {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
-                                </li>
-                               )
-                            )
-                        })}
-                    </ul>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">No work sessions logged yet.</p>
-                )}
-            </div>
-        </div>
-
+        {task.status !== 'Done' && (
+          <div className="space-y-4">
+              <h5 className="font-semibold text-foreground">Time Tracker</h5>
+              {timerStatus === 'idle' ? (
+                  <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-3">
+                      <div>
+                          <p className="font-mono text-lg font-semibold">{totalDuration > 0 ? formatDuration(totalDuration) : "0 s"}</p>
+                          <p className="text-xs text-muted-foreground">Total time logged</p>
+                      </div>
+                      {todaysLog ? (
+                        <Button onClick={() => handleContinueSession(todaysLog)}>
+                            <History className="mr-2 h-4 w-4" />
+                            Continue
+                        </Button>
+                      ) : (
+                        <Button onClick={handleStartPauseTimer}>
+                            <Play className="mr-2 h-4 w-4" />
+                            Start
+                        </Button>
+                      )}
+                  </div>
+              ) : (
+                  <div className="rounded-lg border border-primary/50 bg-primary/10 p-4">
+                      <div className="flex items-center justify-between">
+                          <div>
+                              <p className="font-mono text-2xl font-bold text-primary">{formatDuration(elapsedTime)}</p>
+                              <p className="text-xs text-primary/80">Active session {pauseCount > 0 ? `(${pauseCount} pauses)` : ''}</p>
+                          </div>
+                          <div className="flex gap-2">
+                              <Button variant="outline" size="icon" onClick={handleStartPauseTimer}>
+                                  {timerStatus === 'running' ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                              </Button>
+                              <Button variant="secondary" onClick={handleFinishTimer}>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Finish
+                              </Button>
+                          </div>
+                      </div>
+                  </div>
+              )}
+              
+              <div className="space-y-3">
+                  <h6 className="font-semibold">Work Logs {totalDuration > 0 ? `(${formatDuration(totalDuration)})` : ''}</h6>
+                  {task.workLogs && task.workLogs.length > 0 ? (
+                      <ul className="space-y-3">
+                          {task.workLogs.sort((a,b) => b.id - a.id).map((log) => {
+                              const logDate = new Date(log.date + 'T00:00:00');
+                            
+                              return (
+                                log.endTime && (
+                                  <li key={log.id} className="rounded-lg border p-3">
+                                      <div className="flex justify-between items-start">
+                                          <div>
+                                              <p className="font-medium">{logDate.toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                              <p className="text-xs text-muted-foreground">
+                                                  {log.startTime} - {log.endTime}
+                                              </p>
+                                          </div>
+                                          <div className="text-right">
+                                              <p className="font-semibold">{formatDuration(log.duration)}</p>
+                                              {log.pauseCount && log.pauseCount > 0 && <p className='text-xs text-amber-600'>{log.pauseCount} {log.pauseCount === 1 ? 'pause' : 'pauses'}</p>}
+                                          </div>
+                                      </div>
+                                      {log.description && <p className="text-sm text-muted-foreground mt-2 pt-2 border-t">{log.description}</p>}
+                                  </li>
+                                )
+                              )
+                          })}
+                      </ul>
+                  ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">No work sessions logged yet.</p>
+                  )}
+              </div>
+          </div>
+        )}
       </CardContent>
     </Card>
     <Dialog open={isLogDialogOpen} onOpenChange={setIsLogDialogOpen}>

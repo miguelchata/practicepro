@@ -38,7 +38,11 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 
 type TimerStatus = 'idle' | 'running' | 'paused';
-type LocalWorkLog = Omit<WorkLog, 'duration' | 'lostTime' | 'endDatetime'>
+type LocalWorkLog = {
+    id: number,
+    startTime: number, // timestamp
+    pauses: { start: number; end?: number }[];
+}
 
 type TaskDetailViewProps = {
   task: Task;
@@ -83,9 +87,6 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
       setTimerStatus('paused');
       setActiveLog(prevLog => {
         if (!prevLog) return null;
-        const lastPause = prevLog.pauses?.[prevLog.pauses.length - 1];
-        // If last pause has no end, this is a logic error, but we'll handle it.
-        if (lastPause && !lastPause.end) return prevLog;
         
         return {
           ...prevLog,
@@ -101,7 +102,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
         setElapsedTime(0);
         setActiveLog({
             id: now,
-            startDatetime: new Date(now).toISOString(),
+            startTime: now,
             pauses: []
         });
       } else { // Resuming from pause
@@ -127,20 +128,21 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   };
   
   const handleSaveLog = () => {
-    const endDatetime = new Date();
-    
     if (!activeLog) return;
 
+    const endTime = new Date();
+    
     // Finalize any open pause if user clicks "Finish" while timer is running
-    const finalizedPauses = (activeLog.pauses || []).map(p => {
+    const finalizedPauses = activeLog.pauses.map(p => {
         if (p.start && !p.end) {
-            return { ...p, end: endDatetime.getTime() };
+            return { ...p, end: endTime.getTime() };
         }
         return p;
     });
 
-    const startMs = new Date(activeLog.startDatetime).getTime();
-    const endMs = endDatetime.getTime();
+    const startTime = new Date(activeLog.startTime);
+    const startMs = startTime.getTime();
+    const endMs = endTime.getTime();
     
     const pauseDurationMs = finalizedPauses.reduce((acc, p) => {
         if (p.start && p.end) {
@@ -154,8 +156,10 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     const lostTimeSec = Math.round(pauseDurationMs / 1000);
 
     const newLog: WorkLog = {
-      ...activeLog,
-      endDatetime: endDatetime.toISOString(),
+      id: activeLog.id,
+      date: startTime.toISOString().split('T')[0], // YYYY-MM-DD
+      startTime: startTime.toTimeString().split(' ')[0], // HH:MM:SS
+      endTime: endTime.toTimeString().split(' ')[0], // HH:MM:SS
       duration: finalDurationSec > 0 ? finalDurationSec : 0,
       description: logDescription,
       lostTime: lostTimeSec,
@@ -303,14 +307,14 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
                 <h6 className="font-semibold">Work Logs ({formatDuration(totalDuration)})</h6>
                 {task.workLogs && task.workLogs.length > 0 ? (
                     <ul className="space-y-3">
-                        {task.workLogs.sort((a,b) => new Date(b.startDatetime).getTime() - new Date(a.startDatetime).getTime()).map((log) => (
-                           log.endDatetime && (
+                        {task.workLogs.sort((a,b) => b.id - a.id).map((log) => (
+                           log.endTime && (
                             <li key={log.id} className="rounded-lg border p-3">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <p className="font-medium">{new Date(log.startDatetime).toLocaleDateString()}</p>
+                                        <p className="font-medium">{new Date(log.date).toLocaleDateString()}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            {new Date(log.startDatetime).toLocaleTimeString()} - {new Date(log.endDatetime!).toLocaleTimeString()}
+                                            {log.startTime} - {log.endTime}
                                         </p>
                                     </div>
                                     <div className="text-right">

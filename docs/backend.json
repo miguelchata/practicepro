@@ -123,15 +123,20 @@
             "id": {
               "type": "number"
             },
-            "startDatetime": {
-                "type": "string",
-                "format": "date-time",
-                "description": "The start date and time of the work session."
+            "date": {
+              "type": "string",
+              "format": "date",
+              "description": "The date of the work session."
             },
-            "endDatetime": {
+            "startTime": {
                 "type": "string",
-                "format": "date-time",
-                "description": "The end date and time of the work session."
+                "format": "time",
+                "description": "The start time of the work session."
+            },
+            "endTime": {
+                "type": "string",
+                "format": "time",
+                "description": "The end time of the work session."
             },
             "duration": {
                 "type": "number",
@@ -156,7 +161,7 @@
               }
             }
         },
-        "required": ["id", "startDatetime", "duration"]
+        "required": ["id", "date", "startTime", "endTime", "duration"]
     },
     "projectPrefixCounter": {
       "title": "Project Prefix Counter",

@@ -48,8 +48,9 @@ export type TaskStatus = 'Backlog' | 'In Progress' | 'Done';
 
 export type WorkLog = {
     id: number;
-    startDatetime: string;
-    endDatetime?: string;
+    date: string;
+    startTime: string;
+    endTime: string;
     duration: number; // in seconds
     description?: string;
     lostTime?: number; // in seconds

@@ -33,7 +33,7 @@ import {
 import { useDeleteTask, useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { EditTaskForm } from './edit-task-form';
 import { Separator } from '../ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 
@@ -124,19 +124,37 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     
     if (!activeLog) return;
 
-    let pauseDuration = 0;
-    activeLog.pauses?.forEach(p => {
+    // Finalize any open pause
+    const finalizedPauses = (activeLog.pauses || []).map(p => {
+        if (p.start && !p.end) {
+            return { ...p, end: Date.now() };
+        }
+        return p;
+    });
+
+    let pauseDurationMs = 0;
+    finalizedPauses.forEach(p => {
         if (p.start && p.end) {
-            pauseDuration += (p.end - p.start);
+            pauseDurationMs += (p.end - p.start);
         }
     });
 
-    const finalDuration = Math.max(0, elapsedTime);
-    const lostTime = Math.round(pauseDuration / 1000);
+    const startMs = new Date(activeLog.startDatetime).getTime();
+    const endMs = new Date(endDatetime).getTime();
+    const totalSessionMs = endMs - startMs;
+    const finalDurationSec = Math.round((totalSessionMs - pauseDurationMs) / 1000);
+    const lostTimeSec = Math.round(pauseDurationMs / 1000);
 
     const updatedLogs = (task.workLogs || []).map(log => 
         log.id === activeLogId 
-            ? { ...log, endDatetime, duration: finalDuration, description: logDescription, lostTime } 
+            ? { 
+                ...log, 
+                endDatetime, 
+                duration: finalDurationSec, 
+                description: logDescription, 
+                lostTime: lostTimeSec,
+                pauses: finalizedPauses
+              } 
             : log
     );
 

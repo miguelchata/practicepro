@@ -114,7 +114,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
   };
 
   const handleFinishTimer = () => {
-    setTimerStatus('paused');
+    setTimerStatus('paused'); // Pause the timer before opening dialog
     setIsLogDialogOpen(true);
   };
   
@@ -151,7 +151,7 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
             ? { 
                 ...log, 
                 endDatetime: endDatetime.toISOString(),
-                duration: finalDurationSec, 
+                duration: finalDurationSec > 0 ? finalDurationSec : 0, 
                 description: logDescription, 
                 lostTime: lostTimeSec,
                 pauses: finalizedPauses
@@ -350,5 +350,3 @@ export function TaskDetailView({ task, projectId, onClose }: TaskDetailViewProps
     </>
   );
 }
-
-    

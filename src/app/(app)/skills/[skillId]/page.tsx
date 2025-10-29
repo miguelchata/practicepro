@@ -229,58 +229,7 @@ export default function SkillDetailPage() {
     <div className="flex min-h-screen w-full flex-col">
       <Header title={skill.name} backButtonHref="/skills" />
       <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8">
-        {/* Header Section */}
-        <div className="flex items-center gap-4">
-          <Icon className="h-8 w-8 text-primary" />
-          <h1 className="flex-1 shrink-0 whitespace-nowrap text-2xl font-semibold tracking-tight sm:grow-0 font-headline">
-            {skill.name}
-          </h1>
-          <Badge variant="outline" className="ml-auto sm:ml-0">
-            {skill.category}
-          </Badge>
-          <div className="flex items-center gap-2">
-            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                </Button>
-                </DialogTrigger>
-                <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Edit Skill</DialogTitle>
-                    <DialogDescription>
-                    Update the details for your skill.
-                    </DialogDescription>
-                </DialogHeader>
-                <EditSkillForm skill={skill} onSkillUpdated={handleSkillUpdated} />
-                </DialogContent>
-            </Dialog>
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This will permanently delete the <strong>{skill.name}</strong> skill and all its associated data. This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteSkill} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-
+        
         {/* Main Content Grid */}
         <div className="grid gap-6 md:grid-cols-3">
           {/* Left Column: Progress and Recent Activity */}

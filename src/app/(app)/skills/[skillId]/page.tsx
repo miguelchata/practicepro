@@ -316,7 +316,7 @@ export default function SkillDetailPage() {
              <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Sub-Skills</CardTitle>
+                  <CardTitle>Skill Areas</CardTitle>
                   <CardDescription>
                     The core components of {skill.name}.
                   </CardDescription>
@@ -324,14 +324,14 @@ export default function SkillDetailPage() {
                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
-                      <Plus className="mr-2 h-4 w-4" /> Add Sub-skill
+                      <Plus className="mr-2 h-4 w-4" /> Add Skill Area
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Edit Skill</DialogTitle>
                       <DialogDescription>
-                        Add or modify your sub-skills below.
+                        Add or modify your skill areas below.
                       </DialogDescription>
                     </DialogHeader>
                     <EditSkillForm skill={skill} onSkillUpdated={handleSkillUpdated} />
@@ -347,7 +347,7 @@ export default function SkillDetailPage() {
                   ))
                 ) : (
                   <p className="text-muted-foreground text-sm text-center py-4 w-full">
-                    No sub-skills defined yet. Click &quot;Add Sub-skill&quot; to get started.
+                    No skill areas defined yet. Click &quot;Add Skill Area&quot; to get started.
                   </p>
                 )}
               </CardContent>
@@ -490,3 +490,4 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
     
 
     
+

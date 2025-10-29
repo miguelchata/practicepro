@@ -123,10 +123,10 @@ export default function PracticePage() {
             {selectedSkill && (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="sub-skill">Focus on Sub-skill (optional)</Label>
+                        <Label htmlFor="sub-skill">Focus on Skill Area (optional)</Label>
                         <Select onValueChange={setSelectedSubSkill} value={selectedSubSkill} disabled={!selectedSkill.subSkills || selectedSkill.subSkills.length === 0}>
                             <SelectTrigger id="sub-skill">
-                                <SelectValue placeholder="Select a sub-skill" />
+                                <SelectValue placeholder="Select a skill area" />
                             </SelectTrigger>
                             <SelectContent>
                                 {selectedSkill.subSkills.map((subSkill) => (

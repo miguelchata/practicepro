@@ -173,10 +173,10 @@ export function AddSkillForm({
           name="subSkills"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Sub-Skills</FormLabel>
+              <FormLabel>Skill Areas</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="List your sub-skills, one per line.
+                  placeholder="List your skill areas, one per line.
 e.g., Fingerpicking"
                   {...field}
                 />

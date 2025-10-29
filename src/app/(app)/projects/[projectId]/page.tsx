@@ -5,29 +5,13 @@ import { useParams } from 'next/navigation';
 import { useProject } from '@/firebase/firestore/use-doc';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  ArrowLeft,
-  Edit,
   PlusCircle,
-  Calendar,
-  CircleDot,
-  PauseCircle,
   CheckCircle,
-  Circle,
-  X,
   ListTodo,
   Loader,
 } from 'lucide-react';
-import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 import type { ProjectStatus, Task, TaskPriority, TaskStatus } from '@/lib/types';
 import {
   Dialog,
@@ -43,8 +27,6 @@ import { useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { TaskCard } from '@/components/projects/task-card';
 import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 import { TaskDetailView } from '@/components/projects/task-detail-view';
-import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 const KANBAN_COLUMNS: TaskStatus[] = ['To Do', 'In Progress', 'Done'];
 
@@ -128,7 +110,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="flex min-h-screen w-full flex-col">
         <Header title="Project Not Found" backButtonHref="/projects" />
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 md:gap-8 md:p-8">
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 md:gap-8 md:p-8">
           <p>The project you are looking for does not exist.</p>
         </main>
       </div>
@@ -138,7 +120,7 @@ export default function ProjectDetailPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title={project.title} backButtonHref="/projects" />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <main className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
         {selectedTaskId ? (
             <TaskDetailView taskId={selectedTaskId} projectId={projectId} onClose={() => setSelectedTaskId(null)} />
         ) : (

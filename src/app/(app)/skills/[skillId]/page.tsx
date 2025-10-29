@@ -20,8 +20,6 @@ import {
   Target,
   Calendar,
   CheckCircle2,
-  FolderKanban,
-  Ticket,
   Clock,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +37,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { useProjects, useUserStoriesForProjects } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useUpdateSkill } from '@/firebase/firestore/use-add-skill';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,16 +58,7 @@ function formatDeadline(deadline: string | undefined) {
 }
 
 type GroupedGoals = {
-    [projectId: string]: {
-        project: Project | null;
-        tickets: {
-            [ticketId: string]: {
-                ticket: UserStory | null;
-                goals: Goal[];
-            }
-        },
-        projectOnlyGoals: Goal[];
-    }
+    [skillArea: string]: Goal[];
 }
 
 
@@ -79,9 +67,6 @@ export default function SkillDetailPage() {
   const router = useRouter();
   const { skillId } = params;
   const { data: skill, loading } = useDoc<Skill>(`skills/${skillId}`);
-  const { data: projects } = useProjects();
-  const projectIds = useMemo(() => projects.map(p => p.id), [projects]);
-  const userStoriesByProject = useUserStoriesForProjects(projectIds);
   
   const updateSkill = useUpdateSkill();
 
@@ -93,34 +78,14 @@ export default function SkillDetailPage() {
 
   const groupedGoals = useMemo(() => {
     return allGoals.reduce((acc, goal) => {
-        const projectId = goal.projectId || 'personal';
-
-        if (!acc[projectId]) {
-            acc[projectId] = {
-                project: projects.find(p => p.id === projectId) || null,
-                tickets: {},
-                projectOnlyGoals: []
-            };
+        const skillArea = goal.subSkillName || 'Uncategorized';
+        if (!acc[skillArea]) {
+            acc[skillArea] = [];
         }
-
-        if (goal.userStoryTicketId && goal.userStoryId) {
-            if (!acc[projectId].tickets[goal.userStoryTicketId]) {
-                const stories = userStoriesByProject[projectId] || [];
-                acc[projectId].tickets[goal.userStoryTicketId] = {
-                    ticket: stories.find(s => s.id === goal.userStoryId) || null,
-                    goals: []
-                };
-            }
-            acc[projectId].tickets[goal.userStoryTicketId].goals.push(goal);
-        } else if (goal.projectId) {
-            acc[projectId].projectOnlyGoals.push(goal);
-        } else {
-             acc[projectId].projectOnlyGoals.push(goal);
-        }
-
+        acc[skillArea].push(goal);
         return acc;
     }, {} as GroupedGoals);
-  }, [allGoals, projects, userStoriesByProject]);
+  }, [allGoals]);
 
 
   if (loading) {
@@ -128,7 +93,6 @@ export default function SkillDetailPage() {
           <div className="flex min-h-screen w-full flex-col">
               <Header title="Loading Skill..." />
               <main className="flex-1 p-4 md:p-8">
-                  <Skeleton className="h-10 w-48 mb-6" />
                   <div className="grid gap-6 md:grid-cols-3">
                       <div className="md:col-span-1 space-y-6">
                         <Skeleton className="h-40 w-full" />
@@ -228,34 +192,17 @@ export default function SkillDetailPage() {
                 </CardHeader>
                 <CardContent>
                     {allGoals.length > 0 ? (
-                        <Accordion type="multiple" className="w-full space-y-2">
-                            {Object.entries(groupedGoals).map(([projectId, { project, tickets, projectOnlyGoals }]) => (
-                                <AccordionItem value={`project-${projectId}`} key={projectId} className="rounded-lg border bg-muted/50 px-3">
+                        <Accordion type="multiple" defaultValue={Object.keys(groupedGoals)} className="w-full space-y-2">
+                            {Object.entries(groupedGoals).map(([skillArea, goals]) => (
+                                <AccordionItem value={skillArea} key={skillArea} className="rounded-lg border bg-muted/50 px-3">
                                     <AccordionTrigger>
                                         <div className="flex items-center gap-2 font-semibold text-base">
-                                            {project ? <FolderKanban className="h-5 w-5" /> : <Target className="h-5 w-5" />}
-                                            <span>{project?.title || 'Personal Goals'}</span>
+                                            <Target className="h-5 w-5" />
+                                            <span>{skillArea}</span>
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-2 space-y-2">
-                                        {Object.entries(tickets).map(([ticketId, { ticket, goals }]) => (
-                                            <Accordion key={ticketId} type="multiple" className="w-full space-y-1">
-                                                <AccordionItem value={`ticket-${ticketId}`} className="rounded-lg border bg-background/50 px-3">
-                                                    <AccordionTrigger>
-                                                        <div className="flex items-center gap-2 font-medium">
-                                                            <Ticket className="h-5 w-5" />
-                                                            <span>{ticketId}: {ticket?.title || '...'}</span>
-                                                        </div>
-                                                    </AccordionTrigger>
-                                                    <AccordionContent className="p-2 space-y-2">
-                                                        {goals.map((goal, goalIndex) => (
-                                                            <GoalDetail key={goalIndex} goal={goal} />
-                                                        ))}
-                                                    </AccordionContent>
-                                                </AccordionItem>
-                                            </Accordion>
-                                        ))}
-                                        {projectOnlyGoals.map((goal, goalIndex) => (
+                                        {goals.map((goal, goalIndex) => (
                                             <div key={goalIndex} className="rounded-lg border bg-background/50">
                                                 <GoalDetail goal={goal} />
                                             </div>
@@ -302,7 +249,6 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
             <div className="flex-1 text-left">
                 <p className="font-medium">{goal.title}</p>
                 <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                    {goal.subSkillName && <Badge variant="secondary">{goal.subSkillName}</Badge>}
                     {goal.duration && (
                         <span className="flex items-center gap-1.5">
                             <Clock className="h-4 w-4" />

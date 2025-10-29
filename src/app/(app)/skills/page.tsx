@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { MoreHorizontal, PlusCircle, TargetIcon } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, TargetIcon, Edit, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -38,22 +38,46 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSkills } from '@/firebase/firestore/use-collection';
-import { useAddSkill, useUpdateSkill } from '@/firebase/firestore/use-add-skill';
+import { useAddSkill, useUpdateSkill, useDeleteSkill } from '@/firebase/firestore/use-add-skill';
 import { Skeleton } from '@/components/ui/skeleton';
 import { iconMap } from '@/lib/icons';
+import { EditSkillForm } from '@/components/skills/edit-skill-form';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function SkillsPage() {
   const { data: skills, loading } = useSkills();
   const addSkill = useAddSkill();
   const updateSkill = useUpdateSkill();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const deleteSkill = useDeleteSkill();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
 
   const handleSkillAdded = async (
     newSkill: Omit<Skill, 'id' | 'totalHours' | 'userId' | 'subSkills'>
   ) => {
     await addSkill(newSkill);
-    setIsDialogOpen(false);
+    setIsAddDialogOpen(false);
   };
+  
+  const handleSkillUpdated = (updatedSkillData: Partial<Omit<Skill, 'id' | 'userId'>>) => {
+    if (!editingSkill) return;
+    updateSkill(editingSkill.id, updatedSkillData);
+    setEditingSkill(null);
+  };
+  
+  const handleDeleteSkill = (skillId: string) => {
+    deleteSkill(skillId);
+  }
 
   const groupedSkills = skills.reduce((acc, skill) => {
     const category = skill.category || 'Uncategorized';
@@ -86,7 +110,7 @@ export default function SkillsPage() {
               Manage your skills and track your goals.
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Skill
@@ -137,22 +161,49 @@ export default function SkillsPage() {
                                       </CardTitle>
                                   </div>
                                   </div>
-                                  <DropdownMenu>
-                                      <DropdownMenuTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
-                                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                                              <MoreHorizontal className="h-4 w-4" />
-                                          </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
-                                          <DropdownMenuLabel>Move to</DropdownMenuLabel>
-                                          <DropdownMenuSeparator />
-                                          {categories.filter(c => c !== category).map(c => (
-                                              <DropdownMenuItem key={c} onClick={() => handleCategoryChange(skill.id, c)}>
-                                                  {c}
-                                              </DropdownMenuItem>
-                                          ))}
-                                      </DropdownMenuContent>
-                                  </DropdownMenu>
+                                  <AlertDialog>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
+                                            <DropdownMenuItem onSelect={() => setEditingSkill(skill)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                <span>Edit</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuLabel>Move to</DropdownMenuLabel>
+                                            {categories.filter(c => c !== category).map(c => (
+                                                <DropdownMenuItem key={c} onClick={() => handleCategoryChange(skill.id, c)}>
+                                                    {c}
+                                                </DropdownMenuItem>
+                                            ))}
+                                            <DropdownMenuSeparator />
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action will permanently delete the <strong>{skill.name}</strong> skill and all associated data. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteSkill(skill.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                                Delete
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                               </CardHeader>
                               <CardContent className="flex-grow">
                                   <div className="space-y-2">
@@ -187,6 +238,21 @@ export default function SkillsPage() {
             ))}
             </Accordion>
         )}
+
+        {/* Edit Skill Dialog */}
+        <Dialog open={!!editingSkill} onOpenChange={(open) => !open && setEditingSkill(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Skill</DialogTitle>
+                    <DialogDescription>
+                        Update the details for your skill.
+                    </DialogDescription>
+                </DialogHeader>
+                {editingSkill && (
+                    <EditSkillForm skill={editingSkill} onSkillUpdated={handleSkillUpdated} />
+                )}
+            </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

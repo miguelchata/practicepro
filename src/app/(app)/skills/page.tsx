@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardFooter,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -126,62 +126,59 @@ export default function SkillsPage() {
                     {skillsInCategory.map(skill => {
                         const Icon = iconMap[skill.icon] || TargetIcon;
                         return (
-                        <Card key={skill.id}>
-                        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-                            <div className="flex items-center gap-4">
-                            <Icon className="h-10 w-10 text-primary" />
-                            <div>
-                                <CardTitle className="font-headline">
-                                {skill.name}
-                                </CardTitle>
-                            </div>
-                            </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Move to</DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {categories.filter(c => c !== category).map(c => (
-                                        <DropdownMenuItem key={c} onClick={() => handleCategoryChange(skill.id, c)}>
-                                            {c}
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                            <p className="text-sm font-medium">
-                                Total Time: {skill.totalHours} hours
-                            </p>
-                            <Progress value={(skill.totalHours / 250) * 100} />
-                             <p className="text-sm font-medium pt-2">
-                                Active Goals: {allGoals(skill).length}
-                            </p>
-                            <ul className="list-inside space-y-1 text-sm text-muted-foreground">
-                                {allGoals(skill).slice(0,2).map((goal, index) => (
-                                <li
-                                    key={index}
-                                    className="flex items-start gap-2"
-                                >
-                                    <TargetIcon className="h-4 w-4 mt-1 flex-shrink-0" />
-                                    <span className="truncate">{goal.title}</span>
-                                </li>
-                                ))}
-                                {allGoals(skill).length > 2 && <li className="text-xs">...and {allGoals(skill).length-2} more</li>}
-                            </ul>
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="outline" className="w-full" asChild>
-                            <Link href={`/skills/${skill.id}`}>View Details</Link>
-                            </Button>
-                        </CardFooter>
-                        </Card>
+                          <Link key={skill.id} href={`/skills/${skill.id}`} className="flex">
+                            <Card className="flex w-full flex-col transition-all hover:shadow-md">
+                              <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                                  <div className="flex items-center gap-4">
+                                  <Icon className="h-10 w-10 text-primary" />
+                                  <div>
+                                      <CardTitle className="font-headline">
+                                      {skill.name}
+                                      </CardTitle>
+                                  </div>
+                                  </div>
+                                  <DropdownMenu>
+                                      <DropdownMenuTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                                              <MoreHorizontal className="h-4 w-4" />
+                                          </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
+                                          <DropdownMenuLabel>Move to</DropdownMenuLabel>
+                                          <DropdownMenuSeparator />
+                                          {categories.filter(c => c !== category).map(c => (
+                                              <DropdownMenuItem key={c} onClick={() => handleCategoryChange(skill.id, c)}>
+                                                  {c}
+                                              </DropdownMenuItem>
+                                          ))}
+                                      </DropdownMenuContent>
+                                  </DropdownMenu>
+                              </CardHeader>
+                              <CardContent className="flex-grow">
+                                  <div className="space-y-2">
+                                  <p className="text-sm font-medium">
+                                      Total Time: {skill.totalHours} hours
+                                  </p>
+                                  <Progress value={(skill.totalHours / 250) * 100} />
+                                  <p className="text-sm font-medium pt-2">
+                                      Active Goals: {allGoals(skill).length}
+                                  </p>
+                                  <ul className="list-inside space-y-1 text-sm text-muted-foreground">
+                                      {allGoals(skill).slice(0,2).map((goal, index) => (
+                                      <li
+                                          key={index}
+                                          className="flex items-start gap-2"
+                                      >
+                                          <TargetIcon className="h-4 w-4 mt-1 flex-shrink-0" />
+                                          <span className="truncate">{goal.title}</span>
+                                      </li>
+                                      ))}
+                                      {allGoals(skill).length > 2 && <li className="text-xs">...and {allGoals(skill).length-2} more</li>}
+                                  </ul>
+                                  </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
                         )
                     })}
                     </div>

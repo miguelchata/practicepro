@@ -313,46 +313,6 @@ export default function SkillDetailPage() {
 
           {/* Right Column: Sub-Skills and Goals */}
           <div className="md:col-span-2 space-y-6">
-             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Skill Areas</CardTitle>
-                  <CardDescription>
-                    The core components of {skill.name}.
-                  </CardDescription>
-                </div>
-                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Plus className="mr-2 h-4 w-4" /> Add Skill Area
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Skill</DialogTitle>
-                      <DialogDescription>
-                        Add or modify your skill areas below.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <EditSkillForm skill={skill} onSkillUpdated={handleSkillUpdated} />
-                  </DialogContent>
-                </Dialog>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {skill.subSkills && skill.subSkills.length > 0 ? (
-                  skill.subSkills.map((sub, index) => (
-                    <Badge key={index} variant="secondary" className="text-base py-1 px-3">
-                      {sub.name}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-4 w-full">
-                    No skill areas defined yet. Click &quot;Add Skill Area&quot; to get started.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-            
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -491,3 +451,6 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
 
     
 
+
+
+    

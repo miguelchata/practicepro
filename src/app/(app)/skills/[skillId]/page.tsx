@@ -306,7 +306,7 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
                     {goal.duration && (
                         <span className="flex items-center gap-1.5">
                             <Clock className="h-4 w-4" />
-                            {goal.duration} hours
+                            {goal.duration} minutes
                         </span>
                     )}
                     {goal.deadline && (

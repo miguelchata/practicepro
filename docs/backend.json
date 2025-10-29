@@ -206,7 +206,7 @@
             "userStoryId": { "type": "string" },
             "userStoryTicketId": { "type": "string" },
             "deadline": { "type": "string", "format": "date-time" },
-            "duration": { "type": "number", "description": "Target duration in hours." }
+            "duration": { "type": "number", "description": "Target duration in minutes." }
         },
         "required": ["title", "specific", "measurable", "status"]
     }

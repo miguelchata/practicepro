@@ -117,9 +117,9 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
           name="duration"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Target Duration (hours)</FormLabel>
+              <FormLabel>Target Duration (minutes)</FormLabel>
               <FormControl>
-                <Input type="number" placeholder="e.g., 10" {...field} />
+                <Input type="number" placeholder="e.g., 60" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

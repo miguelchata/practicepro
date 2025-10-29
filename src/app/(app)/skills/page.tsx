@@ -33,7 +33,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -89,10 +88,6 @@ export default function SkillsPage() {
   }, {} as Record<string, Skill[]>);
 
   const categories = Object.keys(groupedSkills);
-
-  const handleCategoryChange = (skillId: string, newCategory: string) => {
-    updateSkill(skillId, { category: newCategory });
-  };
   
   const allGoals = (skill: Skill) => skill.subSkills.flatMap(sub => sub.goals);
 
@@ -173,13 +168,6 @@ export default function SkillsPage() {
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 <span>Edit</span>
                                             </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuLabel>Move to</DropdownMenuLabel>
-                                            {categories.filter(c => c !== category).map(c => (
-                                                <DropdownMenuItem key={c} onClick={() => handleCategoryChange(skill.id, c)}>
-                                                    {c}
-                                                </DropdownMenuItem>
-                                            ))}
                                             <DropdownMenuSeparator />
                                             <AlertDialogTrigger asChild>
                                                 <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>

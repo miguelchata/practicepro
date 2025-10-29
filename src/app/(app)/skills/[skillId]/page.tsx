@@ -71,7 +71,7 @@ export default function SkillDetailPage() {
               <Header title="Loading Skill..." />
               <main className="flex-1 p-4 md:p-8">
                   <div className="grid gap-6">
-                      <Skeleton className="h-40 w-full" />
+                      
                       <Skeleton className="h-48 w-full" />
                   </div>
               </main>
@@ -168,7 +168,7 @@ export default function SkillDetailPage() {
 const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
     <div className="space-y-4">
         <div className="flex items-start gap-3 relative w-full">
-            <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+            
             <div className="flex-1 text-left">
                 <p className="font-medium">{goal.title}</p>
                 <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">

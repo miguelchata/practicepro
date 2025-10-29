@@ -118,7 +118,7 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="flex min-h-screen w-full flex-col">
-        <Header title="Project Not Found" />
+        <Header title="Project Not Found" backButtonHref="/projects" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 md:gap-8 md:p-8">
           <p>The project you are looking for does not exist.</p>
           <Button asChild>
@@ -149,16 +149,8 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header title={project.title} />
+      <Header title={project.title} backButtonHref="/projects" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/projects">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div className="flex-1">

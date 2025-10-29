@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -19,9 +19,10 @@ import { useRouter } from 'next/navigation';
 
 type HeaderProps = {
   title: string;
+  backButtonHref?: string;
 };
 
-export function Header({ title }: HeaderProps) {
+export function Header({ title, backButtonHref }: HeaderProps) {
   const { data: user } = useUser();
   const auth = useAuth();
   const router = useRouter();
@@ -47,6 +48,13 @@ export function Header({ title }: HeaderProps) {
       <div className="md:hidden">
         <SidebarTrigger />
       </div>
+      {backButtonHref && (
+        <Button variant="outline" size="icon" asChild className="hidden md:flex">
+          <Link href={backButtonHref}>
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+      )}
       <h1 className="flex-1 font-headline text-lg font-semibold md:text-xl">
         {title}
       </h1>

@@ -167,7 +167,7 @@ export default function SkillDetailPage() {
   if (!skill) {
     return (
       <div className="flex min-h-screen w-full flex-col">
-        <Header title="Skill Not Found" />
+        <Header title="Skill Not Found" backButtonHref="/skills" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 md:gap-8 md:p-8">
           <p>The skill you are looking for does not exist.</p>
           <Button asChild>
@@ -227,16 +227,10 @@ export default function SkillDetailPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header title={skill.name} />
+      <Header title={skill.name} backButtonHref="/skills" />
       <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8">
         {/* Header Section */}
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/skills">
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Back</span>
-            </Link>
-          </Button>
           <Icon className="h-8 w-8 text-primary" />
           <h1 className="flex-1 shrink-0 whitespace-nowrap text-2xl font-semibold tracking-tight sm:grow-0 font-headline">
             {skill.name}

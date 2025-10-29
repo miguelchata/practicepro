@@ -68,7 +68,7 @@ export default function EditProjectPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header title={`Edit: ${project.title}`} />
+      <Header title={`Edit: ${project.title}`} backButtonHref={`/projects/${projectId}`} />
       <main className="flex flex-1 items-center justify-center p-4">
         <Card className="w-full max-w-3xl">
           <CardHeader>

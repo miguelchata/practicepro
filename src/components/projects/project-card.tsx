@@ -70,8 +70,8 @@ export function ProjectCard({ project }: ProjectCardProps) {
     <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between">
-          <Link href={`/projects/${project.id}`} className="block">
-            <CardTitle className="font-headline text-xl hover:underline">{project.title}</CardTitle>
+          <Link href={`/projects/${project.id}`} className="block group">
+            <CardTitle className="font-headline text-xl group-hover:underline">{project.title}</CardTitle>
             <CardDescription className="line-clamp-2 mt-1">{project.description}</CardDescription>
           </Link>
           <AlertDialog>
@@ -84,20 +84,20 @@ export function ProjectCard({ project }: ProjectCardProps) {
               <DropdownMenuContent align="end">
                  <DropdownMenuItem asChild>
                   <Link href={`/projects/${project.id}`}>
-                    <Eye />
+                    <Eye className="mr-2 h-4 w-4" />
                     <span>View Details</span>
                   </Link>
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild>
                   <Link href={`/projects/${project.id}/edit`}>
-                    <Edit />
+                    <Edit className="mr-2 h-4 w-4" />
                     <span>Edit Project</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
-                    <Trash2 />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     <span>Delete Project</span>
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
@@ -142,7 +142,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <CardFooter>
         <Button variant="outline" className="w-full" asChild>
           <Link href={`/projects/${project.id}`}>
-            View Details
+            View Kanban Board
           </Link>
         </Button>
       </CardFooter>

@@ -20,6 +20,7 @@ import {
   Calendar,
   Clock,
   Puzzle,
+  CheckCircle2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -129,7 +130,7 @@ export default function SkillDetailPage() {
         </div>
         
         {allGoals.length > 0 ? (
-             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
+             <div className="space-y-6">
                 {allGoals.map((goal, goalIndex) => (
                     <Card key={goalIndex}>
                         <CardContent className="p-4">
@@ -187,12 +188,12 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
             </div>
         </div>
         <div className="space-y-4 text-muted-foreground">
-            {goal.subSkillName && (
-                <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+                {goal.subSkillName && (
                     <Badge variant="secondary" className="gap-1.5"><Puzzle className="h-3 w-3"/>{goal.subSkillName}</Badge>
-                    <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
-                </div>
-            )}
+                )}
+                <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
+            </div>
             <div>
                 <h5 className="font-semibold text-foreground">Outcome</h5>
                  <ul className="list-none space-y-1 mt-1">

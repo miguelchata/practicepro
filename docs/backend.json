@@ -99,7 +99,7 @@
         },
         "priority": {
             "type": "string",
-            "enum": ["Low", "Medium", "High", "Urgent"],
+            "enum": ["Low", "Medium", "High"],
             "description": "The priority of the task."
         },
         "status": {

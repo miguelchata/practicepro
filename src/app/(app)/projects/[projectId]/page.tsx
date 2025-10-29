@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useProject } from '@/firebase/firestore/use-doc';
 import { Header } from '@/components/layout/header';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   PlusCircle,
@@ -29,7 +28,6 @@ const KANBAN_COLUMN_ICONS: Record<TaskStatus, React.ElementType> = {
 };
 
 const priorityOrder: Record<TaskPriority, number> = {
-  Urgent: 4,
   High: 3,
   Medium: 2,
   Low: 1,

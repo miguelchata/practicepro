@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 const taskSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters long.'),
   description: z.string().min(3, 'Description is required.'),
-  priority: z.enum(['Low', 'Medium', 'High', 'Urgent']),
+  priority: z.enum(['Low', 'Medium', 'High']),
   status: z.enum(['To Do', 'In Progress', 'Done']),
 });
 
@@ -97,10 +97,9 @@ export function EditTaskForm({ task, onTaskUpdated, onCancel }: EditTaskFormProp
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
                     <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Urgent">Urgent</SelectItem>
+                    <SelectItem value="Medium">Medium</SelectItem>
+                    <SelectItem value="Low">Low</SelectItem>
                     </SelectContent>
                 </Select>
                 <FormMessage />

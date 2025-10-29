@@ -19,8 +19,7 @@ export function TaskCard({ task, onTaskSelected }: TaskCardProps) {
   const priorityVariant = {
     Low: 'secondary',
     Medium: 'outline',
-    High: 'default',
-    Urgent: 'destructive',
+    High: 'destructive',
   } as const;
 
   return (

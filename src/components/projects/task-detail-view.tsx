@@ -271,8 +271,7 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
   const priorityVariant = {
     Low: 'secondary',
     Medium: 'outline',
-    High: 'default',
-    Urgent: 'destructive',
+    High: 'destructive',
   } as const;
 
   return (

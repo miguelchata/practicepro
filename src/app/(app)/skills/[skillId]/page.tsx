@@ -19,6 +19,7 @@ import {
   Target,
   Calendar,
   Clock,
+  Puzzle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -49,11 +50,6 @@ function formatDeadline(deadline: string | undefined) {
   return `in ${diffDays} days`;
 }
 
-type GroupedGoals = {
-    [skillArea: string]: Goal[];
-}
-
-
 export default function SkillDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -67,18 +63,6 @@ export default function SkillDetailPage() {
   const allGoals = useMemo(() => {
     return skill?.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name}))) || [];
   }, [skill]);
-
-  const groupedGoals = useMemo(() => {
-    return allGoals.reduce((acc, goal) => {
-        const skillArea = goal.subSkillName || 'Uncategorized';
-        if (!acc[skillArea]) {
-            acc[skillArea] = [];
-        }
-        acc[skillArea].push(goal);
-        return acc;
-    }, {} as GroupedGoals);
-  }, [allGoals]);
-
 
   if (loading) {
       return (
@@ -146,20 +130,10 @@ export default function SkillDetailPage() {
         
         {allGoals.length > 0 ? (
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
-                {Object.entries(groupedGoals).map(([skillArea, goals]) => (
-                    <Card key={skillArea}>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 font-semibold text-base">
-                                <Target className="h-5 w-5" />
-                                <span>{skillArea}</span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {goals.map((goal, goalIndex) => (
-                                <div key={goalIndex} className="rounded-lg border bg-background/50">
-                                    <GoalDetail goal={goal} />
-                                </div>
-                            ))}
+                {allGoals.map((goal, goalIndex) => (
+                    <Card key={goalIndex}>
+                        <CardContent className="p-4">
+                            <GoalDetail goal={goal} />
                         </CardContent>
                     </Card>
                 ))}
@@ -191,7 +165,7 @@ export default function SkillDetailPage() {
 }
 
 const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
-    <div className="p-4">
+    <div className="space-y-4">
         <div className="flex items-start gap-3 relative w-full">
             <Target className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
             <div className="flex-1 text-left">
@@ -209,11 +183,16 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
                             Due {formatDeadline(goal.deadline)}
                         </span>
                     )}
-                    <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
                 </div>
             </div>
         </div>
-        <div className="pl-8 pt-4 space-y-4 text-muted-foreground">
+        <div className="space-y-4 text-muted-foreground">
+            {goal.subSkillName && (
+                <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="gap-1.5"><Puzzle className="h-3 w-3"/>{goal.subSkillName}</Badge>
+                    <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
+                </div>
+            )}
             <div>
                 <h5 className="font-semibold text-foreground">Outcome</h5>
                  <ul className="list-none space-y-1 mt-1">

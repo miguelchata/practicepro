@@ -100,7 +100,6 @@ export default function SkillDetailPage() {
                       </div>
                       <div className="md:col-span-2 space-y-6">
                         <Skeleton className="h-48 w-full" />
-                        <Skeleton className="h-64 w-full" />
                       </div>
                   </div>
               </main>
@@ -267,11 +266,7 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
         </div>
         <div className="pl-8 pt-4 space-y-4 text-muted-foreground">
             <div>
-                <h5 className="font-semibold text-foreground">Specific</h5>
-                <p>{goal.specific}</p>
-            </div>
-            <div>
-                <h5 className="font-semibold text-foreground">Measurable</h5>
+                <h5 className="font-semibold text-foreground">Outcome</h5>
                  <ul className="list-none space-y-1 mt-1">
                     <li className="flex items-start gap-2">
                         <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />

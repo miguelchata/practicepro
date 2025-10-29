@@ -23,6 +23,8 @@ import {
   CheckCircle,
   Circle,
   X,
+  ListTodo,
+  Loader,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -44,7 +46,13 @@ import { TaskDetailView } from '@/components/projects/task-detail-view';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
-const KANBAN_COLUMNS: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
+const KANBAN_COLUMNS: TaskStatus[] = ['To Do', 'In Progress', 'Done'];
+
+const KANBAN_COLUMN_ICONS: Record<TaskStatus, React.ElementType> = {
+    'To Do': ListTodo,
+    'In Progress': Loader,
+    'Done': CheckCircle
+};
 
 const priorityOrder: Record<TaskPriority, number> = {
   Urgent: 4,
@@ -66,20 +74,20 @@ export default function ProjectDetailPage() {
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
-      Backlog: [],
+      'To Do': [],
       'In Progress': [],
-      Done: [],
+      'Done': [],
     };
     tasks.forEach((task) => {
       if (task.status && grouped[task.status]) {
         grouped[task.status].push(task);
       } else {
-        grouped.Backlog.push(task); // Default to backlog
+        grouped['To Do'].push(task); // Default to To Do
       }
     });
 
-    // Sort the backlog column by priority
-    grouped.Backlog.sort(
+    // Sort the To Do column by priority
+    grouped['To Do'].sort(
       (a, b) =>
         (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0)
     );
@@ -105,7 +113,7 @@ export default function ProjectDetailPage() {
       <div className="flex min-h-screen w-full flex-col">
         <Header title="Loading Project..." backButtonHref="/projects"/>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-10 w-full" />
           <div className="grid gap-6 md:grid-cols-3">
             <Skeleton className="h-64 w-full" />
             <Skeleton className="h-64 w-full" />
@@ -177,43 +185,49 @@ export default function ProjectDetailPage() {
                     </div>
                   ))
                 ) : (
-                  KANBAN_COLUMNS.map((status) => (
-                    <div
-                      key={status}
-                      className="rounded-lg bg-muted/50 p-3"
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => {
-                        const taskData = window.localStorage.getItem('draggingTask');
-                        if (taskData) {
-                          const task: Task = JSON.parse(taskData);
-                          handleDragEnd(task, status);
-                          window.localStorage.removeItem('draggingTask');
-                        }
-                      }}
-                    >
-                      <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
-                        <span>{status}</span>
-                        <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
-                          {tasksByStatus[status].length}
-                        </span>
-                      </h3>
-                      <div className="space-y-3">
-                        {tasksByStatus[status].map((task) => (
-                          <TaskCard
-                            key={task.id}
-                            task={task}
-                            projectId={projectId}
-                            onTaskSelected={setSelectedTaskId}
-                          />
-                        ))}
-                        {tasksByStatus[status].length === 0 && (
-                          <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
-                            Drop tasks here
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                  KANBAN_COLUMNS.map((status) => {
+                    const Icon = KANBAN_COLUMN_ICONS[status];
+                    return (
+                        <div
+                        key={status}
+                        className="rounded-lg bg-muted/50 p-3"
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => {
+                            const taskData = window.localStorage.getItem('draggingTask');
+                            if (taskData) {
+                            const task: Task = JSON.parse(taskData);
+                            handleDragEnd(task, status);
+                            window.localStorage.removeItem('draggingTask');
+                            }
+                        }}
+                        >
+                        <h3 className="font-semibold font-headline mb-3 flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <Icon className="h-5 w-5" />
+                                {status}
+                            </span>
+                            <span className="text-sm text-muted-foreground bg-background rounded-full px-2 py-0.5">
+                            {tasksByStatus[status].length}
+                            </span>
+                        </h3>
+                        <div className="space-y-3">
+                            {tasksByStatus[status].map((task) => (
+                            <TaskCard
+                                key={task.id}
+                                task={task}
+                                projectId={projectId}
+                                onTaskSelected={setSelectedTaskId}
+                            />
+                            ))}
+                            {tasksByStatus[status].length === 0 && (
+                            <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                                Drop tasks here
+                            </div>
+                            )}
+                        </div>
+                        </div>
+                    )
+                  })
                 )}
             </div>
           </>

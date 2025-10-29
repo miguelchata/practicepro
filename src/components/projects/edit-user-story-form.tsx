@@ -25,7 +25,7 @@ const userStorySchema = z.object({
   ticketId: z.string().min(1, 'Ticket ID is required.'),
   title: z.string().min(3, 'Title must be at least 3 characters long.'),
   features: z.string().min(3, 'At least one feature is required.'),
-  status: z.enum(['Backlog', 'To Do', 'In Progress', 'Done']),
+  status: z.enum(['To Do', 'In Progress', 'Done']),
 });
 
 type EditUserStoryFormProps = {
@@ -124,7 +124,6 @@ export function EditUserStoryForm({ story, onUserStoryUpdated }: EditUserStoryFo
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Backlog">Backlog</SelectItem>
                   <SelectItem value="To Do">To Do</SelectItem>
                   <SelectItem value="In Progress">In Progress</SelectItem>
                   <SelectItem value="Done">Done</SelectItem>

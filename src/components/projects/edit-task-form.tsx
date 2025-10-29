@@ -22,7 +22,7 @@ const taskSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters long.'),
   description: z.string().min(3, 'Description is required.'),
   priority: z.enum(['Low', 'Medium', 'High', 'Urgent']),
-  status: z.enum(['Backlog', 'In Progress', 'Done']),
+  status: z.enum(['To Do', 'In Progress', 'Done']),
 });
 
 
@@ -120,7 +120,7 @@ export function EditTaskForm({ task, onTaskUpdated, onCancel }: EditTaskFormProp
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    <SelectItem value="Backlog">Backlog</SelectItem>
+                    <SelectItem value="To Do">To Do</SelectItem>
                     <SelectItem value="In Progress">In Progress</SelectItem>
                     <SelectItem value="Done">Done</SelectItem>
                     </SelectContent>

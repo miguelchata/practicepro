@@ -100,6 +100,9 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
       // Pausing the timer
       setTimerStatus('paused');
     } else { // idle or paused
+      if(timerStatus === 'paused') {
+        setPauseCount(prev => prev + 1);
+      }
       setTimerStatus('running');
       if (timerStatus === 'idle') {
         // Starting a new session
@@ -113,7 +116,6 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
 
   const handleFinishTimer = () => {
     setTimerStatus('paused');
-    setPauseCount(prev => prev + 1);
     setIsLogDialogOpen(true);
   };
   
@@ -127,8 +129,8 @@ export function TaskDetailView({ taskId, projectId, onClose }: TaskDetailViewPro
     
     const updateData: Partial<Task> = {};
 
-    // Check if this is the first log and the status is 'Backlog'
-    if ((!task.workLogs || task.workLogs.length === 0) && task.status === 'Backlog') {
+    // Check if this is the first log and the status is 'To Do'
+    if ((!task.workLogs || task.workLogs.length === 0) && task.status === 'To Do') {
         updateData.status = 'In Progress';
     }
 

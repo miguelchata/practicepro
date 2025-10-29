@@ -45,7 +45,7 @@ export type Skill = {
 export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
 
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
-export type TaskStatus = 'Backlog' | 'In Progress' | 'Done';
+export type TaskStatus = 'To Do' | 'In Progress' | 'Done';
 
 export type WorkLog = {
     id: number;
@@ -66,7 +66,7 @@ export type Task = {
     workLogs?: WorkLog[];
 };
 
-export type UserStoryStatus = 'Backlog' | 'In Progress' | 'Done';
+export type UserStoryStatus = 'To Do' | 'In Progress' | 'Done';
 
 export type UserStory = {
     id: string;

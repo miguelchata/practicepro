@@ -41,7 +41,7 @@ export default function EditProjectPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen w-full flex-col">
-        <Header title="Loading Project..." />
+        <Header title="Loading Project..." backButtonHref={`/projects/${projectId}`} />
         <main className="flex flex-1 items-center justify-center p-4">
           <Skeleton className="h-[500px] w-full max-w-3xl" />
         </main>
@@ -52,15 +52,9 @@ export default function EditProjectPage() {
   if (!project) {
     return (
       <div className="flex min-h-screen w-full flex-col">
-        <Header title="Project Not Found" />
+        <Header title="Project Not Found" backButtonHref="/projects" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4">
           <p>The project you are looking for does not exist.</p>
-          <Button asChild>
-            <Link href="/projects">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Projects
-            </Link>
-          </Button>
         </main>
       </div>
     );

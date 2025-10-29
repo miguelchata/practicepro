@@ -103,7 +103,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen w-full flex-col">
-        <Header title="Loading Project..." />
+        <Header title="Loading Project..." backButtonHref="/projects"/>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
           <Skeleton className="h-40 w-full" />
           <div className="grid gap-6 md:grid-cols-3">
@@ -122,75 +122,15 @@ export default function ProjectDetailPage() {
         <Header title="Project Not Found" backButtonHref="/projects" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 md:gap-8 md:p-8">
           <p>The project you are looking for does not exist.</p>
-          <Button asChild>
-            <Link href="/projects">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Projects
-            </Link>
-          </Button>
         </main>
       </div>
     );
   }
 
-  const getStatusIcon = (status: ProjectStatus) => {
-    switch (status) {
-      case 'Completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'In Progress':
-        return <CircleDot className="h-4 w-4 text-blue-500" />;
-      case 'On Hold':
-        return <PauseCircle className="h-4 w-4 text-yellow-500" />;
-      case 'Not Started':
-        return <Circle className="h-4 w-4 text-muted-foreground" />;
-      default:
-        return <Circle className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title={project.title} backButtonHref="/projects" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <Card>
-          <CardContent className="p-6 space-y-4">
-             <div className="flex items-start justify-between gap-4">
-                <p className="text-muted-foreground flex-1">
-                    {project.description}
-                </p>
-                <Button asChild variant="outline">
-                    <Link href={`/projects/${project.id}/edit`}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                    </Link>
-                </Button>
-            </div>
-            <Separator />
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                {getStatusIcon(project.status)}
-                <span>
-                    Status: <strong>{project.status}</strong>
-                </span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>
-                    Start Date:{' '}
-                    <strong>{new Date(project.startDate).toLocaleDateString()}</strong>
-                </span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>
-                    Target Date:{' '}
-                    <strong>{new Date(project.targetDate).toLocaleDateString()}</strong>
-                </span>
-                </div>
-            </div>
-          </CardContent>
-        </Card>
-        
         {selectedTaskId ? (
             <TaskDetailView taskId={selectedTaskId} projectId={projectId} onClose={() => setSelectedTaskId(null)} />
         ) : (

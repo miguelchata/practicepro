@@ -126,13 +126,13 @@ export default function SkillsPage() {
                     {skillsInCategory.map(skill => {
                         const Icon = iconMap[skill.icon] || TargetIcon;
                         return (
-                          <Link key={skill.id} href={`/skills/${skill.id}`} className="flex">
+                          <Link key={skill.id} href={`/skills/${skill.id}`} className="flex group">
                             <Card className="flex w-full flex-col transition-all hover:shadow-md">
                               <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                                   <div className="flex items-center gap-4">
                                   <Icon className="h-10 w-10 text-primary" />
                                   <div>
-                                      <CardTitle className="font-headline">
+                                      <CardTitle className="font-headline group-hover:underline">
                                       {skill.name}
                                       </CardTitle>
                                   </div>

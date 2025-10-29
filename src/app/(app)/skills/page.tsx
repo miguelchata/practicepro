@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { MoreHorizontal, PlusCircle, TargetIcon, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, TargetIcon, Edit, Trash2, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -164,6 +164,12 @@ export default function SkillsPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
+                                            <DropdownMenuItem asChild>
+                                              <Link href={`/skills/${skill.id}`}>
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                <span>View Details</span>
+                                              </Link>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onSelect={() => setEditingSkill(skill)}>
                                                 <Edit className="mr-2 h-4 w-4" />
                                                 <span>Edit</span>

@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { MoreHorizontal, PlusCircle, TargetIcon, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -143,24 +143,20 @@ export default function SkillsPage() {
                 <AccordionContent className="pt-4">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {skillsInCategory.map(skill => {
-                        const Icon = iconMap[skill.icon] || TargetIcon;
                         return (
                           <Link key={skill.id} href={`/skills/${skill.id}`} className="flex group">
                             <Card className="flex w-full flex-col transition-all hover:shadow-md">
                               <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-                                  <div className="flex items-center gap-4">
-                                  <Icon className="h-10 w-10 text-primary" />
                                   <div>
                                       <CardTitle className="font-headline group-hover:underline">
                                       {skill.name}
                                       </CardTitle>
                                   </div>
-                                  </div>
                                   <AlertDialog>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
                                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreHorizontal className="h-4 w-4" />
+                                                <MoreVertical className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,12 +24,6 @@ import { AddSkillForm } from '@/components/skills/add-skill-form';
 import type { Skill } from '@/lib/types';
 import Link from 'next/link';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -52,6 +46,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SkillsPage() {
   const { data: skills, loading } = useSkills();
@@ -60,6 +55,7 @@ export default function SkillsPage() {
   const deleteSkill = useDeleteSkill();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('All');
 
   const handleSkillAdded = async (
     newSkill: Omit<Skill, 'id' | 'totalHours' | 'userId' | 'subSkills'>
@@ -77,18 +73,19 @@ export default function SkillsPage() {
   const handleDeleteSkill = (skillId: string) => {
     deleteSkill(skillId);
   }
-
-  const groupedSkills = skills.reduce((acc, skill) => {
-    const category = skill.category || 'Uncategorized';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(skill);
-    return acc;
-  }, {} as Record<string, Skill[]>);
-
-  const categories = Object.keys(groupedSkills);
   
+  const categories = useMemo(() => {
+    const allCategories = skills.map(skill => skill.category);
+    return ['All', ...Array.from(new Set(allCategories))];
+  }, [skills]);
+
+  const filteredSkills = useMemo(() => {
+    if (categoryFilter === 'All') {
+      return skills;
+    }
+    return skills.filter(skill => skill.category === categoryFilter);
+  }, [skills, categoryFilter]);
+
   const allGoals = (skill: Skill) => skill.subSkills.flatMap(sub => sub.goals);
 
 
@@ -105,116 +102,115 @@ export default function SkillsPage() {
               Manage your skills and track your goals.
             </p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add Skill
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add a New Skill</DialogTitle>
-                <DialogDescription>
-                  What new skill do you want to master?
-                </DialogDescription>
-              </DialogHeader>
-              <AddSkillForm
-                onSkillAdded={handleSkillAdded}
-                categories={categories}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Skill
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add a New Skill</DialogTitle>
+                  <DialogDescription>
+                    What new skill do you want to master?
+                  </DialogDescription>
+                </DialogHeader>
+                <AddSkillForm
+                  onSkillAdded={handleSkillAdded}
+                  categories={categories.filter(c => c !== 'All')}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         
         {loading ? (
-            <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
-                </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
             </div>
         ) : (
-            <Accordion type="multiple" defaultValue={categories} className="w-full space-y-4">
-            {Object.entries(groupedSkills).map(([category, skillsInCategory]) => (
-                <AccordionItem value={category} key={category} className="border-b-0">
-                    <AccordionTrigger className="text-xl font-headline font-bold tracking-tight rounded-lg bg-muted px-4 py-3 hover:no-underline">
-                    {category} ({skillsInCategory.length})
-                    </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {skillsInCategory.map(skill => {
-                        return (
-                          <Link key={skill.id} href={`/skills/${skill.id}`} className="flex group">
-                            <Card className="flex w-full flex-col transition-all hover:shadow-md">
-                              <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-                                  <div>
-                                      <CardTitle className="font-headline group-hover:underline">
-                                      {skill.name}
-                                      </CardTitle>
-                                  </div>
-                                  <AlertDialog>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
-                                            <DropdownMenuItem asChild>
-                                              <Link href={`/skills/${skill.id}`}>
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                <span>View Details</span>
-                                              </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setEditingSkill(skill)}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                <span>Edit</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <AlertDialogTrigger asChild>
-                                                <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>Delete</span>
-                                                </DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action will permanently delete the <strong>{skill.name}</strong> skill and all associated data. This action cannot be undone.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteSkill(skill.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                                Delete
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                              </CardHeader>
-                              <CardContent className="flex-grow">
-                                  <div className="space-y-2">
-                                  <p className="text-sm font-medium">
-                                      Total Time: {skill.totalHours} hours
-                                  </p>
-                                  <Progress value={(skill.totalHours / 250) * 100} />
-                                  <p className="text-sm font-medium pt-2">
-                                      Active Goals: {allGoals(skill).length}
-                                  </p>
-                                  </div>
-                              </CardContent>
-                            </Card>
-                          </Link>
-                        )
-                    })}
-                    </div>
-                </AccordionContent>
-                </AccordionItem>
-            ))}
-            </Accordion>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredSkills.map(skill => {
+                  const Icon = iconMap[skill.icon as keyof typeof iconMap] || Target;
+                  return (
+                    <Link key={skill.id} href={`/skills/${skill.id}`} className="flex group">
+                      <Card className="flex w-full flex-col transition-all hover:shadow-md">
+                        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                            <div>
+                                <CardTitle className="font-headline group-hover:underline">
+                                {skill.name}
+                                </CardTitle>
+                            </div>
+                            <AlertDialog>
+                              <DropdownMenu>
+                                  <DropdownMenuTrigger asChild onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <MoreVertical className="h-4 w-4" />
+                                      </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" onClick={(e) => { e.preventDefault(); e.stopPropagation();}}>
+                                      <DropdownMenuItem asChild>
+                                        <Link href={`/skills/${skill.id}`}>
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          <span>View Details</span>
+                                        </Link>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onSelect={() => setEditingSkill(skill)}>
+                                          <Edit className="mr-2 h-4 w-4" />
+                                          <span>Edit</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <AlertDialogTrigger asChild>
+                                          <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                              <Trash2 className="mr-2 h-4 w-4" />
+                                              <span>Delete</span>
+                                          </DropdownMenuItem>
+                                      </AlertDialogTrigger>
+                                  </DropdownMenuContent>
+                              </DropdownMenu>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This action will permanently delete the <strong>{skill.name}</strong> skill and all associated data. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteSkill(skill.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                          Delete
+                                      </AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                            <div className="space-y-2">
+                            <p className="text-sm font-medium">
+                                Total Time: {skill.totalHours} hours
+                            </p>
+                            <Progress value={(skill.totalHours / 250) * 100} />
+                            <p className="text-sm font-medium pt-2">
+                                Active Goals: {allGoals(skill).length}
+                            </p>
+                            </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  )
+              })}
+            </div>
         )}
 
         {/* Edit Skill Dialog */}

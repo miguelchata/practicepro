@@ -25,6 +25,7 @@ export type Goal = {
   userStoryId?: string;
   userStoryTicketId?: string;
   deadline?: string;
+  duration?: number; // Target duration in hours
 };
 
 export type SubSkill = {

@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   FolderKanban,
   Ticket,
+  Clock,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -302,6 +303,12 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
                 <p className="font-medium">{goal.title}</p>
                 <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
                     {goal.subSkillName && <Badge variant="secondary">{goal.subSkillName}</Badge>}
+                    {goal.duration && (
+                        <span className="flex items-center gap-1.5">
+                            <Clock className="h-4 w-4" />
+                            {goal.duration} hours
+                        </span>
+                    )}
                     {goal.deadline && (
                         <span className="flex items-center gap-1.5">
                             <Calendar className="h-4 w-4" />

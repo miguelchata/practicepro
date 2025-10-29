@@ -12,209 +12,106 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { Goal, Project, UserStory } from '@/lib/types';
-import { List, Ticket } from 'lucide-react';
+import type { Goal } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { useUserStories } from '@/firebase/firestore/use-collection';
-import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 const formSchema = z.object({
+  skillArea: z.string().min(1, { message: 'Please select a skill area.' }),
   specific: z.string().min(3, {
     message: 'Specific goal description must be at least 3 characters.',
   }),
   measurable: z.string().min(3, {
     message: 'Provide at least one measurable outcome, one per line.',
   }),
-  projectId: z.string().optional(),
-  userStoryId: z.string().optional(),
 });
 
 type AddGoalFormProps = {
-  onGoalAdded: (newGoal: Goal) => void;
-  disabled?: boolean;
-  projects: Project[];
+  onGoalAdded: (skillArea: string, newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'>) => void;
+  skillAreas: string[];
 };
 
-export function AddGoalForm({ onGoalAdded, disabled, projects }: AddGoalFormProps) {
-  const [step, setStep] = useState(1);
-  
+export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      skillArea: skillAreas[0] || '',
       specific: '',
       measurable: '',
-      projectId: 'none',
-      userStoryId: 'none',
     },
   });
 
-  const selectedProjectId = form.watch('projectId');
-  const selectedUserStoryId = form.watch('userStoryId');
-  const { data: userStories, loading: storiesLoading } = useUserStories(selectedProjectId === 'none' ? null : selectedProjectId || null);
-
-  useEffect(() => {
-    form.setValue('userStoryId', 'none');
-  }, [selectedProjectId, form]);
-
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const finalProjectId = values.projectId === 'none' ? undefined : values.projectId;
-    const finalUserStoryId = values.userStoryId === 'none' ? undefined : values.userStoryId;
-    const selectedStory = userStories.find(story => story.id === finalUserStoryId);
-
-    const newGoal: Goal = {
-        title: values.specific, // Use specific as title
+    const newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> = {
+        title: values.specific,
         specific: values.specific,
         measurable: values.measurable.split('\n').filter(m => m.trim() !== ''),
         status: 'Not Started',
-        projectId: finalProjectId,
-        userStoryId: finalUserStoryId,
-        userStoryTicketId: selectedStory?.ticketId,
     };
-    onGoalAdded(newGoal);
+    onGoalAdded(values.skillArea, newGoal);
     form.reset();
-    setStep(1);
   }
-
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
-  const selectedStory = userStories.find(s => s.id === selectedUserStoryId);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {step === 1 ? (
-          <div className="space-y-4">
-             <FormField
-                control={form.control}
-                name="projectId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Link to Project (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a project" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        <SelectItem value="none">None (Personal Goal)</SelectItem>
-                        {projects.map(project => (
-                            <SelectItem key={project.id} value={project.id}>{project.title}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-              />
-              <FormField
-              control={form.control}
-              name="userStoryId"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Link to Ticket (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedProjectId || selectedProjectId === 'none' || userStories.length === 0 || storiesLoading}>
-                      <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder={storiesLoading ? "Loading tickets..." : "Select a ticket"} />
-                      </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {userStories.map(story => (
-                          <SelectItem key={story.id} value={story.id}>
-                              <div className="flex items-center gap-2">
-                                  <Ticket className="h-4 w-4 text-muted-foreground" />
-                                  <span>{story.ticketId}: {story.title}</span>
-                              </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
-              )}
-            />
-            <Button onClick={() => setStep(2)} className="w-full">
-                Next
-            </Button>
-          </div>
-        ) : (
-          <>
-            {selectedStory ? (
-                <Card className="bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="text-lg">{selectedStory.ticketId}: {selectedStory.title}</CardTitle>
-                        <CardDescription>Features for this ticket:</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {selectedStory.features.length > 0 ? (
-                            <ul className="space-y-2 text-sm text-muted-foreground">
-                                {selectedStory.features.map((feature, index) => (
-                                    <li key={index} className="flex items-start gap-2">
-                                        <List className="h-4 w-4 mt-0.5 flex-shrink-0"/>
-                                        <span>{feature}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">No features defined for this ticket yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
-            ) : selectedProject && (
-                 <Card className="bg-muted/50">
-                    <CardHeader>
-                        <CardTitle className="text-lg">{selectedProject.title}</CardTitle>
-                        <CardDescription>This goal is linked to the project, but not a specific ticket.</CardDescription>
-                    </CardHeader>
-                </Card>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+        <FormField
+            control={form.control}
+            name="skillArea"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Skill Area</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a skill area to target" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {skillAreas.map(area => (
+                        <SelectItem key={area} value={area}>{area}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
             )}
-            
-            <FormField
-              control={form.control}
-              name="specific"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Goal</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="What is your specific goal? e.g., 'Learn Travis Picking for Landslide'"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
             />
-            <FormField
-              control={form.control}
-              name="measurable"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Measurable Outcomes (one per line)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="How will you measure progress? e.g., Play the song at full speed without mistakes"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-between gap-2">
-                <Button type="button" variant="outline" onClick={() => setStep(1)}>
-                    Back
-                </Button>
-                <Button type="submit" className="flex-grow" disabled={disabled}>
-                    Add Goal
-                </Button>
-            </div>
-          </>
-        )}
+        <FormField
+            control={form.control}
+            name="specific"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Goal</FormLabel>
+                <FormControl>
+                <Textarea
+                    placeholder="What is your specific goal? e.g., 'Learn Travis Picking for Landslide'"
+                    {...field}
+                />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        <FormField
+            control={form.control}
+            name="measurable"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Measurable Outcomes (one per line)</FormLabel>
+                <FormControl>
+                <Textarea
+                    placeholder="How will you measure progress? e.g., Play the song at full speed without mistakes"
+                    {...field}
+                />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || skillAreas.length === 0}>
+            {form.formState.isSubmitting ? 'Adding Goal...' : 'Add Goal'}
+        </Button>
       </form>
     </Form>
   );

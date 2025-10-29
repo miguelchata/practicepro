@@ -16,13 +16,11 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Edit,
   Plus,
   Target,
   Calendar,
   CheckCircle2,
   FolderKanban,
-  Trash2,
   Ticket,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -32,9 +30,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { EditSkillForm } from '@/components/skills/edit-skill-form';
 import { AddGoalForm } from '@/components/skills/add-goal-form';
 import {
   Accordion,
@@ -42,24 +38,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { useProjects, useUserStoriesForProjects } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { useUpdateSkill, useDeleteSkill } from '@/firebase/firestore/use-add-skill';
+import { useUpdateSkill } from '@/firebase/firestore/use-add-skill';
 import { Skeleton } from '@/components/ui/skeleton';
-import { iconMap } from '@/lib/icons';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 function formatDeadline(deadline: string | undefined) {
   if (!deadline) return '';
@@ -101,11 +83,8 @@ export default function SkillDetailPage() {
   const userStoriesByProject = useUserStoriesForProjects(projectIds);
   
   const updateSkill = useUpdateSkill();
-  const deleteSkill = useDeleteSkill();
 
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddGoalDialogOpen, setIsAddGoalDialogOpen] = useState(false);
-  const [selectedSubSkills, setSelectedSubSkills] = useState<string[]>([]);
   
   const allGoals = useMemo(() => {
     return skill?.subSkills.flatMap(sub => sub.goals.map(goal => ({...goal, subSkillName: sub.name}))) || [];
@@ -181,49 +160,22 @@ export default function SkillDetailPage() {
     );
   }
 
-  const handleSkillUpdated = (updatedSkillData: Partial<Omit<Skill, 'id' | 'userId'>>) => {
-    updateSkill(skill.id, updatedSkillData);
-    setIsEditDialogOpen(false);
-  };
-
-  const handleGoalAdded = (newGoal: Goal) => {
-    if (selectedSubSkills.length === 0) return;
+  const handleGoalAdded = (skillArea: string, newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'>) => {
+    if (!skillArea) return;
 
     const newSubSkills = skill.subSkills.map(sub => {
-      if (selectedSubSkills.includes(sub.name)) {
-        return { ...sub, goals: [...sub.goals, newGoal] };
+      if (sub.name === skillArea) {
+        return { ...sub, goals: [...sub.goals, newGoal as Goal] };
       }
       return sub;
     });
     updateSkill(skill.id, { subSkills: newSubSkills });
     setIsAddGoalDialogOpen(false);
-    setSelectedSubSkills([]);
   };
   
   const handleOpenAddGoalDialog = () => {
-    if (skill.subSkills && skill.subSkills.length > 0) {
-      setSelectedSubSkills([skill.subSkills[0].name]);
-    } else {
-      setSelectedSubSkills([]);
-    }
     setIsAddGoalDialogOpen(true);
   };
-
-  const handleSubSkillSelectionChange = (subSkillName: string, isSelected: boolean) => {
-    setSelectedSubSkills(prev => 
-      isSelected 
-        ? [...prev, subSkillName]
-        : prev.filter(name => name !== subSkillName)
-    );
-  };
-
-  const handleDeleteSkill = () => {
-    deleteSkill(skill.id).then(() => {
-        router.push('/skills');
-    });
-  }
-
-  const Icon = iconMap[skill.icon] || Target;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -328,29 +280,13 @@ export default function SkillDetailPage() {
             <DialogHeader>
               <DialogTitle>Add New Goal</DialogTitle>
               <DialogDescription>
-                Define a new goal and link it to one or more sub-skills.
+                Define a new goal and link it to a skill area.
               </DialogDescription>
             </DialogHeader>
-            {skill.subSkills && skill.subSkills.length > 0 && (
-              <div className="space-y-4 py-4">
-                <Label>Link to Sub-Skill(s)</Label>
-                <div className="space-y-2 rounded-md border p-4">
-                    {skill.subSkills.map(sub => (
-                      <div key={sub.name} className="flex items-center gap-3">
-                        <Checkbox 
-                          id={`subskill-checkbox-${sub.name}`}
-                          checked={selectedSubSkills.includes(sub.name)}
-                          onCheckedChange={(checked) => handleSubSkillSelectionChange(sub.name, !!checked)}
-                        />
-                        <Label htmlFor={`subskill-checkbox-${sub.name}`} className="font-normal cursor-pointer">
-                          {sub.name}
-                        </Label>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-            <AddGoalForm onGoalAdded={handleGoalAdded} disabled={selectedSubSkills.length === 0} projects={projects} />
+            <AddGoalForm 
+                onGoalAdded={handleGoalAdded} 
+                skillAreas={skill.subSkills.map(s => s.name)} 
+            />
           </DialogContent>
         </Dialog>
       </main>
@@ -395,11 +331,3 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
         </div>
     </div>
 );
-
-    
-
-    
-
-
-
-    

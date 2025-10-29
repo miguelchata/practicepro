@@ -13,20 +13,12 @@ import {
   Loader,
 } from 'lucide-react';
 import type { ProjectStatus, Task, TaskPriority, TaskStatus } from '@/lib/types';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { AddTaskForm } from '@/components/projects/add-task-form';
 import { useTasks } from '@/firebase/firestore/use-collection';
 import { useUpdateTask } from '@/firebase/firestore/use-update-task';
 import { TaskCard } from '@/components/projects/task-card';
 import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 import { TaskDetailView } from '@/components/projects/task-detail-view';
+import { AddTaskDialog } from '@/components/projects/add-task-dialog';
 
 const KANBAN_COLUMNS: TaskStatus[] = ['To Do', 'In Progress', 'Done'];
 
@@ -51,7 +43,6 @@ export default function ProjectDetailPage() {
   const addTasks = useAddTasks();
   const updateTask = useUpdateTask();
 
-  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const tasksByStatus = useMemo(() => {
@@ -81,7 +72,6 @@ export default function ProjectDetailPage() {
     newTasks: Omit<Task, 'id'> | Omit<Task, 'id'>[]
   ) => {
     await addTasks(projectId, newTasks);
-    setIsAddTaskDialogOpen(false);
   };
 
   const handleDragEnd = (task: Task, newStatus: TaskStatus) => {
@@ -94,7 +84,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="flex min-h-screen w-full flex-col">
         <Header title="Loading Project..." backButtonHref="/projects"/>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <main className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
           <Skeleton className="h-10 w-full" />
           <div className="grid gap-6 md:grid-cols-3">
             <Skeleton className="h-64 w-full" />
@@ -134,28 +124,7 @@ export default function ProjectDetailPage() {
                   Drag and drop tasks to manage your project's workflow.
                 </p>
               </div>
-              <Dialog
-                open={isAddTaskDialogOpen}
-                onOpenChange={setIsAddTaskDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Task
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>New Task</DialogTitle>
-                    <DialogDescription>
-                      Add a new task to the project via the form or by using JSON.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <AddTaskForm
-                    onTaskAdded={handleTaskAdded}
-                    existingTasksCount={tasks.length}
-                  />
-                </DialogContent>
-              </Dialog>
+              <AddTaskDialog onTaskAdded={handleTaskAdded} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">

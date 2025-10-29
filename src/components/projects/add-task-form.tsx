@@ -19,7 +19,6 @@ import type { Task } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useState } from 'react';
-import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 import { Label } from '../ui/label';
 
 const taskObjectSchema = z.object({
@@ -37,10 +36,9 @@ const taskSchema = z.union([
 
 type AddTaskFormProps = {
     onTaskAdded: (task: Omit<Task, 'id'> | Omit<Task, 'id'>[]) => Promise<void>;
-    existingTasksCount: number;
 }
 
-export function AddTaskForm({ onTaskAdded, existingTasksCount }: AddTaskFormProps) {
+export function AddTaskForm({ onTaskAdded }: AddTaskFormProps) {
   const [jsonInput, setJsonInput] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
 
@@ -83,8 +81,8 @@ export function AddTaskForm({ onTaskAdded, existingTasksCount }: AddTaskFormProp
   }
 
   return (
-    <Tabs defaultValue="form">
-        <TabsList className="grid w-full grid-cols-2">
+    <Tabs defaultValue="form" className="pt-4">
+        <TabsList className="grid w-full grid-cols-2 bg-muted/50">
             <TabsTrigger value="form">Form</TabsTrigger>
             <TabsTrigger value="json">JSON</TabsTrigger>
         </TabsList>
@@ -188,7 +186,7 @@ export function AddTaskForm({ onTaskAdded, existingTasksCount }: AddTaskFormProp
                         value={jsonInput}
                         onChange={(e) => setJsonInput(e.target.value)}
                         rows={10}
-                        className="font-mono"
+                        className="font-mono bg-muted/50"
                     />
                      {jsonError && <p className="text-sm font-medium text-destructive">{jsonError}</p>}
                 </div>

@@ -42,6 +42,7 @@ import { TaskCard } from '@/components/projects/task-card';
 import { useAddTasks } from '@/firebase/firestore/use-add-tasks';
 import { TaskDetailView } from '@/components/projects/task-detail-view';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 const KANBAN_COLUMNS: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 
@@ -152,42 +153,40 @@ export default function ProjectDetailPage() {
       <Header title={project.title} backButtonHref="/projects" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <Card>
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0 font-headline">
-                {project.title}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {project.description}
-              </p>
+          <CardContent className="p-6 space-y-4">
+             <div className="flex items-start justify-between gap-4">
+                <p className="text-muted-foreground flex-1">
+                    {project.description}
+                </p>
+                <Button asChild variant="outline">
+                    <Link href={`/projects/${project.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit
+                    </Link>
+                </Button>
             </div>
-            <Button asChild>
-              <Link href={`/projects/${project.id}/edit`}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Project
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 border-t pt-4 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              {getStatusIcon(project.status)}
-              <span>
-                Status: <strong>{project.status}</strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>
-                Start Date:{' '}
-                <strong>{new Date(project.startDate).toLocaleDateString()}</strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>
-                Target Date:{' '}
-                <strong>{new Date(project.targetDate).toLocaleDateString()}</strong>
-              </span>
+            <Separator />
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                {getStatusIcon(project.status)}
+                <span>
+                    Status: <strong>{project.status}</strong>
+                </span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>
+                    Start Date:{' '}
+                    <strong>{new Date(project.startDate).toLocaleDateString()}</strong>
+                </span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>
+                    Target Date:{' '}
+                    <strong>{new Date(project.targetDate).toLocaleDateString()}</strong>
+                </span>
+                </div>
             </div>
           </CardContent>
         </Card>

@@ -208,18 +208,6 @@ export default function SkillsPage() {
                                   <p className="text-sm font-medium pt-2">
                                       Active Goals: {allGoals(skill).length}
                                   </p>
-                                  <ul className="list-inside space-y-1 text-sm text-muted-foreground">
-                                      {allGoals(skill).slice(0,2).map((goal, index) => (
-                                      <li
-                                          key={index}
-                                          className="flex items-start gap-2"
-                                      >
-                                          <TargetIcon className="h-4 w-4 mt-1 flex-shrink-0" />
-                                          <span className="truncate">{goal.title}</span>
-                                      </li>
-                                      ))}
-                                      {allGoals(skill).length > 2 && <li className="text-xs">...and {allGoals(skill).length-2} more</li>}
-                                  </ul>
                                   </div>
                               </CardContent>
                             </Card>

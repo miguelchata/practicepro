@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { Goal, Skill, UserStory, Project } from '@/lib/types';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import {
@@ -30,12 +29,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AddGoalForm } from '@/components/skills/add-goal-form';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useUpdateSkill } from '@/firebase/firestore/use-add-skill';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -140,52 +133,42 @@ export default function SkillDetailPage() {
       <Header title={skill.name} backButtonHref="/skills" />
       <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8">
         
-        {/* Main Content Grid */}
-        <div className="grid gap-6">
-          {/* Right Column: Sub-Skills and Goals */}
-          <div className="space-y-6">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle>Active Goals</CardTitle>
-                        <CardDescription>Your specific targets for mastering {skill.name}.</CardDescription>
-                    </div>
-                    <Button variant="default" size="sm" onClick={handleOpenAddGoalDialog} disabled={skill.subSkills.length === 0}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Goal
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    {allGoals.length > 0 ? (
-                        <Accordion type="multiple" defaultValue={Object.keys(groupedGoals)} className="w-full space-y-2">
-                            {Object.entries(groupedGoals).map(([skillArea, goals]) => (
-                                <AccordionItem value={skillArea} key={skillArea} className="rounded-lg border bg-muted/50 px-3">
-                                    <AccordionTrigger>
-                                        <div className="flex items-center gap-2 font-semibold text-base">
-                                            <Target className="h-5 w-5" />
-                                            <span>{skillArea}</span>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-2 space-y-2">
-                                        {goals.map((goal, goalIndex) => (
-                                            <div key={goalIndex} className="rounded-lg border bg-background/50">
-                                                <GoalDetail goal={goal} />
-                                            </div>
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
-                    ) : (
-                        <p className="text-sm text-muted-foreground text-center py-8">
-                            No goals defined yet. Add a goal to get started.
-                        </p>
-                    )}
-                </CardContent>
-            </Card>
-
-          </div>
+        <div className="flex items-center justify-between">
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight font-headline">Active Goals</h2>
+                <p className="text-muted-foreground">Your specific targets for mastering {skill.name}.</p>
+            </div>
+            <Button variant="default" size="sm" onClick={handleOpenAddGoalDialog} disabled={skill.subSkills.length === 0}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Goal
+            </Button>
         </div>
+        
+        {allGoals.length > 0 ? (
+             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-start">
+                {Object.entries(groupedGoals).map(([skillArea, goals]) => (
+                    <Card key={skillArea}>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 font-semibold text-base">
+                                <Target className="h-5 w-5" />
+                                <span>{skillArea}</span>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {goals.map((goal, goalIndex) => (
+                                <div key={goalIndex} className="rounded-lg border bg-background/50">
+                                    <GoalDetail goal={goal} />
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        ) : (
+            <div className="text-center text-sm text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                <p>No goals defined yet. Add a goal to get started.</p>
+            </div>
+        )}
 
         {/* Add Goal Dialog */}
         <Dialog open={isAddGoalDialogOpen} onOpenChange={setIsAddGoalDialogOpen}>

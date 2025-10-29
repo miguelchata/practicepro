@@ -19,7 +19,7 @@ export type GoalStatus = 'Not Started' | 'In Progress' | 'Completed';
 export type Goal = {
   title: string;
   specific: string;
-  measurable: string[];
+  measurable: string;
   status: GoalStatus;
   projectId?: string;
   userStoryId?: string;

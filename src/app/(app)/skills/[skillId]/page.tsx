@@ -326,13 +326,11 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
             </div>
             <div>
                 <h5 className="font-semibold text-foreground">Measurable</h5>
-                <ul className="list-none space-y-1 mt-1">
-                    {(Array.isArray(goal.measurable) ? goal.measurable : [goal.measurable]).map((item, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-                            <span>{item}</span>
-                        </li>
-                    ))}
+                 <ul className="list-none space-y-1 mt-1">
+                    <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+                        <span>{goal.measurable}</span>
+                    </li>
                 </ul>
             </div>
         </div>

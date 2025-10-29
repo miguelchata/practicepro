@@ -200,7 +200,7 @@
         "properties": {
             "title": { "type": "string" },
             "specific": { "type": "string" },
-            "measurable": { "type": "array", "items": { "type": "string" } },
+            "measurable": { "type": "string" },
             "status": { "type": "string", "enum": ["Not Started", "In Progress", "Completed"] },
             "projectId": { "type": "string" },
             "userStoryId": { "type": "string" },

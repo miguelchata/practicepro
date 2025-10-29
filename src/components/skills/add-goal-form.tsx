@@ -12,7 +12,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
 import type { Goal } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
@@ -23,7 +22,7 @@ const formSchema = z.object({
     message: 'Specific goal description must be at least 3 characters.',
   }),
   measurable: z.string().min(3, {
-    message: 'Provide at least one measurable outcome, one per line.',
+    message: 'Provide at least one measurable outcome.',
   }),
   duration: z.coerce.number().positive().optional(),
 });
@@ -47,7 +46,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
     const newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> = {
         title: values.specific,
         specific: values.specific,
-        measurable: values.measurable.split('\n').filter(m => m.trim() !== ''),
+        measurable: values.measurable,
         status: 'Not Started',
         duration: values.duration,
     };
@@ -87,7 +86,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
             <FormItem>
                 <FormLabel>Goal</FormLabel>
                 <FormControl>
-                <Textarea
+                <Input
                     placeholder="What is your specific goal? e.g., 'Learn Travis Picking for Landslide'"
                     {...field}
                 />
@@ -101,10 +100,10 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
             name="measurable"
             render={({ field }) => (
             <FormItem>
-                <FormLabel>Measurable Outcomes (one per line)</FormLabel>
+                <FormLabel>Measurable Outcome</FormLabel>
                 <FormControl>
-                <Textarea
-                    placeholder="How will you measure progress? e.g., Play the song at full speed without mistakes"
+                <Input
+                    placeholder="How will you measure progress? e.g., Play the song at full speed"
                     {...field}
                 />
                 </FormControl>

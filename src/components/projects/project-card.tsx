@@ -16,6 +16,7 @@ import {
   Calendar,
   Trash2,
   Edit,
+  Eye,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -81,6 +82,12 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                 <DropdownMenuItem asChild>
+                  <Link href={`/projects/${project.id}`}>
+                    <Eye />
+                    <span>View Details</span>
+                  </Link>
+                </DropdownMenuItem>
                  <DropdownMenuItem asChild>
                   <Link href={`/projects/${project.id}/edit`}>
                     <Edit />

@@ -92,14 +92,9 @@ export default function SkillDetailPage() {
           <div className="flex min-h-screen w-full flex-col">
               <Header title="Loading Skill..." />
               <main className="flex-1 p-4 md:p-8">
-                  <div className="grid gap-6 md:grid-cols-3">
-                      <div className="md:col-span-1 space-y-6">
-                        <Skeleton className="h-40 w-full" />
-                        <Skeleton className="h-32 w-full" />
-                      </div>
-                      <div className="md:col-span-2 space-y-6">
-                        <Skeleton className="h-48 w-full" />
-                      </div>
+                  <div className="grid gap-6">
+                      <Skeleton className="h-40 w-full" />
+                      <Skeleton className="h-48 w-full" />
                   </div>
               </main>
           </div>
@@ -146,37 +141,9 @@ export default function SkillDetailPage() {
       <main className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8">
         
         {/* Main Content Grid */}
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Left Column: Progress and Recent Activity */}
-          <div className="md:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Progress</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm font-medium">
-                  Total Time Practiced: {skill.totalHours} hours
-                </p>
-                <Progress value={(skill.totalHours / 250) * 100} className="mt-2" />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {Math.round((skill.totalHours / 250) * 100)}% towards mastery (250 hours)
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Practice</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  No recent sessions logged for this skill yet.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
+        <div className="grid gap-6">
           {/* Right Column: Sub-Skills and Goals */}
-          <div className="md:col-span-2 space-y-6">
+          <div className="space-y-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>

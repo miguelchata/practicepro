@@ -15,10 +15,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Star } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { useFirestore } from '@/firebase';
-import { doc, runTransaction, collection } from 'firebase/firestore';
-import type { Skill } from '@/lib/types';
+import { doc, runTransaction } from 'firebase/firestore';
+import type { Skill, GoalLog } from '@/lib/types';
 
 function JournalForm() {
   const searchParams = useSearchParams();
@@ -32,8 +32,7 @@ function JournalForm() {
   const goalTitle = searchParams.get('goal');
   const subSkillName = searchParams.get('subSkill');
 
-  const [whatWentWell, setWhatWentWell] = useState('');
-  const [whatWasDifficult, setWhatWasDifficult] = useState('');
+  const [feedback, setFeedback] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const formatDuration = (seconds: string | null) => {
@@ -45,11 +44,11 @@ function JournalForm() {
   };
 
   const handleSaveJournal = async () => {
-    if (!firestore || !skillId) {
+    if (!firestore || !skillId || !goalTitle || !subSkillName) {
         toast({
             variant: 'destructive',
             title: 'Error',
-            description: 'Could not save journal entry. Skill or database connection missing.',
+            description: 'Could not save journal entry. Required information is missing.',
         });
         return;
     }
@@ -67,34 +66,28 @@ function JournalForm() {
             const skillData = skillDoc.data() as Skill;
             const durationInSeconds = parseInt(duration || '0', 10);
             
-            // --- 1. Create new practice session ---
-            const sessionsCollectionRef = collection(skillRef, 'practiceSessions');
-            const newSessionRef = doc(sessionsCollectionRef);
-            
-            const newSession = {
-                skillId: skillId,
+            // --- Create new log for the goal ---
+            const newLog: GoalLog = {
                 date: new Date().toISOString(),
                 duration: durationInSeconds,
-                whatWentWell: whatWentWell,
-                whatWasDifficult: whatWasDifficult,
-                goal: goalTitle,
-                subSkill: subSkillName
+                feedback: feedback,
             };
 
-            transaction.set(newSessionRef, newSession);
-
-            // --- 2. Update skill total hours and goal status ---
+            // --- Find and update the goal with the new log ---
             let newSubSkills = [...skillData.subSkills];
-            if (goalTitle && subSkillName) {
-                const subSkillIndex = newSubSkills.findIndex(sub => sub.name === subSkillName);
-                if (subSkillIndex !== -1) {
-                    const goalIndex = newSubSkills[subSkillIndex].goals.findIndex(g => g.specific === goalTitle);
-                    if (goalIndex !== -1) {
-                        newSubSkills[subSkillIndex].goals[goalIndex].status = 'Completed';
-                    }
+            const subSkillIndex = newSubSkills.findIndex(sub => sub.name === subSkillName);
+            if (subSkillIndex !== -1) {
+                const goalIndex = newSubSkills[subSkillIndex].goals.findIndex(g => g.specific === goalTitle);
+                if (goalIndex !== -1) {
+                    const goal = newSubSkills[subSkillIndex].goals[goalIndex];
+                    const updatedLogs = [...(goal.logs || []), newLog];
+                    // Also mark goal as completed
+                    newSubSkills[subSkillIndex].goals[goalIndex].logs = updatedLogs;
+                    newSubSkills[subSkillIndex].goals[goalIndex].status = 'Completed';
                 }
             }
 
+            // --- Update skill total hours ---
             const currentTotalHours = skillData.totalHours || 0;
             const newTotalHours = currentTotalHours + (durationInSeconds / 3600);
             
@@ -139,23 +132,13 @@ function JournalForm() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="what-went-well" className="text-base">What went well?</Label>
+              <Label htmlFor="feedback" className="text-base">Feedback</Label>
               <Textarea
-                id="what-went-well"
-                placeholder="e.g., I finally nailed the chord change I was struggling with."
-                value={whatWentWell}
-                onChange={(e) => setWhatWentWell(e.target.value)}
-                rows={4}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="what-was-difficult" className="text-base">What was difficult?</Label>
-              <Textarea
-                id="what-was-difficult"
-                placeholder="e.g., My timing was off when playing with the metronome."
-                value={whatWasDifficult}
-                onChange={(e) => setWhatWasDifficult(e.target.value)}
-                rows={4}
+                id="feedback"
+                placeholder="e.g., I finally nailed the chord change I was struggling with, but my timing was off."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={5}
               />
             </div>
           </CardContent>

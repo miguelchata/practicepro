@@ -231,7 +231,19 @@
             "isLastInSubSkill": { "type": "boolean", "description": "Indicates if this is the last goal created in its sub-skill branch." }
         },
         "required": ["title", "specific", "measurable", "status"]
-    }
+    },
+    "generateNextGoal": {
+        "title": "Generate Next Goal",
+        "description": "Generates a suggestion for the next goal based on a completed one.",
+        "type": "object",
+        "properties": {
+          "skillArea": { "type": "string" },
+          "level": { "type": "string" },
+          "previousGoalTitle": { "type": "string" },
+          "previousGoalFeedback": { "type": "string" }
+        },
+        "required": ["skillArea", "level", "previousGoalTitle", "previousGoalFeedback"]
+      }
   },
   "auth": {
     "providers": ["email", "google"]

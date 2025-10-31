@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/layout/header';
@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button';
 import {
   Plus,
   Calendar,
-  Clock,
   Puzzle,
   MoreVertical,
   Trash2,
@@ -57,6 +56,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { NextGoalForm } from '@/components/skills/next-goal-form';
+import { generateNextGoal, type GenerateNextGoalOutput } from '@/ai/flows/generate-next-goal';
 
 
 function formatDeadline(deadline: string | undefined) {
@@ -265,31 +265,12 @@ export default function SkillDetailPage() {
         </Dialog>
 
         {/* Next Goal Dialog */}
-        <Dialog open={!!nextGoalCandidate} onOpenChange={(open) => !open && setNextGoalCandidate(null)}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>What's Your Next Goal?</DialogTitle>
-                     <DialogDescription>
-                        Define the next goal for &quot;{nextGoalCandidate?.subSkillName}&quot;. The level will remain {nextGoalCandidate?.level}.
-                    </DialogDescription>
-                </DialogHeader>
-                {nextGoalCandidate && (
-                  <>
-                    {nextGoalCandidate.feedback && (
-                        <div className="mt-4 rounded-lg border bg-muted/50 p-3">
-                            <p className="text-sm font-medium">Feedback from previous goal:</p>
-                            <p className="text-sm text-muted-foreground italic">&quot;{nextGoalCandidate.feedback}&quot;</p>
-                        </div>
-                    )}
-                    <NextGoalForm
-                        onGoalAdded={(newGoals) => handleGoalAdded(newGoals, nextGoalCandidate)}
-                        skillArea={nextGoalCandidate.subSkillName || ''}
-                        level={nextGoalCandidate.level}
-                    />
-                  </>
-                )}
-            </DialogContent>
-        </Dialog>
+        <NextGoalDialog
+            isOpen={!!nextGoalCandidate}
+            onClose={() => setNextGoalCandidate(null)}
+            goal={nextGoalCandidate}
+            onGoalAdded={(newGoals) => handleGoalAdded(newGoals, nextGoalCandidate)}
+        />
       </main>
     </div>
   );
@@ -431,4 +412,62 @@ const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps)
     )
 };
 
-    
+
+type NextGoalDialogProps = {
+    isOpen: boolean;
+    onClose: () => void;
+    goal: Goal | null;
+    onGoalAdded: (goals: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => void;
+};
+
+const NextGoalDialog = ({ isOpen, onClose, goal, onGoalAdded }: NextGoalDialogProps) => {
+    const [suggestion, setSuggestion] = useState<GenerateNextGoalOutput | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && goal) {
+            const fetchSuggestion = async () => {
+                setIsLoading(true);
+                setSuggestion(null);
+                try {
+                    const result = await generateNextGoal({
+                        skillArea: (goal as any).subSkillName || '',
+                        level: goal.level || 'Junior',
+                        previousGoalTitle: goal.title,
+                        previousGoalFeedback: goal.feedback || '',
+                    });
+                    setSuggestion(result);
+                } catch (error) {
+                    console.error("Error generating next goal suggestion:", error);
+                    // Handle error silently, the form will still be usable
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            fetchSuggestion();
+        }
+    }, [isOpen, goal]);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>What's Your Next Goal?</DialogTitle>
+                    <DialogDescription>
+                        Define the next goal for &quot;{(goal as any)?.subSkillName}&quot;. The level will remain {goal?.level}.
+                    </DialogDescription>
+                </DialogHeader>
+                {goal && (
+                    <NextGoalForm
+                        onGoalAdded={onGoalAdded}
+                        skillArea={(goal as any).subSkillName || ''}
+                        level={goal.level}
+                        suggestion={suggestion}
+                        isLoadingSuggestion={isLoading}
+                        previousFeedback={goal.feedback}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+};

@@ -125,17 +125,6 @@ function ActiveSession() {
                 <StopCircle className="mr-2" /> End & Journal
               </Button>
             </div>
-            <div className="space-y-4 rounded-lg border p-4">
-                <p className="text-sm font-medium">How did it go? (Rate after)</p>
-                <div className="flex justify-center gap-2">
-                {[1, 2, 3, 4, 5].map(rating => (
-                    <Button key={rating} variant="outline" size="icon" disabled>
-                    <Star className="h-5 w-5" />
-                    <span className="sr-only">Rate {rating} of 5</span>
-                    </Button>
-                ))}
-                </div>
-            </div>
           </CardContent>
         </Card>
       </main>

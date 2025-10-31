@@ -219,16 +219,16 @@
             "userStoryId": { "type": "string" },
             "userStoryTicketId": { "type": "string" },
             "deadline": { "type": "string", "format": "date-time" },
-            "duration": { "type": "number", "description": "Target duration in minutes." },
+            "targetDuration": { "type": "number", "description": "Target duration in minutes." },
             "level": {
               "type": "string",
               "enum": ["Junior", "Semi Senior", "Senior"]
             },
-            "lastPracticeDate": { "type": "string", "format": "date" },
-            "lastPracticeDuration": { "type": "number", "description": "Duration in seconds" },
-            "lastPracticeFeedback": { "type": "string" },
-            "lastPracticeStartTime": { "type": "string", "format": "time" },
-            "lastPracticeEndTime": { "type": "string", "format": "time" }
+            "date": { "type": "string", "format": "date" },
+            "duration": { "type": "number", "description": "Duration in seconds" },
+            "feedback": { "type": "string" },
+            "startTime": { "type": "string", "format": "time" },
+            "endTime": { "type": "string", "format": "time" }
         },
         "required": ["title", "specific", "measurable", "status"]
     }

@@ -60,7 +60,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
         specific: values.goal,
         measurable: values.outcome,
         status: 'Not Started',
-        duration: values.duration,
+        targetDuration: values.duration,
         level: values.level,
     };
     onGoalAdded([newGoal]);
@@ -90,6 +90,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
           specific: item.goal,
           measurable: item.outcome,
           status: 'Not Started' as const,
+          targetDuration: item.duration,
         }));
         
         onGoalAdded(goalsToSave);

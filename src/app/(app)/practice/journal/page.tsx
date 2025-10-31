@@ -84,11 +84,11 @@ function JournalForm() {
                     newSubSkills[subSkillIndex].goals[goalIndex] = {
                         ...newSubSkills[subSkillIndex].goals[goalIndex],
                         status: 'Completed',
-                        lastPracticeDate: localDateString,
-                        lastPracticeDuration: durationInSeconds,
-                        lastPracticeFeedback: feedback,
-                        lastPracticeStartTime: startDate.toTimeString().split(' ')[0],
-                        lastPracticeEndTime: endDate.toTimeString().split(' ')[0],
+                        date: localDateString,
+                        duration: durationInSeconds,
+                        feedback: feedback,
+                        startTime: startDate.toTimeString().split(' ')[0],
+                        endTime: endDate.toTimeString().split(' ')[0],
                     };
                 }
             }

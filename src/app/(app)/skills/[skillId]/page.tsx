@@ -260,11 +260,11 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
         if (goal.specific) {
             params.set('goal', goal.specific);
         }
-        if (goal.duration) {
+        if (goal.targetDuration) {
             params.set('type', 'timed');
-            params.set('duration', String(goal.duration * 60));
+            params.set('duration', String(goal.targetDuration * 60));
         }
-        return `/practice?${params.toString()}`;
+        return `/practice/active?${params.toString()}`;
     }, [skill.id, skill.name, goal]);
 
     return (
@@ -274,10 +274,10 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
             <div className="flex-1 text-left">
                 <p className="font-medium">{goal.title}</p>
                 <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                    {goal.duration && (
+                    {goal.targetDuration && (
                         <span className="flex items-center gap-1.5">
                             <Clock className="h-4 w-4" />
-                            {goal.duration} minutes
+                            {goal.targetDuration} minutes
                         </span>
                     )}
                     {goal.deadline && (

@@ -77,9 +77,9 @@ export default function PracticePage() {
     if (goal.specific) {
         params.set('goal', goal.specific);
     }
-    if (goal.duration) {
+    if (goal.targetDuration) {
         params.set('type', 'timed');
-        params.set('duration', String(goal.duration * 60));
+        params.set('duration', String(goal.targetDuration * 60));
     }
     return `/practice/active?${params.toString()}`;
   };

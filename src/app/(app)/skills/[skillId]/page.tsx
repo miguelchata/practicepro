@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import {
   Card,
@@ -104,15 +104,22 @@ export default function SkillDetailPage() {
     );
   }
 
-  const handleGoalAdded = (skillArea: string, newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'>) => {
-    if (!skillArea) return;
+  const handleGoalAdded = (newGoalsData: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => {
+    
+    let newSubSkills = [...skill.subSkills];
 
-    const newSubSkills = skill.subSkills.map(sub => {
-      if (sub.name === skillArea) {
-        return { ...sub, goals: [...sub.goals, newGoal as Goal] };
-      }
-      return sub;
+    newGoalsData.forEach(goalData => {
+        const { skillArea, ...newGoal } = goalData;
+        const subSkillIndex = newSubSkills.findIndex(sub => sub.name === skillArea);
+
+        if (subSkillIndex !== -1) {
+            newSubSkills[subSkillIndex] = {
+                ...newSubSkills[subSkillIndex],
+                goals: [...newSubSkills[subSkillIndex].goals, newGoal as Goal],
+            };
+        }
     });
+
     updateSkill(skill.id, { subSkills: newSubSkills });
     setIsAddGoalDialogOpen(false);
   };
@@ -172,7 +179,7 @@ export default function SkillDetailPage() {
             <DialogHeader>
               <DialogTitle>Add New Goal</DialogTitle>
               <DialogDescription>
-                Define a new goal and link it to a skill area.
+                Define a new goal and link it to a skill area. You can add one or multiple via JSON.
               </DialogDescription>
             </DialogHeader>
             <AddGoalForm 

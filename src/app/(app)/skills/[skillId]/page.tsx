@@ -117,7 +117,8 @@ export default function SkillDetailPage() {
   }
 
   const handleGoalAdded = (newGoalsData: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => {
-    
+    if (!skill) return;
+
     let newSubSkills = [...skill.subSkills];
 
     newGoalsData.forEach(goalData => {
@@ -125,10 +126,18 @@ export default function SkillDetailPage() {
         const subSkillIndex = newSubSkills.findIndex(sub => sub.name === skillArea);
 
         if (subSkillIndex !== -1) {
+            // Add goal to existing subskill
             newSubSkills[subSkillIndex] = {
                 ...newSubSkills[subSkillIndex],
                 goals: [...newSubSkills[subSkillIndex].goals, newGoal as Goal],
             };
+        } else {
+            // Create new subskill and add goal
+            const newSubSkill: SubSkill = {
+                name: skillArea,
+                goals: [newGoal as Goal]
+            };
+            newSubSkills.push(newSubSkill);
         }
     });
 

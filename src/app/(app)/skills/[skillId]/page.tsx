@@ -31,6 +31,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -47,7 +48,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { AddGoalForm } from '@/components/skills/add-goal-form';
 import { useDoc } from '@/firebase/firestore/use-doc';
@@ -55,6 +55,8 @@ import { useUpdateSkill } from '@/firebase/firestore/use-add-skill';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { NextGoalForm } from '@/components/skills/next-goal-form';
+
 
 function formatDeadline(deadline: string | undefined) {
   if (!deadline) return '';
@@ -90,6 +92,7 @@ export default function SkillDetailPage() {
   const updateSkill = useUpdateSkill();
 
   const [isAddGoalDialogOpen, setIsAddGoalDialogOpen] = useState(false);
+  const [nextGoalCandidate, setNextGoalCandidate] = useState<Goal | null>(null);
   const [filter, setFilter] = useState('All');
   
   const allGoals = useMemo(() => {
@@ -139,17 +142,22 @@ export default function SkillDetailPage() {
         const { skillArea, ...newGoal } = goalData;
         const subSkillIndex = newSubSkills.findIndex(sub => sub.name === skillArea);
 
+        const goalToAdd = {
+            ...newGoal,
+            status: 'Not Started',
+        } as Goal
+
         if (subSkillIndex !== -1) {
             // Add goal to existing subskill
             newSubSkills[subSkillIndex] = {
                 ...newSubSkills[subSkillIndex],
-                goals: [...newSubSkills[subSkillIndex].goals, newGoal as Goal],
+                goals: [...newSubSkills[subSkillIndex].goals, goalToAdd],
             };
         } else {
             // Create new subskill and add goal
             const newSubSkill: SubSkill = {
                 name: skillArea,
-                goals: [newGoal as Goal]
+                goals: [goalToAdd]
             };
             newSubSkills.push(newSubSkill);
         }
@@ -157,6 +165,7 @@ export default function SkillDetailPage() {
 
     updateSkill(skill.id, { subSkills: newSubSkills });
     setIsAddGoalDialogOpen(false);
+    setNextGoalCandidate(null);
   };
   
   const handleGoalDeleted = (goalTitle: string, subSkillName: string) => {
@@ -210,7 +219,12 @@ export default function SkillDetailPage() {
                 {filteredGoals.map((goal, goalIndex) => (
                     <Card key={goalIndex} className="flex flex-col">
                         <CardContent className="p-4 flex-grow flex flex-col">
-                            <GoalDetail skill={skill} goal={goal} onGoalDeleted={handleGoalDeleted} />
+                            <GoalDetail 
+                                skill={skill} 
+                                goal={goal} 
+                                onGoalDeleted={handleGoalDeleted}
+                                onNextGoal={() => setNextGoalCandidate(goal)}
+                            />
                         </CardContent>
                     </Card>
                 ))}
@@ -236,6 +250,25 @@ export default function SkillDetailPage() {
             />
           </DialogContent>
         </Dialog>
+
+        {/* Next Goal Dialog */}
+        <Dialog open={!!nextGoalCandidate} onOpenChange={(open) => !open && setNextGoalCandidate(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>What's Your Next Goal?</DialogTitle>
+                     <DialogDescription>
+                        Define the next goal for &quot;{nextGoalCandidate?.subSkillName}&quot;. The level will remain {nextGoalCandidate?.level}.
+                    </DialogDescription>
+                </DialogHeader>
+                {nextGoalCandidate && (
+                    <NextGoalForm
+                        onGoalAdded={handleGoalAdded}
+                        skillArea={nextGoalCandidate.subSkillName || ''}
+                        level={nextGoalCandidate.level}
+                    />
+                )}
+            </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
@@ -245,6 +278,7 @@ type GoalDetailProps = {
   skill: Skill;
   goal: Goal & { subSkillName?: string };
   onGoalDeleted: (goalTitle: string, subSkillName: string) => void;
+  onNextGoal: () => void;
 };
 
 const getLevelVariant = (level: GoalLevel | undefined) => {
@@ -260,7 +294,7 @@ const getLevelVariant = (level: GoalLevel | undefined) => {
     }
 };
 
-const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
+const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps) => {
 
     const practiceUrl = useMemo(() => {
         const params = new URLSearchParams();
@@ -362,7 +396,7 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
               </AlertDialogContent>
             </AlertDialog>
             {goal.status === 'Completed' ? (
-                <Button variant="secondary" size="sm" className="cursor-default">
+                 <Button variant="secondary" size="sm" onClick={onNextGoal}>
                     Next Goal
                     <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>

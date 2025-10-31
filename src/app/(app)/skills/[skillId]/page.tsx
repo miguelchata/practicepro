@@ -48,6 +48,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { AddGoalForm } from '@/components/skills/add-goal-form';
 import { useDoc } from '@/firebase/firestore/use-doc';

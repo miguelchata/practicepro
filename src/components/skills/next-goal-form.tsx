@@ -18,6 +18,7 @@ import { useEffect } from 'react';
 import type { GenerateNextGoalOutput } from '@/ai/flows/generate-next-goal';
 import { Sparkles } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { Textarea } from '../ui/textarea';
 
 const nextGoalSchema = z.object({
   goal: z.string().min(3, 'Goal must be at least 3 characters.'),
@@ -65,12 +66,6 @@ export function NextGoalForm({ onGoalAdded, skillArea, level, suggestion, isLoad
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-        {previousFeedback && (
-            <div className="rounded-lg border bg-muted/50 p-3">
-                <p className="text-sm font-medium">Feedback from previous goal:</p>
-                <p className="text-sm text-muted-foreground italic">&quot;{previousFeedback}&quot;</p>
-            </div>
-        )}
         
         {isLoadingSuggestion && (
             <div className="space-y-4 rounded-lg border border-dashed border-primary/50 bg-primary/10 p-4">
@@ -111,7 +106,8 @@ export function NextGoalForm({ onGoalAdded, skillArea, level, suggestion, isLoad
                     <FormItem className="mt-2">
                         <FormLabel className="text-primary/90">Measurable Outcome</FormLabel>
                         <FormControl>
-                        <Input
+                        <Textarea
+                            rows={3}
                             {...field}
                         />
                         </FormControl>
@@ -147,8 +143,9 @@ export function NextGoalForm({ onGoalAdded, skillArea, level, suggestion, isLoad
                 <FormItem>
                     <FormLabel>Measurable Outcome</FormLabel>
                     <FormControl>
-                    <Input
-                        placeholder="e.g., 'Play it smoothly at 100 BPM'"
+                    <Textarea
+                        placeholder="e.g., 'Play it smoothly at 100 BPM without errors for 3 consecutive attempts.'"
+                        rows={3}
                         {...field}
                     />
                     </FormControl>

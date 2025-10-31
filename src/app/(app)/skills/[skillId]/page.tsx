@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import {
   Card,
@@ -19,6 +20,7 @@ import {
   Puzzle,
   MoreVertical,
   Trash2,
+  Timer,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -185,7 +187,7 @@ export default function SkillDetailPage() {
                     </SelectContent>
                 </Select>
             </div>
-            <Button variant="default" size="sm" onClick={handleOpenAddGoalDialog} disabled={skill.subSkills.length === 0}>
+            <Button variant="default" size="sm" onClick={handleOpenAddGoalDialog}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Goal
             </Button>
@@ -196,7 +198,7 @@ export default function SkillDetailPage() {
                 {filteredGoals.map((goal, goalIndex) => (
                     <Card key={goalIndex}>
                         <CardContent className="p-4">
-                            <GoalDetail goal={goal} onGoalDeleted={handleGoalDeleted} />
+                            <GoalDetail skill={skill} goal={goal} onGoalDeleted={handleGoalDeleted} />
                         </CardContent>
                     </Card>
                 ))}
@@ -228,6 +230,7 @@ export default function SkillDetailPage() {
 }
 
 type GoalDetailProps = {
+  skill: Skill;
   goal: Goal & { subSkillName?: string };
   onGoalDeleted: (goalTitle: string, subSkillName: string) => void;
 };
@@ -245,7 +248,26 @@ const getLevelVariant = (level: GoalLevel | undefined) => {
     }
 };
 
-const GoalDetail = ({ goal, onGoalDeleted }: GoalDetailProps) => (
+const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
+
+    const practiceUrl = useMemo(() => {
+        const params = new URLSearchParams();
+        params.set('skillId', skill.id);
+        params.set('skillName', skill.name);
+        if (goal.subSkillName) {
+            params.set('subSkill', goal.subSkillName);
+        }
+        if (goal.specific) {
+            params.set('goal', goal.specific);
+        }
+        if (goal.duration) {
+            params.set('type', 'timed');
+            params.set('duration', String(goal.duration * 60));
+        }
+        return `/practice?${params.toString()}`;
+    }, [skill.id, skill.name, goal]);
+
+    return (
     <div className="space-y-4">
         <div className="flex items-start gap-3 relative w-full">
             
@@ -267,37 +289,45 @@ const GoalDetail = ({ goal, onGoalDeleted }: GoalDetailProps) => (
                 </div>
             </div>
             
-            <AlertDialog>
-              <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                          <MoreVertical className="h-4 w-4" />
-                      </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                      <AlertDialogTrigger asChild>
-                          <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Delete Goal</span>
-                          </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                  </DropdownMenuContent>
-              </DropdownMenu>
-              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                          This action will permanently delete the goal: <strong>{goal.title}</strong>. This cannot be undone.
-                      </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onGoalDeleted(goal.title, goal.subSkillName || '')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                          Delete
-                      </AlertDialogAction>
-                  </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" asChild>
+                    <Link href={practiceUrl}>
+                        <Timer className="mr-2 h-4 w-4" />
+                        Practice
+                    </Link>
+                </Button>
+                <AlertDialog>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                              <MoreVertical className="h-4 w-4" />
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogTrigger asChild>
+                              <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span>Delete Goal</span>
+                              </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                              This action will permanently delete the goal: <strong>{goal.title}</strong>. This cannot be undone.
+                          </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onGoalDeleted(goal.title, goal.subSkillName || '')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Delete
+                          </AlertDialogAction>
+                      </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+            </div>
         </div>
         <div className="space-y-4 text-muted-foreground">
             <div className="flex items-center gap-2">
@@ -319,4 +349,5 @@ const GoalDetail = ({ goal, onGoalDeleted }: GoalDetailProps) => (
             </div>
         </div>
     </div>
-);
+    )
+};

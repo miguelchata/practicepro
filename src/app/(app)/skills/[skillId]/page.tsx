@@ -364,12 +364,17 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
                 <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
             </div>
             <div>
-                <h5 className="font-semibold text-foreground">Outcome</h5>
-                 <ul className="list-none space-y-1 mt-1">
-                    <li className="flex items-start gap-2">
-                        <span>{goal.measurable}</span>
-                    </li>
-                </ul>
+              {goal.status === 'Completed' && goal.feedback ? (
+                <>
+                  <h5 className="font-semibold text-foreground">Feedback</h5>
+                  <p className="text-sm mt-1">{goal.feedback}</p>
+                </>
+              ) : (
+                <>
+                  <h5 className="font-semibold text-foreground">Outcome</h5>
+                  <p className="text-sm mt-1">{goal.measurable}</p>
+                </>
+              )}
             </div>
         </div>
     </div>

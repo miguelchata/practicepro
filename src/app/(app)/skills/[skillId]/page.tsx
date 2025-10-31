@@ -141,30 +141,39 @@ export default function SkillDetailPage() {
 
     newGoalsData.forEach(goalData => {
         const { skillArea, ...newGoal } = goalData;
-        const subSkillIndex = newSubSkills.findIndex(sub => sub.name === skillArea);
+        let subSkillIndex = newSubSkills.findIndex(sub => sub.name === skillArea);
+        
+        if (subSkillIndex === -1) {
+            const newSubSkill: SubSkill = { name: skillArea, goals: [] };
+            newSubSkills.push(newSubSkill);
+            subSkillIndex = newSubSkills.length - 1;
+        }
 
+        // Mark the previous last goal in this subskill as not last anymore
+        const lastGoalIndex = newSubSkills[subSkillIndex].goals.findIndex(g => g.isLastInSubSkill === true);
+        if (lastGoalIndex !== -1) {
+            newSubSkills[subSkillIndex].goals[lastGoalIndex].isLastInSubSkill = false;
+        }
+        
+        // If this is a "next goal", mark the original goal as not the last.
+        if (originalGoal) {
+            const originalSubSkillIndex = newSubSkills.findIndex(sub => sub.name === (originalGoal as any).subSkillName);
+            if (originalSubSkillIndex !== -1) {
+                const originalGoalIndex = newSubSkills[originalSubSkillIndex].goals.findIndex(g => g.title === originalGoal.title);
+                if (originalGoalIndex !== -1) {
+                    newSubSkills[originalSubSkillIndex].goals[originalGoalIndex].isLastInSubSkill = false;
+                }
+            }
+        }
+        
         const goalToAdd: Goal = {
             ...newGoal,
             status: 'Not Started',
             isLastInSubSkill: true,
         };
 
-        if (subSkillIndex !== -1) {
-            // If this is a "next goal", mark the original goal as not the last.
-            if (originalGoal) {
-                const originalGoalIndex = newSubSkills[subSkillIndex].goals.findIndex(g => g.title === originalGoal.title);
-                if (originalGoalIndex !== -1) {
-                    newSubSkills[subSkillIndex].goals[originalGoalIndex].isLastInSubSkill = false;
-                }
-            }
-            newSubSkills[subSkillIndex].goals.push(goalToAdd);
-        } else {
-            const newSubSkill: SubSkill = {
-                name: skillArea,
-                goals: [goalToAdd]
-            };
-            newSubSkills.push(newSubSkill);
-        }
+        newSubSkills[subSkillIndex].goals.push(goalToAdd);
+
     });
 
     updateSkill(skill.id, { subSkills: newSubSkills });
@@ -265,11 +274,19 @@ export default function SkillDetailPage() {
                     </DialogDescription>
                 </DialogHeader>
                 {nextGoalCandidate && (
+                  <>
+                    {nextGoalCandidate.feedback && (
+                        <div className="mt-4 rounded-lg border bg-muted/50 p-3">
+                            <p className="text-sm font-medium">Feedback from previous goal:</p>
+                            <p className="text-sm text-muted-foreground italic">&quot;{nextGoalCandidate.feedback}&quot;</p>
+                        </div>
+                    )}
                     <NextGoalForm
                         onGoalAdded={(newGoals) => handleGoalAdded(newGoals, nextGoalCandidate)}
                         skillArea={nextGoalCandidate.subSkillName || ''}
                         level={nextGoalCandidate.level}
                     />
+                  </>
                 )}
             </DialogContent>
         </Dialog>
@@ -413,3 +430,5 @@ const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps)
     </div>
     )
 };
+
+    

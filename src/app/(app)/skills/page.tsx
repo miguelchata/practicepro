@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { MoreVertical, PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, PlusCircle, Edit, Trash2, Eye, Target } from 'lucide-react';
 import {
   Dialog,
   DialogContent,

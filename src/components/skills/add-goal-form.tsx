@@ -22,8 +22,8 @@ import { Label } from '../ui/label';
 
 const goalObjectSchema = z.object({
   skillArea: z.string().min(1, 'Skill area is required.'),
-  title: z.string().min(3, 'Title must be at least 3 characters.'),
-  measurable: z.string().min(3, 'Measurable outcome is required.'),
+  goal: z.string().min(3, 'Goal must be at least 3 characters.'),
+  outcome: z.string().min(3, 'Outcome is required.'),
   duration: z.coerce.number().positive().optional(),
 });
 
@@ -46,17 +46,17 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
     resolver: zodResolver(goalObjectSchema),
     defaultValues: {
       skillArea: skillAreas[0] || '',
-      title: '',
-      measurable: '',
+      goal: '',
+      outcome: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof goalObjectSchema>) {
     const newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string } = {
         skillArea: values.skillArea,
-        title: values.title,
-        specific: values.title,
-        measurable: values.measurable,
+        title: values.goal,
+        specific: values.goal,
+        measurable: values.outcome,
         status: 'Not Started',
         duration: values.duration,
     };
@@ -83,7 +83,9 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
 
         const goalsToSave = data.map(item => ({
           ...item,
-          specific: item.title,
+          title: item.goal,
+          specific: item.goal,
+          measurable: item.outcome,
           status: 'Not Started' as const,
         }));
         
@@ -128,7 +130,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
                     />
                 <FormField
                     control={form.control}
-                    name="title"
+                    name="goal"
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Goal</FormLabel>
@@ -144,10 +146,10 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
                 />
                 <FormField
                     control={form.control}
-                    name="measurable"
+                    name="outcome"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Measurable Outcome</FormLabel>
+                        <FormLabel>Outcome</FormLabel>
                         <FormControl>
                         <Input
                             placeholder="e.g., Play the song at full speed"
@@ -183,7 +185,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
                     <Label htmlFor="json-input">Goal JSON (Single or Array)</Label>
                     <Textarea
                         id="json-input"
-                        placeholder={`{\n  "skillArea": "State Management",\n  "title": "Master Redux",\n  "measurable": "Build a complex app with Redux",\n  "duration": 120\n}`}
+                        placeholder={`{\n  "skillArea": "State Management",\n  "goal": "Master Redux",\n  "outcome": "Build a complex app with Redux",\n  "duration": 120\n}`}
                         value={jsonInput}
                         onChange={(e) => setJsonInput(e.target.value)}
                         rows={10}

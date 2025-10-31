@@ -224,11 +224,11 @@
               "type": "string",
               "enum": ["Junior", "Semi Senior", "Senior"]
             },
-            "logs": {
-                "type": "array",
-                "description": "A list of practice logs for this goal.",
-                "items": { "$ref": "#/entities/workLog" }
-            }
+            "lastPracticeDate": { "type": "string", "format": "date" },
+            "lastPracticeDuration": { "type": "number", "description": "Duration in seconds" },
+            "lastPracticeFeedback": { "type": "string" },
+            "lastPracticeStartTime": { "type": "string", "format": "time" },
+            "lastPracticeEndTime": { "type": "string", "format": "time" }
         },
         "required": ["title", "specific", "measurable", "status"]
     }

@@ -28,7 +28,11 @@ export type Goal = {
   deadline?: string;
   duration?: number; // Target duration in minutes
   level?: GoalLevel;
-  logs?: WorkLog[];
+  lastPracticeDate?: string;
+  lastPracticeDuration?: number;
+  lastPracticeFeedback?: string;
+  lastPracticeStartTime?: string;
+  lastPracticeEndTime?: string;
 };
 
 export type SubSkill = {

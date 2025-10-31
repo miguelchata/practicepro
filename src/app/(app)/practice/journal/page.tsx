@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { doc, runTransaction } from 'firebase/firestore';
-import type { Skill, WorkLog } from '@/lib/types';
+import type { Skill } from '@/lib/types';
 
 function JournalForm() {
   const searchParams = useSearchParams();
@@ -67,7 +67,6 @@ function JournalForm() {
             const skillData = skillDoc.data() as Skill;
             const durationInSeconds = parseInt(duration || '0', 10);
             
-            // --- Create new log for the goal ---
             const startDate = new Date(parseInt(startTime, 10));
             const endDate = new Date();
             const year = startDate.getFullYear();
@@ -75,26 +74,22 @@ function JournalForm() {
             const day = startDate.getDate().toString().padStart(2, '0');
             const localDateString = `${year}-${month}-${day}`;
 
-            const newLog: WorkLog = {
-                id: endDate.getTime(),
-                date: localDateString,
-                startTime: startDate.toTimeString().split(' ')[0],
-                endTime: endDate.toTimeString().split(' ')[0],
-                duration: durationInSeconds,
-                description: feedback,
-            };
-
             // --- Find and update the goal with the new log ---
             let newSubSkills = [...skillData.subSkills];
             const subSkillIndex = newSubSkills.findIndex(sub => sub.name === subSkillName);
             if (subSkillIndex !== -1) {
                 const goalIndex = newSubSkills[subSkillIndex].goals.findIndex(g => g.specific === goalTitle);
                 if (goalIndex !== -1) {
-                    const goal = newSubSkills[subSkillIndex].goals[goalIndex];
-                    const updatedLogs = [...(goal.logs || []), newLog];
-                    // Also mark goal as completed
-                    newSubSkills[subSkillIndex].goals[goalIndex].logs = updatedLogs;
-                    newSubSkills[subSkillIndex].goals[goalIndex].status = 'Completed';
+                    // Update the goal directly
+                    newSubSkills[subSkillIndex].goals[goalIndex] = {
+                        ...newSubSkills[subSkillIndex].goals[goalIndex],
+                        status: 'Completed',
+                        lastPracticeDate: localDateString,
+                        lastPracticeDuration: durationInSeconds,
+                        lastPracticeFeedback: feedback,
+                        lastPracticeStartTime: startDate.toTimeString().split(' ')[0],
+                        lastPracticeEndTime: endDate.toTimeString().split(' ')[0],
+                    };
                 }
             }
 

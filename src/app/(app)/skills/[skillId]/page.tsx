@@ -21,6 +21,8 @@ import {
   MoreVertical,
   Trash2,
   Timer,
+  Check,
+  ChevronRight,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -68,6 +70,15 @@ function formatDeadline(deadline: string | undefined) {
   if (diffDays === 1) return 'Tomorrow';
   return `in ${diffDays} days`;
 }
+
+const formatDuration = (seconds: number | undefined) => {
+    if (seconds === undefined || seconds === null) return '';
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (remainingSeconds === 0) return `${minutes}m`;
+    return `${minutes}m ${remainingSeconds}s`;
+};
 
 export default function SkillDetailPage() {
   const params = useParams();
@@ -194,7 +205,7 @@ export default function SkillDetailPage() {
         </div>
         
         {filteredGoals.length > 0 ? (
-             <div className="space-y-6">
+             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {filteredGoals.map((goal, goalIndex) => (
                     <Card key={goalIndex}>
                         <CardContent className="p-4">
@@ -286,16 +297,29 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
                             Due {formatDeadline(goal.deadline)}
                         </span>
                     )}
+                    {goal.status === 'Completed' && goal.duration && (
+                         <span className="flex items-center gap-1.5 font-semibold text-foreground">
+                            <Check className="h-4 w-4 text-green-500" />
+                            {formatDuration(goal.duration)}
+                        </span>
+                    )}
                 </div>
             </div>
             
             <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={practiceUrl}>
-                        <Timer className="mr-2 h-4 w-4" />
-                        Practice
-                    </Link>
-                </Button>
+                {goal.status === 'Completed' ? (
+                    <Button variant="secondary" size="sm" className="cursor-default">
+                        Next Goal
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                ) : (
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={practiceUrl}>
+                            <Timer className="mr-2 h-4 w-4" />
+                            Practice
+                        </Link>
+                    </Button>
+                )}
                 <AlertDialog>
                   <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -351,3 +375,5 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
     </div>
     )
 };
+
+    

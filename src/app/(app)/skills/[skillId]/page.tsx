@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import {
   Card,
@@ -16,11 +16,9 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   Plus,
-  Target,
   Calendar,
   Clock,
   Puzzle,
-  CheckCircle2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {

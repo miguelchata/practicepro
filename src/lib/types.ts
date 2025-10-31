@@ -45,6 +45,16 @@ export type Skill = {
   userId: string;
 };
 
+export type PracticeSession = {
+  id: string;
+  skillId: string;
+  date: string; // ISO string
+  duration: number; // in seconds
+  whatWentWell: string;
+  whatWasDifficult: string;
+};
+
+
 export type ProjectStatus = 'Not Started' | 'In Progress' | 'On Hold' | 'Completed';
 
 export type TaskPriority = 'Low' | 'Medium' | 'High';

@@ -193,6 +193,19 @@
         },
         "required": ["userId", "name", "icon", "category", "totalHours", "subSkills"]
     },
+    "practiceSession": {
+        "title": "Practice Session",
+        "description": "Represents a single practice session for a skill.",
+        "type": "object",
+        "properties": {
+            "skillId": { "type": "string", "description": "The ID of the skill being practiced." },
+            "date": { "type": "string", "format": "date-time" },
+            "duration": { "type": "number", "description": "Duration of the session in seconds." },
+            "whatWentWell": { "type": "string" },
+            "whatWasDifficult": { "type": "string" }
+        },
+        "required": ["skillId", "date", "duration", "whatWentWell", "whatWasDifficult"]
+    },
     "goal": {
         "title": "Goal",
         "description": "A specific goal within a sub-skill.",
@@ -234,6 +247,10 @@
     "/skills/{skillId}": {
       "schema": { "$ref": "#/entities/skill" },
       "description": "Stores individual skill documents for users."
+    },
+     "/skills/{skillId}/practiceSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/practiceSession" },
+      "description": "Stores practice sessions for a specific skill."
     }
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
@@ -16,20 +16,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Save, Star } from 'lucide-react';
-import { useState } from 'react';
+import { useFirestore } from '@/firebase';
+import { doc, runTransaction } from 'firebase/firestore';
 
 function JournalForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
+  const firestore = useFirestore();
 
   const skillName = searchParams.get('skillName') || 'Practice';
   const duration = searchParams.get('duration');
   const skillId = searchParams.get('skillId');
 
-  const [rating, setRating] = useState(0);
   const [whatWentWell, setWhatWentWell] = useState('');
   const [whatWasDifficult, setWhatWasDifficult] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const formatDuration = (seconds: string | null) => {
     if (!seconds) return 'N/A';
@@ -39,24 +41,61 @@ function JournalForm() {
     return `${minutes} min ${secs} sec`;
   };
 
-  const handleSaveJournal = () => {
-    // In a real app, you would save this data to Firestore
-    console.log({
-      skillId,
-      skillName,
-      duration,
-      rating,
-      whatWentWell,
-      whatWasDifficult,
-    });
+  const handleSaveJournal = async () => {
+    if (!firestore || !skillId) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not save journal entry. Skill or database connection missing.',
+        });
+        return;
+    }
+    setIsSaving(true);
 
-    toast({
-      title: 'Journal Saved!',
-      description: 'Your practice session has been logged.',
-    });
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const skillRef = doc(firestore, 'skills', skillId);
+            const skillDoc = await transaction.get(skillRef);
 
-    // Navigate to the main journal page to see all entries
-    router.push('/journal');
+            if (!skillDoc.exists()) {
+                throw new Error("Skill document not found!");
+            }
+
+            const sessionsRef = doc(collection(skillRef, 'practiceSessions'));
+            const durationInSeconds = parseInt(duration || '0', 10);
+            
+            const newSession = {
+                skillId: skillId,
+                date: new Date().toISOString(),
+                duration: durationInSeconds,
+                whatWentWell: whatWentWell,
+                whatWasDifficult: whatWasDifficult,
+            };
+
+            transaction.set(sessionsRef, newSession);
+
+            const currentTotalHours = skillDoc.data().totalHours || 0;
+            const newTotalHours = currentTotalHours + (durationInSeconds / 3600);
+            transaction.update(skillRef, { totalHours: newTotalHours });
+        });
+
+        toast({
+            title: 'Journal Saved!',
+            description: 'Your practice session has been logged.',
+        });
+
+        router.push('/journal');
+
+    } catch (error: any) {
+        console.error("Error saving journal entry: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Uh oh! Something went wrong.',
+            description: error.message || 'There was a problem saving your journal entry.',
+        });
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   return (
@@ -95,8 +134,9 @@ function JournalForm() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button size="lg" className="w-full" onClick={handleSaveJournal}>
-              <Save className="mr-2 h-5 w-5" /> Save Journal Entry
+            <Button size="lg" className="w-full" onClick={handleSaveJournal} disabled={isSaving}>
+              <Save className="mr-2 h-5 w-5" /> 
+              {isSaving ? 'Saving...' : 'Save Journal Entry'}
             </Button>
           </CardFooter>
         </Card>

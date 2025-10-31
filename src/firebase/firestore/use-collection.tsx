@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
-import { onSnapshot, query, collection, where, type Query, type DocumentData, type Firestore } from 'firebase/firestore';
+import { onSnapshot, query, collection, where, type Query, type DocumentData, type Firestore, collectionGroup } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
-import type { Project, UserStory, Skill, Task } from '@/lib/types';
+import type { Project, UserStory, Skill, Task, PracticeSession } from '@/lib/types';
 
 type CollectionData<T> = {
   loading: boolean;
@@ -127,4 +127,45 @@ export function useSkills(): CollectionData<Skill> {
     ...skills,
     loading: userLoading || skills.loading,
   };
+}
+
+// Hook to get all practice sessions for the current user
+export function usePracticeSessions(): CollectionData<PracticeSession> {
+    const firestore = useFirestore();
+    const { data: user, loading: userLoading } = useUser();
+
+    const sessionsQuery = useMemo(() => {
+        if (!firestore || !user?.uid) return null;
+        return query(collectionGroup(firestore, 'practiceSessions'));
+    }, [firestore, user?.uid]);
+    
+    const sessions = useCollection<PracticeSession>(sessionsQuery);
+
+    // This is a client-side filter because collectionGroup queries can't be filtered by parent doc fields.
+    const userSessions = useMemo(() => {
+        return sessions.data.filter(session => session.skillId && session.skillId.startsWith(user?.uid || ''));
+    }, [sessions.data, user?.uid]);
+
+
+    const { data: skills, loading: skillsLoading } = useSkills();
+
+    const enrichedSessions = useMemo(() => {
+        if (skillsLoading || sessions.loading) return [];
+        
+        return sessions.data.map(session => {
+            const skill = skills.find(s => s.id === session.skillId);
+            return {
+                ...session,
+                skillName: skill ? skill.name : 'Unknown Skill'
+            }
+        });
+
+    }, [sessions.data, skills, skillsLoading, sessions.loading]);
+
+
+    return {
+        ...sessions,
+        loading: userLoading || sessions.loading,
+        data: enrichedSessions,
+    };
 }

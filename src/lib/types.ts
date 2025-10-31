@@ -15,6 +15,7 @@ export type Achievement = {
 export type SkillProficiency = 'Beginner' | 'Intermediate' | 'Advanced';
 
 export type GoalStatus = 'Not Started' | 'In Progress' | 'Completed';
+export type GoalLevel = 'Junior' | 'Semi Senior' | 'Senior';
 
 export type Goal = {
   title: string;
@@ -26,6 +27,7 @@ export type Goal = {
   userStoryTicketId?: string;
   deadline?: string;
   duration?: number; // Target duration in minutes
+  level?: GoalLevel;
 };
 
 export type SubSkill = {

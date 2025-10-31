@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { Goal, Skill, SubSkill } from '@/lib/types';
+import type { Goal, GoalLevel, Skill, SubSkill } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Plus,
@@ -232,6 +232,19 @@ type GoalDetailProps = {
   onGoalDeleted: (goalTitle: string, subSkillName: string) => void;
 };
 
+const getLevelVariant = (level: GoalLevel | undefined) => {
+    switch (level) {
+        case 'Junior':
+            return 'default';
+        case 'Semi Senior':
+            return 'secondary';
+        case 'Senior':
+            return 'destructive';
+        default:
+            return 'outline';
+    }
+};
+
 const GoalDetail = ({ goal, onGoalDeleted }: GoalDetailProps) => (
     <div className="space-y-4">
         <div className="flex items-start gap-3 relative w-full">
@@ -290,6 +303,9 @@ const GoalDetail = ({ goal, onGoalDeleted }: GoalDetailProps) => (
             <div className="flex items-center gap-2">
                 {goal.subSkillName && (
                     <Badge variant="secondary" className="gap-1.5"><Puzzle className="h-3 w-3"/>{goal.subSkillName}</Badge>
+                )}
+                 {goal.level && (
+                    <Badge variant={getLevelVariant(goal.level)}>{goal.level}</Badge>
                 )}
                 <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
             </div>

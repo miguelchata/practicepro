@@ -25,6 +25,7 @@ const goalObjectSchema = z.object({
   goal: z.string().min(3, 'Goal must be at least 3 characters.'),
   outcome: z.string().min(3, 'Outcome is required.'),
   duration: z.coerce.number().positive().optional(),
+  level: z.enum(['Junior', 'Semi Senior', 'Senior']).optional(),
 });
 
 const jsonSchema = z.union([
@@ -48,6 +49,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
       skillArea: skillAreas[0] || '',
       goal: '',
       outcome: '',
+      level: 'Junior',
     },
   });
 
@@ -59,6 +61,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
         measurable: values.outcome,
         status: 'Not Started',
         duration: values.duration,
+        level: values.level,
     };
     onGoalAdded([newGoal]);
     form.reset();
@@ -160,19 +163,43 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
                     </FormItem>
                     )}
                 />
-                <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Target Duration (minutes)</FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="e.g., 60" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Target Duration (minutes)</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="e.g., 60" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="level"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Level</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a level" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="Junior">Junior</SelectItem>
+                                    <SelectItem value="Semi Senior">Semi Senior</SelectItem>
+                                    <SelectItem value="Senior">Senior</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                </div>
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || skillAreas.length === 0}>
                     {form.formState.isSubmitting ? 'Adding Goal...' : 'Add Goal'}
                 </Button>
@@ -185,7 +212,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
                     <Label htmlFor="json-input">Goal JSON (Single or Array)</Label>
                     <Textarea
                         id="json-input"
-                        placeholder={`{\n  "skillArea": "State Management",\n  "goal": "Master Redux",\n  "outcome": "Build a complex app with Redux",\n  "duration": 120\n}`}
+                        placeholder={`{\n  "skillArea": "State Management",\n  "goal": "Master Redux",\n  "outcome": "Build a complex app with Redux",\n  "duration": 120,\n  "level": "Junior"\n}`}
                         value={jsonInput}
                         onChange={(e) => setJsonInput(e.target.value)}
                         rows={10}

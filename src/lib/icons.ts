@@ -1,16 +1,10 @@
-import { Code, Guitar, Mic, Target, Brain, BookOpen, Brush, Film, Dumbbell, Languages } from 'lucide-react';
+import { Code, Brush, Languages, Target } from 'lucide-react';
 
 export const iconMap = {
-  Guitar,
-  Mic,
   Code,
-  Target,
-  Brain,
-  BookOpen,
-  Brush,
-  Film,
-  Dumbbell,
-  Languages,
+  Design: Brush,
+  Language: Languages,
+  Other: Target,
 };
 
 export const iconNames = Object.keys(iconMap) as (keyof typeof iconMap)[];

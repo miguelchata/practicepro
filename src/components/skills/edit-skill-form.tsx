@@ -60,7 +60,7 @@ export function EditSkillForm({ skill, onSkillUpdated }: EditSkillFormProps) {
     onSkillUpdated(updatedSkillData);
   }
 
-  const selectedIconName = form.watch('icon');
+  const selectedIconName = form.watch('icon') as keyof typeof iconMap;
   const SelectedIcon = iconMap[selectedIconName] || Target;
 
   return (

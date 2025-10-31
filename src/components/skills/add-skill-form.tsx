@@ -53,7 +53,7 @@ export function AddSkillForm({
       name: '',
       category: '',
       subSkills: '',
-      icon: 'Target',
+      icon: 'Other',
     },
   });
 
@@ -69,7 +69,7 @@ export function AddSkillForm({
     setShowNewCategory(false);
   }
 
-  const selectedIconName = form.watch('icon');
+  const selectedIconName = form.watch('icon') as keyof typeof iconMap;
   const SelectedIcon = iconMap[selectedIconName] || Target;
 
   return (

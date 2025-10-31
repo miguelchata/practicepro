@@ -52,6 +52,8 @@ export type PracticeSession = {
   duration: number; // in seconds
   whatWentWell: string;
   whatWasDifficult: string;
+  goal?: string;
+  subSkill?: string;
 };
 
 

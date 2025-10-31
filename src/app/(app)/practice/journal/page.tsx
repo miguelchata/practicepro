@@ -17,7 +17,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Save, Star } from 'lucide-react';
 import { useFirestore } from '@/firebase';
-import { doc, runTransaction } from 'firebase/firestore';
+import { doc, runTransaction, collection } from 'firebase/firestore';
+import type { Skill } from '@/lib/types';
 
 function JournalForm() {
   const searchParams = useSearchParams();
@@ -28,6 +29,8 @@ function JournalForm() {
   const skillName = searchParams.get('skillName') || 'Practice';
   const duration = searchParams.get('duration');
   const skillId = searchParams.get('skillId');
+  const goalTitle = searchParams.get('goal');
+  const subSkillName = searchParams.get('subSkill');
 
   const [whatWentWell, setWhatWentWell] = useState('');
   const [whatWasDifficult, setWhatWasDifficult] = useState('');
@@ -60,9 +63,13 @@ function JournalForm() {
             if (!skillDoc.exists()) {
                 throw new Error("Skill document not found!");
             }
-
-            const sessionsRef = doc(collection(skillRef, 'practiceSessions'));
+            
+            const skillData = skillDoc.data() as Skill;
             const durationInSeconds = parseInt(duration || '0', 10);
+            
+            // --- 1. Create new practice session ---
+            const sessionsCollectionRef = collection(skillRef, 'practiceSessions');
+            const newSessionRef = doc(sessionsCollectionRef);
             
             const newSession = {
                 skillId: skillId,
@@ -70,18 +77,36 @@ function JournalForm() {
                 duration: durationInSeconds,
                 whatWentWell: whatWentWell,
                 whatWasDifficult: whatWasDifficult,
+                goal: goalTitle,
+                subSkill: subSkillName
             };
 
-            transaction.set(sessionsRef, newSession);
+            transaction.set(newSessionRef, newSession);
 
-            const currentTotalHours = skillDoc.data().totalHours || 0;
+            // --- 2. Update skill total hours and goal status ---
+            let newSubSkills = [...skillData.subSkills];
+            if (goalTitle && subSkillName) {
+                const subSkillIndex = newSubSkills.findIndex(sub => sub.name === subSkillName);
+                if (subSkillIndex !== -1) {
+                    const goalIndex = newSubSkills[subSkillIndex].goals.findIndex(g => g.specific === goalTitle);
+                    if (goalIndex !== -1) {
+                        newSubSkills[subSkillIndex].goals[goalIndex].status = 'Completed';
+                    }
+                }
+            }
+
+            const currentTotalHours = skillData.totalHours || 0;
             const newTotalHours = currentTotalHours + (durationInSeconds / 3600);
-            transaction.update(skillRef, { totalHours: newTotalHours });
+            
+            transaction.update(skillRef, { 
+                totalHours: newTotalHours,
+                subSkills: newSubSkills
+            });
         });
 
         toast({
             title: 'Journal Saved!',
-            description: 'Your practice session has been logged.',
+            description: 'Your practice session has been logged and your goal updated.',
         });
 
         router.push('/journal');
@@ -109,6 +134,7 @@ function JournalForm() {
             </CardTitle>
             <CardDescription>
               Session: {skillName} ({formatDuration(duration)})
+              {goalTitle && <span className="block mt-1">Goal: {goalTitle}</span>}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

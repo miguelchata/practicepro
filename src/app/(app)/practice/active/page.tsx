@@ -91,6 +91,14 @@ function ActiveSession() {
       skillName: skillName,
       duration: String(durationInSeconds),
     });
+
+    if (goal) {
+        queryParams.set('goal', goal);
+    }
+    if (subSkill) {
+        queryParams.set('subSkill', subSkill);
+    }
+    
     router.push(`/practice/journal?${queryParams.toString()}`);
   };
 

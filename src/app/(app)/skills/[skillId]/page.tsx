@@ -56,7 +56,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { NextGoalForm } from '@/components/skills/next-goal-form';
-import { generateNextGoal, type GenerateNextGoalOutput } from '@/ai/flows/generate-next-goal';
+import { generateNextGoal } from '@/ai/flows/generate-next-goal';
+import type { GenerateNextGoalOutput } from '@/ai/flows/generate-next-goal.types';
 
 
 function formatDeadline(deadline: string | undefined) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { Timer, Target, Puzzle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Goal, Skill, GoalLevel } from '@/lib/types';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type GoalWithSkillInfo = Goal & {
   skillId: string;
@@ -41,6 +42,7 @@ const getLevelVariant = (level: GoalLevel | undefined) => {
 export default function PracticePage() {
   const router = useRouter();
   const { data: skills, loading: skillsLoading } = useSkills();
+  const [skillFilter, setSkillFilter] = useState('All');
 
   const allGoals: GoalWithSkillInfo[] = useMemo(() => {
     if (skillsLoading) {
@@ -57,6 +59,13 @@ export default function PracticePage() {
       )
     );
   }, [skills, skillsLoading]);
+  
+  const filteredGoals = useMemo(() => {
+    if (skillFilter === 'All') {
+        return allGoals;
+    }
+    return allGoals.filter(goal => goal.skillName === skillFilter);
+  }, [allGoals, skillFilter]);
 
   const practiceUrl = (goal: GoalWithSkillInfo) => {
     const params = new URLSearchParams();
@@ -88,15 +97,28 @@ export default function PracticePage() {
               Select one of your goals to start a focused practice session.
             </p>
           </div>
+          {!skillsLoading && skills.length > 0 && (
+             <Select value={skillFilter} onValueChange={setSkillFilter}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by skill" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="All">All Skills</SelectItem>
+                    {skills.map((skill) => (
+                        <SelectItem key={skill.id} value={skill.name}>{skill.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          )}
         </div>
 
         {skillsLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
             </div>
         ) : allGoals.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {allGoals.map((goal, index) => (
+            {filteredGoals.map((goal, index) => (
               <Card key={index} className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="font-medium text-base">{goal.title}</CardTitle>

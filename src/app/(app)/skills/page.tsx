@@ -15,7 +15,7 @@ import { MoreVertical, PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogDescription as DialogDescriptionComponent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -123,9 +123,9 @@ export default function SkillsPage() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add a New Skill</DialogTitle>
-                  <DialogDescription>
+                  <DialogDescriptionComponent>
                     What new skill do you want to master?
-                  </DialogDescription>
+                  </DialogDescriptionComponent>
                 </DialogHeader>
                 <AddSkillForm
                   onSkillAdded={handleSkillAdded}
@@ -148,10 +148,11 @@ export default function SkillsPage() {
                     <Link key={skill.id} href={`/skills/${skill.id}`} className="flex group">
                       <Card className="flex w-full flex-col transition-all hover:shadow-md">
                         <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-                            <div>
+                            <div className="space-y-1">
                                 <CardTitle className="font-headline group-hover:underline">
                                 {skill.name}
                                 </CardTitle>
+                                <CardDescription>{skill.category}</CardDescription>
                             </div>
                             <AlertDialog>
                               <DropdownMenu>
@@ -219,9 +220,9 @@ export default function SkillsPage() {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Edit Skill</DialogTitle>
-                    <DialogDescription>
+                    <DialogDescriptionComponent>
                         Update the details for your skill.
-                    </DialogDescription>
+                    </DialogDescriptionComponent>
                 </DialogHeader>
                 {editingSkill && (
                     <EditSkillForm skill={editingSkill} onSkillUpdated={handleSkillUpdated} />

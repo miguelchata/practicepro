@@ -73,23 +73,6 @@ function JournalForm() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-3 rounded-lg border p-4">
-              <Label className="text-base">How would you rate this session?</Label>
-              <div className="flex justify-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Button
-                    key={star}
-                    variant={rating >= star ? 'default' : 'outline'}
-                    size="icon"
-                    onClick={() => setRating(star)}
-                    className="h-12 w-12"
-                  >
-                    <Star className="h-6 w-6" />
-                    <span className="sr-only">Rate {star} of 5</span>
-                  </Button>
-                ))}
-              </div>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="what-went-well" className="text-base">What went well?</Label>
               <Textarea
@@ -112,7 +95,7 @@ function JournalForm() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button size="lg" className="w-full" onClick={handleSaveJournal} disabled={rating === 0}>
+            <Button size="lg" className="w-full" onClick={handleSaveJournal}>
               <Save className="mr-2 h-5 w-5" /> Save Journal Entry
             </Button>
           </CardFooter>

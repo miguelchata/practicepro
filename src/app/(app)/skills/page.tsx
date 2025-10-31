@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { MoreVertical, PlusCircle, Edit, Trash2, Eye, Target } from 'lucide-react';
+import { MoreVertical, PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Target } from 'lucide-react';
 
 export default function SkillsPage() {
   const { data: skills, loading } = useSkills();

@@ -170,8 +170,8 @@ export default function SkillDetailPage() {
         <div className="flex items-center justify-between">
             <div className='flex items-center gap-4'>
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight font-headline">Active Goals</h2>
-                    <p className="text-muted-foreground">Your specific targets for mastering {skill.name}.</p>
+                    <h2 className="text-2xl font-bold tracking-tight font-headline">Skill Goals</h2>
+                    <p className="text-muted-foreground">Manage and track the specific goals for your skill.</p>
                 </div>
                  <Select value={filter} onValueChange={setFilter}>
                     <SelectTrigger className="w-[180px]">

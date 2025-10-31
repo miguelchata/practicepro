@@ -54,6 +54,7 @@ import { useDoc } from '@/firebase/firestore/use-doc';
 import { useUpdateSkill } from '@/firebase/firestore/use-add-skill';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 function formatDeadline(deadline: string | undefined) {
   if (!deadline) return '';
@@ -207,8 +208,8 @@ export default function SkillDetailPage() {
         {filteredGoals.length > 0 ? (
              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {filteredGoals.map((goal, goalIndex) => (
-                    <Card key={goalIndex}>
-                        <CardContent className="p-4">
+                    <Card key={goalIndex} className="flex flex-col">
+                        <CardContent className="p-4 flex-grow flex flex-col">
                             <GoalDetail skill={skill} goal={goal} onGoalDeleted={handleGoalDeleted} />
                         </CardContent>
                     </Card>
@@ -279,82 +280,30 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
     }, [skill.id, skill.name, goal]);
 
     return (
-    <div className="space-y-4">
-        <div className="flex items-start gap-3 relative w-full">
-            
-            <div className="flex-1 text-left">
-                <p className="font-medium">{goal.title}</p>
-                <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1 mt-1">
-                    {goal.targetDuration && (
-                        <span className="flex items-center gap-1.5">
-                            <Clock className="h-4 w-4" />
-                            {goal.targetDuration} minutes
-                        </span>
-                    )}
-                    {goal.deadline && (
-                        <span className="flex items-center gap-1.5">
-                            <Calendar className="h-4 w-4" />
-                            Due {formatDeadline(goal.deadline)}
-                        </span>
-                    )}
-                    {goal.status === 'Completed' && goal.duration && (
-                         <span className="flex items-center gap-1.5 font-semibold text-foreground">
-                            <Check className="h-4 w-4 text-green-500" />
-                            {formatDuration(goal.duration)}
-                        </span>
-                    )}
-                </div>
-            </div>
-            
-            <div className="flex items-center gap-1">
-                {goal.status === 'Completed' ? (
-                    <Button variant="secondary" size="sm" className="cursor-default">
-                        Next Goal
-                        <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                ) : (
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={practiceUrl}>
-                            <Timer className="mr-2 h-4 w-4" />
-                            Practice
-                        </Link>
-                    </Button>
+    <div className="space-y-4 flex flex-col flex-grow">
+        <div className="space-y-2 flex-grow">
+            <p className="font-medium">{goal.title}</p>
+            <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1">
+                {goal.targetDuration && (
+                    <span className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4" />
+                        {goal.targetDuration} minutes
+                    </span>
                 )}
-                <AlertDialog>
-                  <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                              <MoreVertical className="h-4 w-4" />
-                          </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                          <AlertDialogTrigger asChild>
-                              <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  <span>Delete Goal</span>
-                              </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                      </DropdownMenuContent>
-                  </DropdownMenu>
-                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                      <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                              This action will permanently delete the goal: <strong>{goal.title}</strong>. This cannot be undone.
-                          </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => onGoalDeleted(goal.title, goal.subSkillName || '')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                              Delete
-                          </AlertDialogAction>
-                      </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                {goal.deadline && (
+                    <span className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4" />
+                        Due {formatDeadline(goal.deadline)}
+                    </span>
+                )}
+                {goal.status === 'Completed' && goal.duration && (
+                     <span className="flex items-center gap-1.5 font-semibold text-foreground">
+                        <Check className="h-4 w-4 text-green-500" />
+                        {formatDuration(goal.duration)}
+                    </span>
+                )}
             </div>
-        </div>
-        <div className="space-y-4 text-muted-foreground">
-            <div className="flex items-center gap-2">
+             <div className="flex items-center gap-2 pt-2">
                 {goal.subSkillName && (
                     <Badge variant="secondary" className="gap-1.5"><Puzzle className="h-3 w-3"/>{goal.subSkillName}</Badge>
                 )}
@@ -363,22 +312,69 @@ const GoalDetail = ({ skill, goal, onGoalDeleted }: GoalDetailProps) => {
                 )}
                 <Badge variant={goal.status === 'Completed' ? 'default' : 'secondary'}>{goal.status}</Badge>
             </div>
-            <div>
+            <div className="pt-2">
               {goal.status === 'Completed' && goal.feedback ? (
                 <>
                   <h5 className="font-semibold text-foreground">Feedback</h5>
-                  <p className="text-sm mt-1">{goal.feedback}</p>
+                  <p className="text-sm mt-1 text-muted-foreground">{goal.feedback}</p>
                 </>
               ) : (
                 <>
                   <h5 className="font-semibold text-foreground">Outcome</h5>
-                  <p className="text-sm mt-1">{goal.measurable}</p>
+                  <p className="text-sm mt-1 text-muted-foreground">{goal.measurable}</p>
                 </>
               )}
             </div>
         </div>
+        
+        <Separator />
+
+        <div className="flex items-center justify-between">
+             <AlertDialog>
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-muted-foreground">
+                          <MoreVertical className="h-4 w-4" />
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogTrigger asChild>
+                          <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Delete Goal</span>
+                          </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This action will permanently delete the goal: <strong>{goal.title}</strong>. This cannot be undone.
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onGoalDeleted(goal.title, goal.subSkillName || '')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Delete
+                      </AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            {goal.status === 'Completed' ? (
+                <Button variant="secondary" size="sm" className="cursor-default">
+                    Next Goal
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+            ) : (
+                <Button variant="outline" size="sm" asChild>
+                    <Link href={practiceUrl}>
+                        <Timer className="mr-2 h-4 w-4" />
+                        Practice
+                    </Link>
+                </Button>
+            )}
+        </div>
     </div>
     )
 };
-
-    

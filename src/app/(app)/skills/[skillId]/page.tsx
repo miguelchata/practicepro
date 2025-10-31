@@ -10,15 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { Goal, Skill } from '@/lib/types';
+import type { Goal, Skill, SubSkill } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import {
-  ArrowLeft,
   Plus,
   Calendar,
   Clock,
   Puzzle,
+  MoreVertical,
+  Trash2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -28,6 +28,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { AddGoalForm } from '@/components/skills/add-goal-form';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useUpdateSkill } from '@/firebase/firestore/use-add-skill';
@@ -91,11 +108,8 @@ export default function SkillDetailPage() {
         <Header title="Skill Not Found" backButtonHref="/skills" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 md:gap-8 md:p-8">
           <p>The skill you are looking for does not exist.</p>
-          <Button asChild>
-            <Link href="/skills">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+          <Button onClick={() => router.push('/skills')}>
               Back to Skills
-            </Link>
           </Button>
         </main>
       </div>
@@ -120,6 +134,19 @@ export default function SkillDetailPage() {
 
     updateSkill(skill.id, { subSkills: newSubSkills });
     setIsAddGoalDialogOpen(false);
+  };
+  
+  const handleGoalDeleted = (goalTitle: string, subSkillName: string) => {
+    const newSubSkills: SubSkill[] = skill.subSkills.map(subSkill => {
+        if (subSkill.name === subSkillName) {
+            return {
+                ...subSkill,
+                goals: subSkill.goals.filter(goal => goal.title !== goalTitle)
+            };
+        }
+        return subSkill;
+    });
+    updateSkill(skill.id, { subSkills: newSubSkills });
   };
   
   const handleOpenAddGoalDialog = () => {
@@ -160,7 +187,7 @@ export default function SkillDetailPage() {
                 {filteredGoals.map((goal, goalIndex) => (
                     <Card key={goalIndex}>
                         <CardContent className="p-4">
-                            <GoalDetail goal={goal} />
+                            <GoalDetail goal={goal} onGoalDeleted={handleGoalDeleted} />
                         </CardContent>
                     </Card>
                 ))}
@@ -191,7 +218,12 @@ export default function SkillDetailPage() {
   );
 }
 
-const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
+type GoalDetailProps = {
+  goal: Goal & { subSkillName?: string };
+  onGoalDeleted: (goalTitle: string, subSkillName: string) => void;
+};
+
+const GoalDetail = ({ goal, onGoalDeleted }: GoalDetailProps) => (
     <div className="space-y-4">
         <div className="flex items-start gap-3 relative w-full">
             
@@ -212,6 +244,38 @@ const GoalDetail = ({ goal }: { goal: Goal & { subSkillName?: string } }) => (
                     )}
                 </div>
             </div>
+            
+            <AlertDialog>
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                          <MoreVertical className="h-4 w-4" />
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogTrigger asChild>
+                          <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Delete Goal</span>
+                          </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                  </DropdownMenuContent>
+              </DropdownMenu>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                          This action will permanently delete the goal: <strong>{goal.title}</strong>. This cannot be undone.
+                      </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onGoalDeleted(goal.title, goal.subSkillName || '')} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Delete
+                      </AlertDialogAction>
+                  </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </div>
         <div className="space-y-4 text-muted-foreground">
             <div className="flex items-center gap-2">

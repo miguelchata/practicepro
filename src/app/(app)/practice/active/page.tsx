@@ -90,6 +90,7 @@ function ActiveSession() {
       skillId: skillId || '',
       skillName: skillName,
       duration: String(durationInSeconds),
+      startTime: String(startTime),
     });
 
     if (goal) {

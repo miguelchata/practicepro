@@ -17,12 +17,6 @@ export type SkillProficiency = 'Beginner' | 'Intermediate' | 'Advanced';
 export type GoalStatus = 'Not Started' | 'In Progress' | 'Completed';
 export type GoalLevel = 'Junior' | 'Semi Senior' | 'Senior';
 
-export type GoalLog = {
-  date: string; // ISO string
-  duration: number; // in seconds
-  feedback: string;
-};
-
 export type Goal = {
   title: string;
   specific: string;
@@ -34,7 +28,7 @@ export type Goal = {
   deadline?: string;
   duration?: number; // Target duration in minutes
   level?: GoalLevel;
-  logs?: GoalLog[];
+  logs?: WorkLog[];
 };
 
 export type SubSkill = {

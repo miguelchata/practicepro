@@ -227,21 +227,10 @@
             "logs": {
                 "type": "array",
                 "description": "A list of practice logs for this goal.",
-                "items": { "$ref": "#/entities/goalLog" }
+                "items": { "$ref": "#/entities/workLog" }
             }
         },
         "required": ["title", "specific", "measurable", "status"]
-    },
-    "goalLog": {
-      "title": "Goal Log",
-      "description": "A log of a single practice session for a goal.",
-      "type": "object",
-      "properties": {
-        "date": { "type": "string", "format": "date-time" },
-        "duration": { "type": "number", "description": "Duration of the session in seconds." },
-        "feedback": { "type": "string" }
-      },
-      "required": ["date", "duration", "feedback"]
     }
   },
   "auth": {

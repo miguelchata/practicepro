@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { doc, runTransaction } from 'firebase/firestore';
-import type { Skill, GoalLog } from '@/lib/types';
+import type { Skill, WorkLog } from '@/lib/types';
 
 function JournalForm() {
   const searchParams = useSearchParams();
@@ -31,6 +31,7 @@ function JournalForm() {
   const skillId = searchParams.get('skillId');
   const goalTitle = searchParams.get('goal');
   const subSkillName = searchParams.get('subSkill');
+  const startTime = searchParams.get('startTime');
 
   const [feedback, setFeedback] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -44,7 +45,7 @@ function JournalForm() {
   };
 
   const handleSaveJournal = async () => {
-    if (!firestore || !skillId || !goalTitle || !subSkillName) {
+    if (!firestore || !skillId || !goalTitle || !subSkillName || !startTime) {
         toast({
             variant: 'destructive',
             title: 'Error',
@@ -67,10 +68,20 @@ function JournalForm() {
             const durationInSeconds = parseInt(duration || '0', 10);
             
             // --- Create new log for the goal ---
-            const newLog: GoalLog = {
-                date: new Date().toISOString(),
+            const startDate = new Date(parseInt(startTime, 10));
+            const endDate = new Date();
+            const year = startDate.getFullYear();
+            const month = (startDate.getMonth() + 1).toString().padStart(2, '0');
+            const day = startDate.getDate().toString().padStart(2, '0');
+            const localDateString = `${year}-${month}-${day}`;
+
+            const newLog: WorkLog = {
+                id: endDate.getTime(),
+                date: localDateString,
+                startTime: startDate.toTimeString().split(' ')[0],
+                endTime: endDate.toTimeString().split(' ')[0],
                 duration: durationInSeconds,
-                feedback: feedback,
+                description: feedback,
             };
 
             // --- Find and update the goal with the new log ---

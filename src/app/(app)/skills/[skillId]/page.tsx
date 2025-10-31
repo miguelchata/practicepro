@@ -134,7 +134,7 @@ export default function SkillDetailPage() {
     );
   }
 
-  const handleGoalAdded = (newGoalsData: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => {
+  const handleGoalAdded = (newGoalsData: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[], originalGoal?: Goal | null) => {
     if (!skill) return;
 
     let newSubSkills = [...skill.subSkills];
@@ -143,19 +143,22 @@ export default function SkillDetailPage() {
         const { skillArea, ...newGoal } = goalData;
         const subSkillIndex = newSubSkills.findIndex(sub => sub.name === skillArea);
 
-        const goalToAdd = {
+        const goalToAdd: Goal = {
             ...newGoal,
             status: 'Not Started',
-        } as Goal
+            isLastInSubSkill: true,
+        };
 
         if (subSkillIndex !== -1) {
-            // Add goal to existing subskill
-            newSubSkills[subSkillIndex] = {
-                ...newSubSkills[subSkillIndex],
-                goals: [...newSubSkills[subSkillIndex].goals, goalToAdd],
-            };
+            // If this is a "next goal", mark the original goal as not the last.
+            if (originalGoal) {
+                const originalGoalIndex = newSubSkills[subSkillIndex].goals.findIndex(g => g.title === originalGoal.title);
+                if (originalGoalIndex !== -1) {
+                    newSubSkills[subSkillIndex].goals[originalGoalIndex].isLastInSubSkill = false;
+                }
+            }
+            newSubSkills[subSkillIndex].goals.push(goalToAdd);
         } else {
-            // Create new subskill and add goal
             const newSubSkill: SubSkill = {
                 name: skillArea,
                 goals: [goalToAdd]
@@ -263,7 +266,7 @@ export default function SkillDetailPage() {
                 </DialogHeader>
                 {nextGoalCandidate && (
                     <NextGoalForm
-                        onGoalAdded={handleGoalAdded}
+                        onGoalAdded={(newGoals) => handleGoalAdded(newGoals, nextGoalCandidate)}
                         skillArea={nextGoalCandidate.subSkillName || ''}
                         level={nextGoalCandidate.level}
                     />
@@ -307,24 +310,17 @@ const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps)
         if (goal.specific) {
             params.set('goal', goal.specific);
         }
-        if (goal.targetDuration) {
-            params.set('type', 'timed');
-            params.set('duration', String(goal.targetDuration * 60));
-        }
         return `/practice/active?${params.toString()}`;
     }, [skill.id, skill.name, goal]);
+
+    const showNextGoalButton = goal.status === 'Completed' && (goal.isLastInSubSkill === undefined || goal.isLastInSubSkill === true);
+
 
     return (
     <div className="space-y-4 flex flex-col flex-grow">
         <div className="space-y-2 flex-grow">
             <p className="font-medium">{goal.title}</p>
             <div className="text-sm text-muted-foreground flex items-center flex-wrap gap-x-4 gap-y-1">
-                {goal.targetDuration && (
-                    <span className="flex items-center gap-1.5">
-                        <Clock className="h-4 w-4" />
-                        {goal.targetDuration} minutes
-                    </span>
-                )}
                 {goal.deadline && (
                     <span className="flex items-center gap-1.5">
                         <Calendar className="h-4 w-4" />
@@ -397,10 +393,14 @@ const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps)
               </AlertDialogContent>
             </AlertDialog>
             {goal.status === 'Completed' ? (
-                 <Button variant="secondary" size="sm" onClick={onNextGoal}>
-                    Next Goal
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
+                <>
+                 {showNextGoalButton && (
+                    <Button variant="secondary" size="sm" onClick={onNextGoal}>
+                        Next Goal
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                 )}
+                </>
             ) : (
                 <Button variant="outline" size="sm" asChild>
                     <Link href={practiceUrl}>

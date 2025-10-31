@@ -26,13 +26,13 @@ export type Goal = {
   userStoryId?: string;
   userStoryTicketId?: string;
   deadline?: string;
-  targetDuration?: number; // Target duration in minutes
   level?: GoalLevel;
   date?: string;
   duration?: number; // duration in seconds
   feedback?: string;
   startTime?: string;
   endTime?: string;
+  isLastInSubSkill?: boolean;
 };
 
 export type SubSkill = {

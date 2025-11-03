@@ -9,10 +9,22 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useState } from 'react';
 
 const vocabularyList = [
     { word: 'ephemeral', type: 'Adjective', definition: 'Lasting for a very short time.', learned: true },
@@ -27,6 +39,7 @@ const progressPercentage = (learnedCount / totalCount) * 100;
 
 
 export default function EnglishPage() {
+  const [practiceAmount, setPracticeAmount] = useState(10);
   const firstUnlearnedWord = vocabularyList.find(item => !item.learned);
   const reviewLink = firstUnlearnedWord ? `/english/${firstUnlearnedWord.word.toLowerCase()}` : `/english/${vocabularyList[0].word.toLowerCase()}`;
 
@@ -65,11 +78,55 @@ export default function EnglishPage() {
             </div>
           </CardContent>
            <CardFooter>
-            <Button className="w-full" asChild>
-                <Link href={reviewLink}>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="w-full">
                     Start Vocabulary Review
-                </Link>
-            </Button>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Start Vocabulary Review</DialogTitle>
+                  <DialogDescription>
+                    Configure your practice session.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="amount">Amount of words</Label>
+                    <Input id="amount" type="number" value={practiceAmount} onChange={(e) => setPracticeAmount(Number(e.target.value))} />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Exercise Type</Label>
+                    <RadioGroup defaultValue="both" className="flex gap-4">
+                        <div>
+                            <RadioGroupItem value="both" id="r1" className="peer sr-only" />
+                            <Label htmlFor="r1" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                Both
+                            </Label>
+                        </div>
+                        <div>
+                            <RadioGroupItem value="flashcards" id="r2" className="peer sr-only" />
+                            <Label htmlFor="r2" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                Flashcards only
+                            </Label>
+                        </div>
+                        <div>
+                            <RadioGroupItem value="writing" id="r3" className="peer sr-only" />
+                            <Label htmlFor-="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                Writing only
+                            </Label>
+                        </div>
+                    </RadioGroup>
+                  </div>
+                </div>
+                <Button asChild className="w-full">
+                    <Link href={reviewLink}>
+                        Practice {practiceAmount} Words
+                    </Link>
+                </Button>
+              </DialogContent>
+            </Dialog>
            </CardFooter>
         </Card>
       </main>

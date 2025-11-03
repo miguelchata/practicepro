@@ -30,12 +30,14 @@ type PracticeItem = {
     type: ExerciseType;
     // Keep track of recent qualities for lapse detection
     recentQualities?: number[];
+    attempts: number;
 };
 
 const MAX_CARDS_PER_SESSION = 20;
 const MASTERED_INTERVAL_DAYS = 10;
 const LEARNING_INTERVAL_DAYS = 1;
 const MAX_INTERVAL_DAYS = 15;
+const MAX_ATTEMPTS = 2;
 
 
 function PracticeSession() {
@@ -54,15 +56,15 @@ function PracticeSession() {
     const words = vocabularyList.slice(0, amount);
 
     if (exerciseType === 'flashcards') {
-        return words.map(wordData => ({ wordData, type: 'guess' }));
+        return words.map(wordData => ({ wordData, type: 'guess', attempts: 0 }));
     }
     if (exerciseType === 'writing') {
-        return words.map(wordData => ({ wordData, type: 'write' }));
+        return words.map(wordData => ({ wordData, type: 'write', attempts: 0 }));
     }
     // 'both'
     return words.flatMap(wordData => ([
-        { wordData, type: 'guess' },
-        { wordData, type: 'write' },
+        { wordData, type: 'guess', attempts: 0 },
+        { wordData, type: 'write', attempts: 0 },
     ]));
   }, [searchParams, vocabularyList, loading]);
   
@@ -129,12 +131,13 @@ function PracticeSession() {
     updateVocabularyItem(item.id, updates);
     
     const isCorrect = quality >= 4;
-    if (!isCorrect) {
+    if (!isCorrect && currentItem.attempts < MAX_ATTEMPTS) {
         setPracticeList(prev => {
             if (prev.length < MAX_CARDS_PER_SESSION) {
                 const updatedFailedItem: PracticeItem = {
                     ...currentItem,
-                    recentQualities: [...(currentItem.recentQualities || []), quality]
+                    recentQualities: [...(currentItem.recentQualities || []), quality],
+                    attempts: currentItem.attempts + 1,
                 };
                 return [...prev, updatedFailedItem];
             }

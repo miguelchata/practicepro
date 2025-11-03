@@ -33,6 +33,10 @@ type PracticeItem = {
 };
 
 const MAX_CARDS_PER_SESSION = 20;
+const MASTERED_INTERVAL_DAYS = 10;
+const LEARNING_INTERVAL_DAYS = 1;
+const MAX_INTERVAL_DAYS = 15;
+
 
 function PracticeSession() {
   const searchParams = useSearchParams();
@@ -106,18 +110,18 @@ function PracticeSession() {
 
     if (newRepetitions >= 5 && newAccuracy >= 0.80) {
         updates.status = 'mastered';
-        updates.nextReviewAt = new Date(now.getTime() + 21 * oneDay).toISOString();
+        updates.nextReviewAt = new Date(now.getTime() + MASTERED_INTERVAL_DAYS * oneDay).toISOString();
     } else if (
         item.status === 'mastered' &&
         (newAccuracy < 0.60 || (hasTwoPoorRecentReviews && daysSinceLastReview <= 14))
     ) {
         updates.status = 'learning';
-        updates.nextReviewAt = new Date(now.getTime() + oneDay).toISOString();
+        updates.nextReviewAt = new Date(now.getTime() + LEARNING_INTERVAL_DAYS * oneDay).toISOString();
     } else {
         updates.status = 'learning';
-        let nextIntervalDays = 1;
+        let nextIntervalDays = LEARNING_INTERVAL_DAYS;
         if (quality >= 3) {
-          nextIntervalDays = Math.pow(2, Math.max(0, item.repetitions - 1));
+          nextIntervalDays = Math.min(MAX_INTERVAL_DAYS, Math.pow(2, Math.max(0, item.repetitions - 1)));
         }
         updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * oneDay).toISOString();
     }

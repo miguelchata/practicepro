@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useState, useMemo } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -100,7 +100,7 @@ function PracticeSession() {
   const [sessionFinished, setSessionFinished] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
   
-  const totalItems = useMemo(() => practiceList.length, [practiceList]);
+  const totalItems = useMemo(() => initialPracticeList.length, [initialPracticeList]);
 
   const progressPercentage = totalItems > 0 ? ((completedCount) / totalItems) * 100 : 0;
   const currentItem = practiceList[currentIndex];
@@ -113,25 +113,42 @@ function PracticeSession() {
       wasCorrect = true;
     }
 
-    if (!wasCorrect) {
+    if (wasCorrect) {
+        setCompletedCount(prev => prev + 1);
+    } else {
         // Re-add the failed item to the end of the list
         setPracticeList(prev => [...prev, currentItem]);
-    } else {
-        setCompletedCount(prev => prev + 1);
     }
 
-    if (currentIndex < practiceList.length - 1) {
+    if (currentIndex + 1 < practiceList.length) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      setSessionFinished(true);
+       // We've reached the end of the current list.
+       // Check if all original items have been completed.
+       if (completedCount >= totalItems) {
+            setSessionFinished(true);
+       } else {
+            // There are still items that were failed and re-added.
+            // This case might happen if the last card is failed.
+            // The next render will pick up the updated practiceList.
+            setCurrentIndex(prev => prev + 1);
+       }
     }
   };
+
+  useEffect(() => {
+    // This effect handles the case where all original items are completed, but we are not at the end of the practiceList yet.
+    if(completedCount >= totalItems && totalItems > 0) {
+        setSessionFinished(true);
+    }
+  }, [completedCount, totalItems]);
+
 
   if (sessionFinished) {
     return (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
             <h2 className="text-2xl font-bold font-headline mb-2">Session Complete!</h2>
-            <p className="text-muted-foreground mb-4">You completed {completedCount} of {totalItems} exercises. Keep up the great work!</p>
+            <p className="text-muted-foreground mb-4">You completed {completedCount} exercises. Keep up the great work!</p>
             <Button onClick={() => router.push('/english')}>
                 Back to Vocabulary
             </Button>
@@ -140,7 +157,12 @@ function PracticeSession() {
   }
 
   if (!currentItem) {
-      return <div>Loading...</div>
+      // This can happen when the session finishes, before the sessionFinished state update renders.
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center">
+            <p>Loading next card...</p>
+        </div>
+      );
   }
 
   return (

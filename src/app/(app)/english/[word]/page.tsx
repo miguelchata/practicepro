@@ -31,6 +31,7 @@ const vocabularyList = [
       'His success as a singer was ephemeral.'
     ],
     learned: true,
+    ipa: '/ɪˈfɛmərəl/'
   },
   {
     word: 'ubiquitous',
@@ -41,6 +42,7 @@ const vocabularyList = [
         'The company\'s logo is ubiquitous, appearing on everything from billboards to coffee mugs.'
     ],
     learned: true,
+    ipa: '/juːˈbɪkwɪtəs/'
   },
   {
     word: 'mellifluous',
@@ -51,6 +53,7 @@ const vocabularyList = [
         'The mellifluous tones of the cello filled the room.'
     ],
     learned: false,
+    ipa: '/məˈlɪfluəs/'
   },
   {
     word: 'pulchritudinous',
@@ -61,6 +64,7 @@ const vocabularyList = [
         'She was a pulchritudinous woman who turned heads wherever she went.'
     ],
     learned: false,
+    ipa: '/ˌpʌlkrɪˈtjuːdɪnəs/'
   },
 ]
 
@@ -134,8 +138,9 @@ export default function WordDetailPage() {
             )}
 
             {showWord && (
-                <div className="text-center pt-4">
+                <div className="text-center pt-4 space-y-1">
                     <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
+                    <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
                 </div>
             )}
 

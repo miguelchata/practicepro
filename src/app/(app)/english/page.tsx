@@ -113,7 +113,7 @@ export default function EnglishPage() {
                         </div>
                         <div>
                             <RadioGroupItem value="writing" id="r3" className="peer sr-only" />
-                            <Label htmlFor-="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                            <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                 Writing only
                             </Label>
                         </div>

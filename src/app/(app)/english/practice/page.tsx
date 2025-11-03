@@ -82,7 +82,7 @@ function PracticeSession() {
   const progressPercentage = totalItems > 0 ? ((currentIndex) / totalItems) * 100 : 0;
   const currentItem = practiceList[currentIndex];
 
-  const handleNext = (quality: number): number => {
+  const handleNext = (quality: number) => {
     const item = currentItem.wordData;
     const now = new Date();
     
@@ -133,7 +133,15 @@ function PracticeSession() {
     return newAccuracy;
   };
 
-  const advanceSession = () => {
+  const advanceSession = (quality: number) => {
+    // Logic to repeat failed cards
+    if (quality < 5 && currentItem.attempts < MAX_ATTEMPTS) {
+        setPracticeList(prevList => [
+            ...prevList,
+            { ...currentItem, attempts: currentItem.attempts + 1 }
+        ]);
+    }
+
     if (currentIndex + 1 < practiceList.length) {
       setCurrentIndex(prev => prev + 1);
     } else {
@@ -170,6 +178,11 @@ function PracticeSession() {
       );
   }
 
+  const handleCardAdvance = (quality: number) => {
+      handleNext(quality);
+      advanceSession(quality);
+  }
+
 
   return (
     <>
@@ -201,8 +214,8 @@ function PracticeSession() {
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onNext={handleNext} onAdvance={advanceSession} />}
-        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onNext={handleNext} onAdvance={advanceSession} />}
+        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onAdvance={handleCardAdvance} />}
+        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onAdvance={handleCardAdvance} />}
       </main>
     </>
   );

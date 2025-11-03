@@ -25,18 +25,23 @@ import { Badge } from '../ui/badge';
 
 type WritingCardProps = {
     wordData: VocabularyItem;
-    onNext: (quality: number) => number;
-    onAdvance: () => void;
+    onAdvance: (quality: number) => void;
 }
 
 type FeedbackState = 'idle' | 'checking' | 'showingAccuracy' | 'result';
 
 
-export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
+export function WritingCard({ wordData, onAdvance }: WritingCardProps) {
   const [userInput, setUserInput] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
-  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
+  
+  useEffect(() => {
+    // Reset state for next card
+    setUserInput('');
+    setIsCorrect(false);
+    setFeedbackState('idle');
+  }, [wordData]);
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -45,33 +50,16 @@ export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
     
     const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
     setIsCorrect(correct);
-    const accuracy = onNext(correct ? 5 : 1);
-    setNewAccuracy(accuracy);
     setFeedbackState('checking');
+
+    // Show result after a short delay
+    setTimeout(() => {
+      setFeedbackState('result');
+    }, 800);
   };
 
-  useEffect(() => {
-    if (feedbackState === 'checking') {
-        const timer = setTimeout(() => {
-            setFeedbackState('showingAccuracy');
-        }, 800);
-        return () => clearTimeout(timer);
-    }
-    if (feedbackState === 'showingAccuracy') {
-        const timer = setTimeout(() => {
-            setFeedbackState('result');
-        }, 800);
-        return () => clearTimeout(timer);
-    }
-  }, [feedbackState]);
-
   const handleContinue = () => {
-    // Reset state for next card
-    setUserInput('');
-    setIsCorrect(false);
-    setFeedbackState('idle');
-    setNewAccuracy(null);
-    onAdvance();
+    onAdvance(isCorrect ? 5 : 1);
   }
 
 
@@ -130,47 +118,34 @@ export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
                     </div>
                     <Button type="submit" className="w-full">Check Answer</Button>
                 </form>
+            ) : feedbackState === 'checking' ? (
+                <div className="space-y-4 text-center pt-4">
+                     <div className={`relative rounded-md p-4 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
+                        <p>{isCorrect ? "Correct answer: nice one!" : "Incorrect answer: keep trying!"}</p>
+                    </div>
+                </div>
             ) : (
                 <div className="space-y-4 text-center pt-4">
-                    {feedbackState === 'checking' && (
-                         <div className={`relative rounded-md p-4 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
-                            <p>{isCorrect ? "Correct answer: nice one!" : "Incorrect answer: keep trying!"}</p>
+                    {isCorrect ? (
+                        <div className="text-center space-y-1">
+                            <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
+                            {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                         </div>
-                    )}
-
-                    {feedbackState === 'showingAccuracy' && newAccuracy !== null && (
-                         <div className="rounded-lg border bg-muted/50 p-4 space-y-2 text-center">
-                            <p className="font-semibold">New Accuracy Score</p>
-                            <p className="font-mono text-2xl font-bold text-primary">
-                                {Math.round(newAccuracy * 100)}%
-                            </p>
-                        </div>
-                    )}
-
-                    {feedbackState === 'result' && (
-                        <>
-                             {isCorrect ? (
-                                <div className="text-center space-y-1">
-                                    <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
-                                    {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
-                                </div>
-                            ) : (
-                                <div className="text-center space-y-2">
-                                    <CardTitle className="font-headline text-4xl text-primary">{wordData.word}</CardTitle>
-                                    {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
-                                    <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
-                                        <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="rounded-lg border bg-muted/50 p-4">
-                                <Button onClick={handleContinue} className="w-full">
-                                    Continue <ChevronsRight className="ml-2 h-5 w-5" />
-                                </Button>
+                    ) : (
+                        <div className="text-center space-y-2">
+                            <CardTitle className="font-headline text-4xl text-primary">{wordData.word}</CardTitle>
+                            {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
+                            <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
+                                <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
                             </div>
-                        </>
+                        </div>
                     )}
+
+                    <div className="rounded-lg border bg-muted/50 p-4">
+                        <Button onClick={handleContinue} className="w-full">
+                            Continue <ChevronsRight className="ml-2 h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
             )}
         </CardContent>

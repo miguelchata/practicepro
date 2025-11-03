@@ -24,36 +24,31 @@ import { ChevronsRight } from 'lucide-react';
 
 type FlashcardProps = {
     wordData: VocabularyItem;
-    onNext: (quality: number) => number; // Returns the new accuracy
-    onAdvance: () => void; // Function to advance to the next card
+    onAdvance: (quality: number) => void; // Function to advance to the next card
 }
 
-export function Flashcard({ wordData, onNext, onAdvance }: FlashcardProps) {
+export function Flashcard({ wordData, onAdvance }: FlashcardProps) {
   const [showWord, setShowWord] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
-  const [feedbackResult, setFeedbackResult] = useState<{ quality: number, newAccuracy: number } | null>(null);
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
 
   const handleShowAnswer = () => {
     setShowWord(true);
   }
 
   const handleFeedback = (quality: number) => {
-    const newAccuracy = onNext(quality);
-    setFeedbackResult({ quality, newAccuracy });
-  }
-
-  const handleContinue = () => {
-      setShowWord(false);
-      setShowExamples(false);
-      setFeedbackResult(null);
-      onAdvance();
+    setFeedbackGiven(true);
+    // Automatically advance after a short delay
+    setTimeout(() => {
+        onAdvance(quality);
+    }, 800);
   }
 
   useEffect(() => {
     // Reset state when wordData changes
     setShowWord(false);
     setShowExamples(false);
-    setFeedbackResult(null);
+    setFeedbackGiven(false);
   }, [wordData]);
   
   const handleShowExamples = () => {
@@ -120,35 +115,23 @@ export function Flashcard({ wordData, onNext, onAdvance }: FlashcardProps) {
                 <div className="text-center">
                     <Button onClick={handleShowAnswer}>Show Answer</Button>
                 </div>
-            ) : feedbackResult ? (
-                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4 text-center">
-                    <div>
-                        <p className="font-semibold">New Accuracy Score</p>
-                        <p className="font-mono text-2xl font-bold text-primary">
-                            {Math.round(feedbackResult.newAccuracy * 100)}%
-                        </p>
-                    </div>
-                     <Button onClick={handleContinue} className="w-full">
-                        Continue <ChevronsRight className="ml-2 h-5 w-5" />
-                    </Button>
-                </div>
             ) : (
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
                     <p className="text-center font-semibold">How well did you remember it?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <Button variant="destructive" className="h-auto" onClick={() => handleFeedback(1)}>
+                        <Button variant="destructive" className="h-auto" onClick={() => handleFeedback(1)} disabled={feedbackGiven}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">NO</span>
                                 <span className="text-xs font-normal">Repeat</span>
                             </div>
                         </Button>
-                            <Button variant="outline" className="h-auto" onClick={() => handleFeedback(3)}>
+                            <Button variant="outline" className="h-auto" onClick={() => handleFeedback(3)} disabled={feedbackGiven}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">Sort of</span>
                                 <span className="text-xs font-normal">Keep studying</span>
                             </div>
                         </Button>
-                            <Button variant="default" className="h-auto" onClick={() => handleFeedback(5)}>
+                            <Button variant="default" className="h-auto" onClick={() => handleFeedback(5)} disabled={feedbackGiven}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">YES</span>
                                 <span className="text-xs font-normal">I've learned</span>

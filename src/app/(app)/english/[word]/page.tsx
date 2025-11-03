@@ -116,9 +116,8 @@ export default function WordDetailPage() {
             {showExamples && (
                 <>
                     <Separator/>
-                    <div>
-                        <h4 className="font-semibold text-lg mb-2">Examples</h4>
-                        <Carousel className="w-full">
+                    <div className="relative">
+                        <Carousel className="w-full px-12">
                             <CarouselContent>
                                 {wordData.examples.map((example, index) => (
                                 <CarouselItem key={index}>
@@ -130,8 +129,8 @@ export default function WordDetailPage() {
                                 </CarouselItem>
                                 ))}
                             </CarouselContent>
-                            <CarouselPrevious className="hidden sm:flex" />
-                            <CarouselNext className="hidden sm:flex" />
+                            <CarouselPrevious />
+                            <CarouselNext />
                         </Carousel>
                     </div>
                 </>

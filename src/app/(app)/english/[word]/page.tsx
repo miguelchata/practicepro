@@ -131,8 +131,8 @@ export default function WordDetailPage() {
                                 </CarouselItem>
                                 ))}
                             </CarouselContent>
-                            <CarouselPrevious className="absolute -left-2 top-1/2 -translate-y-1/2" />
-                            <CarouselNext className="absolute -right-2 top-1/2 -translate-y-1/2" />
+                            <CarouselPrevious className="absolute left-0 top-full mt-4" />
+                            <CarouselNext className="absolute right-0 top-full mt-4" />
                         </Carousel>
                     </div>
                 </>
@@ -155,9 +155,24 @@ export default function WordDetailPage() {
                     <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
                         <p className="text-center font-semibold">Did you remember it right?</p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <Button variant="destructive">NO: Repeat</Button>
-                            <Button variant="outline">Sort of: Keep studying</Button>
-                            <Button variant="default">YES: I've learned</Button>
+                            <Button variant="destructive" className="h-auto">
+                                <div className="flex flex-col items-center p-2">
+                                    <span className="font-bold">NO</span>
+                                    <span className="text-xs font-normal">Repeat</span>
+                                </div>
+                            </Button>
+                             <Button variant="outline" className="h-auto">
+                                <div className="flex flex-col items-center p-2">
+                                    <span className="font-bold">Sort of</span>
+                                    <span className="text-xs font-normal">Keep studying</span>
+                                </div>
+                            </Button>
+                             <Button variant="default" className="h-auto">
+                                <div className="flex flex-col items-center p-2">
+                                    <span className="font-bold">YES</span>
+                                    <span className="text-xs font-normal">I've learned</span>
+                                </div>
+                            </Button>
                         </div>
                     </div>
                 )}

@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { MoreVertical, PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreVertical, PlusCircle, Edit, Trash2, Eye, Timer, ListChecks } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -50,22 +50,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Target } from 'lucide-react';
 
 const formatTotalHours = (hours: number) => {
-    if (hours === undefined || hours === null) return '0h';
-    const totalSeconds = hours * 3600;
+    if (hours === undefined || hours === null) return '0s';
+    const totalSeconds = Math.floor(hours * 3600);
 
     if (totalSeconds < 60) {
-        return `${Math.floor(totalSeconds)}s`;
+        return `${totalSeconds}s`;
     }
     
     const totalMinutes = Math.floor(totalSeconds / 60);
     if (totalMinutes < 60) {
-        const seconds = Math.floor(totalSeconds % 60);
+        const seconds = totalSeconds % 60;
         return `${totalMinutes}m ${seconds > 0 ? `${seconds}s` : ''}`.trim();
     }
     
-    const totalHours = Math.floor(totalMinutes / 60);
+    const h = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    return `${totalHours}h ${minutes > 0 ? `${minutes}m` : ''}`.trim();
+    return `${h}h ${minutes > 0 ? `${minutes}m` : ''}`.trim();
 }
 
 
@@ -218,14 +218,16 @@ export default function SkillsPage() {
                             </AlertDialog>
                         </CardHeader>
                         <CardContent className="flex-grow">
-                            <div className="space-y-2">
-                            <p className="text-sm font-medium">
-                                Total Time: {formatTotalHours(skill.totalHours)}
-                            </p>
-                            <Progress value={(skill.totalHours / 250) * 100} />
-                            <p className="text-sm font-medium pt-2">
-                                Active Goals: {allGoals(skill).length}
-                            </p>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                <Timer className="h-4 w-4" />
+                                <span>{formatTotalHours(skill.totalHours)}</span>
+                              </div>
+                              <Progress value={(skill.totalHours / 250) * 100} />
+                              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground pt-1">
+                                <ListChecks className="h-4 w-4" />
+                                <span>{allGoals(skill).length} Active Goals</span>
+                              </div>
                             </div>
                         </CardContent>
                       </Card>

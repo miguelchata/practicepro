@@ -11,9 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { StopCircle, Star, Target, Zap } from 'lucide-react';
+import { StopCircle, Play, Pause, Zap, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+
+type TimerStatus = 'idle' | 'running' | 'paused';
 
 function ActiveSession() {
   const searchParams = useSearchParams();
@@ -42,15 +44,16 @@ function ActiveSession() {
     }
   };
   
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState<number | null>(null);
   const [time, setTime] = useState(getInitialTime());
   const [sessionEnded, setSessionEnded] = useState(false);
+  const [timerStatus, setTimerStatus] = useState<TimerStatus>('idle');
   
   const isCountdown = sessionType === 'pomodoro' || sessionType === 'timed';
 
 
   useEffect(() => {
-    if (sessionEnded) return;
+    if (timerStatus !== 'running' || sessionEnded) return;
 
     const timer = setInterval(() => {
       if (isCountdown) {
@@ -58,6 +61,7 @@ function ActiveSession() {
           if (prevTime <= 1) {
             clearInterval(timer);
             setSessionEnded(true);
+            setTimerStatus('idle');
             toast({
               title: 'Session Complete!',
               description: `Great work on your ${skillName} practice.`,
@@ -73,7 +77,18 @@ function ActiveSession() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [sessionEnded, isCountdown, skillName, toast]);
+  }, [sessionEnded, isCountdown, skillName, toast, timerStatus]);
+
+  const handleStartPause = () => {
+    if (timerStatus === 'running') {
+      setTimerStatus('paused');
+    } else {
+      if (timerStatus === 'idle') {
+        setStartTime(Date.now());
+      }
+      setTimerStatus('running');
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -90,7 +105,7 @@ function ActiveSession() {
       skillId: skillId || '',
       skillName: skillName,
       duration: String(durationInSeconds),
-      startTime: String(startTime),
+      startTime: String(startTime || Date.now()),
     });
 
     if (goal) {
@@ -125,13 +140,23 @@ function ActiveSession() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex justify-center gap-4">
+              {timerStatus !== 'running' && (
+                <Button size="lg" onClick={handleStartPause} className="w-full" variant="outline">
+                    <Play className="mr-2" /> Start
+                </Button>
+              )}
+               {timerStatus === 'running' && (
+                <Button size="lg" onClick={handleStartPause} className="w-full" variant="outline">
+                    <Pause className="mr-2" /> Pause
+                </Button>
+              )}
               <Button
                 variant="destructive"
                 size="lg"
                 onClick={handleEndSession}
-                className="w-full"
+                disabled={timerStatus === 'idle'}
               >
-                <StopCircle className="mr-2" /> End & Journal
+                <StopCircle className="mr-2" /> End
               </Button>
             </div>
           </CardContent>

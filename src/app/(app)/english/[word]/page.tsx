@@ -85,7 +85,7 @@ export default function WordDetailPage() {
     )
   }
   
-  const headerTitle = showWord ? wordData.word.charAt(0).toUpperCase() + wordData.word.slice(1) : "Guess the Word"
+  const headerTitle = "Guess the Word";
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -94,11 +94,7 @@ export default function WordDetailPage() {
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <div className="flex items-baseline justify-between">
-                {showWord ? (
-                    <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
-                ) : (
-                    <div className="h-10"></div> // Placeholder for spacing
-                )}
+                 <div className="h-10"></div> 
                 <p className="text-sm font-medium text-muted-foreground">{wordData.type}</p>
             </div>
           </CardHeader>
@@ -136,6 +132,13 @@ export default function WordDetailPage() {
                     </div>
                 </>
             )}
+
+            {showWord && (
+                <div className="text-center pt-4">
+                    <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
+                </div>
+            )}
+
 
              <div className="flex items-center justify-between pt-4">
                 {!showWord ? (

@@ -21,6 +21,7 @@ import {
 import { BlurredWord } from '@/components/english/blurred-word';
 import { Separator } from '../ui/separator';
 import type { VocabularyItem } from '@/lib/types';
+import { Badge } from '../ui/badge';
 
 type WritingCardProps = {
     wordData: VocabularyItem;
@@ -65,15 +66,18 @@ export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
   return (
     <Card className="w-full max-w-2xl">
         <CardHeader>
-            <p className="text-sm font-medium text-muted-foreground">Writing Practice</p>
+            <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-muted-foreground">Writing Practice</p>
+                 {wordData.type && <Badge variant="outline">{wordData.type}</Badge>}
+            </div>
         </CardHeader>
         <CardContent className="space-y-6">
             <div>
                 <p className="text-muted-foreground text-lg">{wordData.definition}</p>
             </div>
             
-            {wordData.examples.length > 0 && <Separator/>}
-            {wordData.examples.length > 0 && (
+            {wordData.examples && wordData.examples.length > 0 && <Separator/>}
+            {wordData.examples && wordData.examples.length > 0 && (
               <div className="relative pt-6">
                   <Carousel
                       opts={{
@@ -86,7 +90,7 @@ export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
                           <CarouselItem key={index}>
                               <div className="p-1">
                                 <p className="text-center text-lg italic text-muted-foreground">
-                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={feedbackState === 'result' && isCorrect} />&quot;
+                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={feedbackState === 'result' && !isCorrect} />&quot;
                                 </p>
                               </div>
                           </CarouselItem>

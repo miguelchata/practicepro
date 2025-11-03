@@ -37,7 +37,7 @@ const formSchema = z.object({
   definition: z.string().min(3, 'Definition is required.'),
   ipa: z.string().optional(),
   examples: z.string().optional(),
-  tags: z.string().optional(),
+  type: z.string().optional(),
 });
 
 const vocabObjectSchema = z.object({
@@ -45,7 +45,7 @@ const vocabObjectSchema = z.object({
   definition: z.string().min(3, 'Definition is required.'),
   ipa: z.string().optional(),
   examples: z.array(z.string()).optional(),
-  tags: z.array(z.string()).optional(),
+  type: z.string().optional(),
 });
 
 const jsonSchema = z.union([
@@ -69,7 +69,7 @@ export default function AddWordPage() {
       definition: '',
       ipa: '',
       examples: '',
-      tags: '',
+      type: '',
     },
   });
 
@@ -79,7 +79,7 @@ export default function AddWordPage() {
       definition: values.definition,
       ipa: values.ipa,
       examples: values.examples?.split('\n').filter(ex => ex.trim()) || [],
-      tags: values.tags?.split(',').map(tag => tag.trim()).filter(tag => tag) || [],
+      type: values.type || '',
     });
     router.push('/english');
   };
@@ -107,7 +107,7 @@ export default function AddWordPage() {
             definition: item.definition,
             ipa: item.ipa,
             examples: item.examples || [],
-            tags: item.tags || []
+            type: item.type || ''
         }));
 
         await addVocabularyItem(itemsToSave);
@@ -201,12 +201,12 @@ export default function AddWordPage() {
                       />
                       <FormField
                           control={form.control}
-                          name="tags"
+                          name="type"
                           render={({ field }) => (
                               <FormItem>
-                              <FormLabel>Tags (comma-separated)</FormLabel>
+                              <FormLabel>Type</FormLabel>
                               <FormControl>
-                                  <Input placeholder="e.g., adjective, common, new" {...field} />
+                                  <Input placeholder="e.g., adjective, verb, noun" {...field} />
                               </FormControl>
                               <FormMessage />
                               </FormItem>
@@ -226,7 +226,7 @@ export default function AddWordPage() {
                           <Label htmlFor="json-input">Vocabulary JSON (Single Object or Array)</Label>
                           <Textarea
                               id="json-input"
-                              placeholder={`{\n  "word": "Ephemeral",\n  "definition": "Lasting for a very short time.",\n  "ipa": "/ɪˈfɛmərəl/",\n  "examples": ["The beauty of the cherry blossoms is ephemeral."],\n  "tags": ["adjective"]\n}`}
+                              placeholder={`{\n  "word": "Ephemeral",\n  "definition": "Lasting for a very short time.",\n  "ipa": "/ɪˈfɛmərəl/",\n  "examples": ["The beauty of the cherry blossoms is ephemeral."],\n  "type": "adjective"\n}`}
                               value={jsonInput}
                               onChange={(e) => setJsonInput(e.target.value)}
                               rows={10}

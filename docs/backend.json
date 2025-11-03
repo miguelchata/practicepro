@@ -254,7 +254,7 @@
         "definition": { "type": "string", "description": "A short definition or gloss of the word." },
         "ipa": { "type": "string", "description": "The International Phonetic Alphabet notation." },
         "examples": { "type": "array", "items": { "type": "string" }, "description": "Example sentences using the word." },
-        "tags": { "type": "array", "items": { "type": "string" }, "description": "Topics or lists this word belongs to." },
+        "type": { "type": "string", "description": "The type of word (e.g., verb, noun, adjective)." },
         "accuracy": { "type": "number", "description": "The current Exponentially Weighted Moving Average (EWMA) of practice accuracy (0.0 to 1.0)." },
         "alpha": { "type": "number", "description": "The smoothing factor for the EWMA calculation." },
         "repetitions": { "type": "number", "description": "The total number of times this word has been practiced." },

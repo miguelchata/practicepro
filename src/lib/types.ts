@@ -115,7 +115,7 @@ export type VocabularyItem = {
   word: string;
   definition: string;
   examples: string[];
-  tags: string[];
+  type: string;
   accuracy: number;
   alpha: number;
   repetitions: number;

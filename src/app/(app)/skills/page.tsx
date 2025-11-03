@@ -217,17 +217,19 @@ export default function SkillsPage() {
                               </AlertDialogContent>
                             </AlertDialog>
                         </CardHeader>
-                        <CardContent className="flex-grow">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                                <Timer className="h-4 w-4" />
-                                <span>{formatTotalHours(skill.totalHours)}</span>
-                              </div>
-                              <Progress value={(skill.totalHours / 250) * 100} />
-                              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground pt-1">
-                                <ListChecks className="h-4 w-4" />
-                                <span>{allGoals(skill).length} Active Goals</span>
-                              </div>
+                        <CardContent className="flex-grow flex flex-col justify-end">
+                            <div className="space-y-2">
+                                <Progress value={(skill.totalHours / 250) * 100} />
+                                <div className="flex items-baseline justify-between">
+                                    <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                                        <Timer className="h-5 w-5 text-muted-foreground" />
+                                        <span>{formatTotalHours(skill.totalHours)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                        <ListChecks className="h-4 w-4" />
+                                        <span>{allGoals(skill).length} Goals</span>
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                       </Card>

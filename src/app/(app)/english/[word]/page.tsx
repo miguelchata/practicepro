@@ -137,7 +137,7 @@ export default function WordDetailPage() {
 
              <div className="flex items-center justify-between pt-4">
                 {!showWord ? (
-                    <Button onClick={() => setShowWord(true)}>Show Word</Button>
+                    <Button onClick={() => setShowWord(true)}>Show Answer</Button>
                 ) : (
                     <div></div> // Placeholder
                 )}

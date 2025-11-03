@@ -49,6 +49,26 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Target } from 'lucide-react';
 
+const formatTotalHours = (hours: number) => {
+    if (hours === undefined || hours === null) return '0h';
+    const totalSeconds = hours * 3600;
+
+    if (totalSeconds < 60) {
+        return `${Math.floor(totalSeconds)}s`;
+    }
+    
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    if (totalMinutes < 60) {
+        const seconds = Math.floor(totalSeconds % 60);
+        return `${totalMinutes}m ${seconds > 0 ? `${seconds}s` : ''}`.trim();
+    }
+    
+    const totalHours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${totalHours}h ${minutes > 0 ? `${minutes}m` : ''}`.trim();
+}
+
+
 export default function SkillsPage() {
   const { data: skills, loading } = useSkills();
   const addSkill = useAddSkill();
@@ -200,7 +220,7 @@ export default function SkillsPage() {
                         <CardContent className="flex-grow">
                             <div className="space-y-2">
                             <p className="text-sm font-medium">
-                                Total Time: {skill.totalHours} hours
+                                Total Time: {formatTotalHours(skill.totalHours)}
                             </p>
                             <Progress value={(skill.totalHours / 250) * 100} />
                             <p className="text-sm font-medium pt-2">

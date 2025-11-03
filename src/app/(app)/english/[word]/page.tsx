@@ -69,6 +69,7 @@ export default function WordDetailPage() {
   const word = params.word as string
   const wordData = vocabularyList.find(item => item.word === word)
   const [showWord, setShowWord] = useState(false)
+  const [showExamples, setShowExamples] = useState(false)
 
   if (!wordData) {
     return (
@@ -105,23 +106,35 @@ export default function WordDetailPage() {
             <div>
                 <p className="text-muted-foreground text-lg">{wordData.definition}</p>
             </div>
-            <Separator/>
-            <div>
-                <h4 className="font-semibold text-lg mb-2">Examples</h4>
-                <Carousel className="w-full">
-                    <CarouselContent>
-                        {wordData.examples.map((example, index) => (
-                        <CarouselItem key={index}>
-                            <div className="p-1">
-                               <p className="text-center text-lg italic text-muted-foreground">&quot;{example}&quot;</p>
-                            </div>
-                        </CarouselItem>
-                        ))}
-                    </CarouselContent>
-                    <CarouselPrevious className="hidden sm:flex" />
-                    <CarouselNext className="hidden sm:flex" />
-                </Carousel>
-            </div>
+            
+            {!showExamples && (
+                <div className="text-center pt-4">
+                    <Button variant="outline" onClick={() => setShowExamples(true)}>Show Examples</Button>
+                </div>
+            )}
+
+            {showExamples && (
+                <>
+                    <Separator/>
+                    <div>
+                        <h4 className="font-semibold text-lg mb-2">Examples</h4>
+                        <Carousel className="w-full">
+                            <CarouselContent>
+                                {wordData.examples.map((example, index) => (
+                                <CarouselItem key={index}>
+                                    <div className="p-1">
+                                    <p className="text-center text-lg italic text-muted-foreground">&quot;{example}&quot;</p>
+                                    </div>
+                                </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="hidden sm:flex" />
+                            <CarouselNext className="hidden sm:flex" />
+                        </Carousel>
+                    </div>
+                </>
+            )}
+
              <div className="flex items-center justify-between pt-4">
                 {!showWord ? (
                     <Button onClick={() => setShowWord(true)}>Show Word</Button>

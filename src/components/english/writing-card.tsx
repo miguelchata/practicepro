@@ -34,6 +34,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitted) return;
     const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
     setIsCorrect(correct);
     setIsSubmitted(true);
@@ -94,12 +95,16 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                             <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
                         </div>
                     )}
-                    <Button onClick={handleNext} className="w-full">
-                        Next <ChevronsRight className="ml-2 h-5 w-5" />
-                    </Button>
+                     <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
+                        <p className="text-center font-semibold">{isCorrect ? 'Excellent!' : 'Review this word'}</p>
+                        <Button onClick={handleNext} className="w-full">
+                            Next <ChevronsRight className="ml-2 h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
             )}
         </CardContent>
     </Card>
   );
 }
+

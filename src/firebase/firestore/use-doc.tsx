@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { onSnapshot, doc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import type { Project, Skill } from '@/lib/types';
+import type { Project, Skill, VocabularyItem } from '@/lib/types';
 
 type DocData<T> = {
   loading: boolean;
@@ -59,4 +59,10 @@ export function useProject(projectId: string | null): DocData<Project> {
 export function useSkill(skillId: string | null): DocData<Skill> {
     const docPath = skillId ? `skills/${skillId}` : null;
     return useDoc<Skill>(docPath);
+}
+
+// Hook to get a single vocabulary item by ID
+export function useVocabularyItem(itemId: string | null): DocData<VocabularyItem> {
+    const docPath = itemId ? `vocabulary/${itemId}` : null;
+    return useDoc<VocabularyItem>(docPath);
 }

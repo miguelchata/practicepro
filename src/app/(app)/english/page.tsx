@@ -25,25 +25,30 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useState } from 'react';
-
-const vocabularyList = [
-    { word: 'ephemeral', type: 'Adjective', definition: 'Lasting for a very short time.', learned: true },
-    { word: 'ubiquitous', type: 'Adjective', definition: 'Present, appearing, or found everywhere.', learned: true },
-    { word: 'mellifluous', type: 'Adjective', definition: 'A sound that is sweet and musical; pleasant to hear.', learned: false },
-    { word: 'pulchritudinous', type: 'Adjective', definition: 'Having great physical beauty.', learned: false },
-];
-
-const learnedCount = vocabularyList.filter(item => item.learned).length;
-const totalCount = vocabularyList.length;
-const progressPercentage = (learnedCount / totalCount) * 100;
-
+import { useMemo, useState } from 'react';
+import { useVocabulary } from '@/firebase/firestore/use-collection';
+import { PlusCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EnglishPage() {
+  const { data: vocabularyList, loading } = useVocabulary();
   const [practiceAmount, setPracticeAmount] = useState(10);
   const [exerciseType, setExerciseType] = useState('both');
   
   const reviewLink = `/english/practice?amount=${practiceAmount}&type=${exerciseType}`;
+
+  const { learnedCount, totalCount, progressPercentage } = useMemo(() => {
+    const total = vocabularyList.length;
+    if (total === 0) {
+      return { learnedCount: 0, totalCount: 0, progressPercentage: 0 };
+    }
+    const learned = vocabularyList.filter(item => item.status === 'mastered').length;
+    return {
+      learnedCount: learned,
+      totalCount: total,
+      progressPercentage: (learned / total) * 100,
+    };
+  }, [vocabularyList]);
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -51,84 +56,110 @@ export default function EnglishPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <Card>
           <CardHeader>
-            <CardTitle>My Vocabulary</CardTitle>
-            <CardDescription>Your personal word collection.</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>My Vocabulary</CardTitle>
+                <CardDescription>Your personal word collection.</CardDescription>
+              </div>
+              <Button asChild>
+                <Link href="/english/add">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Add Word
+                </Link>
+              </Button>
+            </div>
              <div className="pt-4 space-y-2">
                 <Progress value={progressPercentage} />
                 <p className="text-sm text-muted-foreground">{learnedCount} of {totalCount} words learned</p>
             </div>
           </CardHeader>
           <CardContent>
-            <h3 className="text-lg font-semibold mb-4">Practice List</h3>
-            <div className="space-y-4">
-                {vocabularyList.map((item, index) => (
-                    <Link href={`/english/${item.word.toLowerCase()}`} key={index} className="block hover:bg-muted/50 rounded-lg p-4 -m-4">
-                        <div>
-                            <div className="grid gap-2">
-                                <div className="flex justify-between items-center">
-                                    <p className="font-semibold">{item.word.charAt(0).toUpperCase() + item.word.slice(1)}</p>
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {item.learned ? '100%' : '0%'}
-                                    </span>
+            {loading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+                </div>
+            ) : vocabularyList.length > 0 ? (
+              <>
+                <h3 className="text-lg font-semibold mb-4">Practice List</h3>
+                <div className="space-y-4">
+                    {vocabularyList.map((item, index) => (
+                        <Link href={`/english/${item.word.toLowerCase()}`} key={item.id} className="block hover:bg-muted/50 rounded-lg p-4 -m-4">
+                            <div>
+                                <div className="grid gap-2">
+                                    <div className="flex justify-between items-center">
+                                        <p className="font-semibold">{item.word.charAt(0).toUpperCase() + item.word.slice(1)}</p>
+                                        <span className="text-sm font-medium text-muted-foreground">
+                                            {item.status === 'mastered' ? '100%' : `${Math.round(item.accuracy * 100)}%`}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{item.definition}</p>
                                 </div>
-                                <p className="text-sm text-muted-foreground">{item.definition}</p>
+                                {index < vocabularyList.length - 1 && <Separator className="mt-4" />}
                             </div>
-                            {index < vocabularyList.length - 1 && <Separator className="mt-4" />}
-                        </div>
-                    </Link>
-                ))}
-            </div>
+                        </Link>
+                    ))}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No words in your vocabulary yet.</p>
+                 <Button asChild className="mt-4">
+                  <Link href="/english/add">Add your first word</Link>
+                </Button>
+              </div>
+            )}
           </CardContent>
            <CardFooter>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="w-full">
-                    Start Vocabulary Review
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Start Vocabulary Review</DialogTitle>
-                  <DialogDescription>
-                    Configure your practice session.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-6 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="amount">Amount of words</Label>
-                    <Input id="amount" type="number" value={practiceAmount} onChange={(e) => setPracticeAmount(Number(e.target.value))} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Exercise Type</Label>
-                    <RadioGroup value={exerciseType} onValueChange={setExerciseType} className="flex gap-4">
-                        <div>
-                            <RadioGroupItem value="both" id="r1" className="peer sr-only" />
-                            <Label htmlFor="r1" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                Both
-                            </Label>
-                        </div>
-                        <div>
-                            <RadioGroupItem value="flashcards" id="r2" className="peer sr-only" />
-                            <Label htmlFor="r2" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                Flashcards
-                            </Label>
-                        </div>
-                        <div>
-                            <RadioGroupItem value="writing" id="r3" className="peer sr-only" />
-                            <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                Writing
-                            </Label>
-                        </div>
-                    </RadioGroup>
-                  </div>
-                </div>
-                <Button asChild className="w-full">
-                    <Link href={reviewLink}>
-                        Practice {practiceAmount} Words
-                    </Link>
-                </Button>
-              </DialogContent>
-            </Dialog>
+            {vocabularyList.length > 0 && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="w-full">
+                        Start Vocabulary Review
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Start Vocabulary Review</DialogTitle>
+                      <DialogDescription>
+                        Configure your practice session.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-6 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="amount">Amount of words</Label>
+                        <Input id="amount" type="number" value={practiceAmount} onChange={(e) => setPracticeAmount(Number(e.target.value))} max={totalCount}/>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Exercise Type</Label>
+                        <RadioGroup value={exerciseType} onValueChange={setExerciseType} className="flex gap-4">
+                            <div>
+                                <RadioGroupItem value="both" id="r1" className="peer sr-only" />
+                                <Label htmlFor="r1" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    Both
+                                </Label>
+                            </div>
+                            <div>
+                                <RadioGroupItem value="flashcards" id="r2" className="peer sr-only" />
+                                <Label htmlFor="r2" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    Flashcards
+                                </Label>
+                            </div>
+                            <div>
+                                <RadioGroupItem value="writing" id="r3" className="peer sr-only" />
+                                <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                                    Writing
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                      </div>
+                    </div>
+                    <Button asChild className="w-full">
+                        <Link href={reviewLink}>
+                            Practice {Math.min(practiceAmount, totalCount)} Words
+                        </Link>
+                    </Button>
+                  </DialogContent>
+                </Dialog>
+            )}
            </CardFooter>
         </Card>
       </main>

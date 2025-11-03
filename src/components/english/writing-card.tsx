@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardTitle } from '../ui/card';
-import { cn } from '@/lib/utils';
 import { ChevronsRight } from 'lucide-react';
 import {
   Carousel,
@@ -21,19 +20,11 @@ import {
 } from '@/components/ui/carousel';
 import { BlurredWord } from '@/components/english/blurred-word';
 import { Separator } from '../ui/separator';
-
-type WordData = {
-    word: string;
-    type: string;
-    definition: string;
-    examples: string[];
-    learned: boolean;
-    ipa: string;
-};
+import type { VocabularyItem } from '@/lib/types';
 
 type WritingCardProps = {
-    wordData: WordData;
-    onNext: (isCorrect: boolean) => void;
+    wordData: VocabularyItem;
+    onNext: (isCorrect: boolean, quality?: number) => void;
 }
 
 export function WritingCard({ wordData, onNext }: WritingCardProps) {
@@ -69,47 +60,49 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
 
 
   const handleNext = () => {
-    const wasCorrect = isCorrect;
+    const quality = isCorrect ? 5 : 1;
+    onNext(isCorrect, quality);
     setUserInput('');
     setIsSubmitted(false);
     setIsCorrect(false);
     setFeedbackState('idle');
-    onNext(wasCorrect);
   }
 
   return (
     <Card className="w-full max-w-2xl">
         <CardHeader>
-            <p className="text-sm font-medium text-muted-foreground">{wordData.type}</p>
+            <p className="text-sm font-medium text-muted-foreground">Writing Practice</p>
         </CardHeader>
         <CardContent className="space-y-6">
             <div>
                 <p className="text-muted-foreground text-lg">{wordData.definition}</p>
             </div>
             
-            <Separator/>
-            <div className="relative pt-6">
-                <Carousel
-                    opts={{
-                        align: "start",
-                    }}
-                    className="w-full px-4"
-                >
-                    <CarouselContent>
-                        {wordData.examples.map((example, index) => (
-                        <CarouselItem key={index}>
-                            <div className="p-1">
-                            <p className="text-center text-lg italic text-muted-foreground">
-                                &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
-                            </p>
-                            </div>
-                        </CarouselItem>
-                        ))}
-                    </CarouselContent>
-                    <CarouselPrevious />
-                    <CarouselNext />
-                </Carousel>
-            </div>
+            {wordData.examples.length > 0 && <Separator/>}
+            {wordData.examples.length > 0 && (
+              <div className="relative pt-6">
+                  <Carousel
+                      opts={{
+                          align: "start",
+                      }}
+                      className="w-full px-4"
+                  >
+                      <CarouselContent>
+                          {wordData.examples.map((example, index) => (
+                          <CarouselItem key={index}>
+                              <div className="p-1">
+                                <p className="text-center text-lg italic text-muted-foreground">
+                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
+                                </p>
+                              </div>
+                          </CarouselItem>
+                          ))}
+                      </CarouselContent>
+                      <CarouselPrevious />
+                      <CarouselNext />
+                  </Carousel>
+              </div>
+            )}
             
             {!isSubmitted ? (
                  <form onSubmit={handleSubmit} className="pt-4 space-y-4">
@@ -144,7 +137,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                     ) : feedbackState === 'result' && !isCorrect ? (
                          <div className="text-center pt-4 space-y-2">
                             <CardTitle className="font-headline text-4xl text-green-600">{wordData.word}</CardTitle>
-                            <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
+                             {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                              <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
                                 <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
                             </div>
@@ -152,7 +145,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                     ) : (
                         <div className="text-center pt-4 space-y-1">
                              <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
-                            <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
+                             {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                         </div>
                     )}
                      <div className="rounded-lg border bg-muted/50 p-4 space-y-4">

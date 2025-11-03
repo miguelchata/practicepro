@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { onSnapshot, query, collection, where, type Query, type DocumentData, type Firestore, collectionGroup } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
-import type { Project, UserStory, Skill, Task, PracticeSession } from '@/lib/types';
+import type { Project, UserStory, Skill, Task, PracticeSession, VocabularyItem } from '@/lib/types';
 
 type CollectionData<T> = {
   loading: boolean;
@@ -168,4 +168,22 @@ export function usePracticeSessions(): CollectionData<PracticeSession> {
         loading: userLoading || sessions.loading,
         data: enrichedSessions,
     };
+}
+
+// Hook to get vocabulary for the current user
+export function useVocabulary(): CollectionData<VocabularyItem> {
+  const firestore = useFirestore();
+  const { data: user, loading: userLoading } = useUser();
+
+  const vocabularyQuery = useMemo(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, 'vocabulary'), where('userId', '==', user.uid));
+  }, [firestore, user?.uid]);
+
+  const vocabulary = useCollection<VocabularyItem>(vocabularyQuery);
+  
+  return {
+    ...vocabulary,
+    loading: userLoading || vocabulary.loading,
+  };
 }

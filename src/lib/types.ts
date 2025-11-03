@@ -108,3 +108,22 @@ export type Project = {
   tasks?: Task[];
   ticketPrefix?: string;
 };
+
+export type VocabularyItem = {
+  id: string;
+  userId: string;
+  word: string;
+  definition: string;
+  examples: string[];
+  tags: string[];
+  accuracy: number;
+  alpha: number;
+  repetitions: number;
+  lastQuality: number;
+  lastReviewedAt: string | null;
+  status: 'learning' | 'mastered';
+  nextReviewAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  ipa?: string;
+};

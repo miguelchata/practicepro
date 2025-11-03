@@ -42,8 +42,13 @@ export default function EnglishPage() {
             <div className="space-y-4">
                 {vocabularyList.map((item, index) => (
                     <div key={index}>
-                        <div className="grid gap-1">
-                            <p className="font-semibold">{item.word}</p>
+                        <div className="grid gap-2">
+                            <div className="flex justify-between items-center">
+                                <p className="font-semibold">{item.word}</p>
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    {item.learned ? '100%' : '0%'}
+                                </span>
+                            </div>
                             <p className="text-sm text-muted-foreground">{item.definition}</p>
                         </div>
                         {index < vocabularyList.length - 1 && <Separator className="mt-4" />}

@@ -105,7 +105,7 @@ export default function AddWordPage() {
         const itemsToSave: NewVocabularyData[] = data.map(item => ({
             word: item.word,
             definition: item.definition,
-            ipa: item.ipa || '',
+            ipa: item.ipa,
             examples: item.examples || [],
             tags: item.tags || []
         }));
@@ -226,7 +226,7 @@ export default function AddWordPage() {
                           <Label htmlFor="json-input">Vocabulary JSON (Single Object or Array)</Label>
                           <Textarea
                               id="json-input"
-                              placeholder={`{\n  "word": "Ephemeral",\n  "definition": "Lasting for a very short time.",\n  "examples": ["The beauty of the cherry blossoms is ephemeral."],\n  "tags": ["adjective"]\n}`}
+                              placeholder={`{\n  "word": "Ephemeral",\n  "definition": "Lasting for a very short time.",\n  "ipa": "/ɪˈfɛmərəl/",\n  "examples": ["The beauty of the cherry blossoms is ephemeral."],\n  "tags": ["adjective"]\n}`}
                               value={jsonInput}
                               onChange={(e) => setJsonInput(e.target.value)}
                               rows={10}

@@ -25,11 +25,11 @@ import type { VocabularyItem } from '@/lib/types';
 type WritingCardProps = {
     wordData: VocabularyItem;
     onNext: (quality: number) => void;
+    onAdvance: () => void;
 }
 
-export function WritingCard({ wordData, onNext }: WritingCardProps) {
+export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
   const [userInput, setUserInput] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [feedbackState, setFeedbackState] = useState<'idle' | 'checking' | 'result'>('idle');
 
@@ -40,24 +40,25 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
     
     const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
     setIsCorrect(correct);
-    setIsSubmitted(true);
     setFeedbackState('checking');
     onNext(correct ? 5 : 1);
   };
 
   useEffect(() => {
-    if (feedbackState === 'checking' && isSubmitted) {
+    if (feedbackState === 'checking') {
         const timer = setTimeout(() => {
             setFeedbackState('result');
-        }, 800);
+        }, isCorrect ? 500 : 800);
         return () => clearTimeout(timer);
     }
-  }, [feedbackState, isSubmitted]);
+  }, [feedbackState, isCorrect]);
 
-  // This is the function to advance to the next card. It is passed down via `onNext`.
-  // The `quality` parameter is not used here, but it's part of the `onNext` signature.
   const handleContinue = () => {
-      onNext(isCorrect ? 5 : 1);
+    // Reset state for next card
+    setUserInput('');
+    setIsCorrect(false);
+    setFeedbackState('idle');
+    onAdvance();
   }
 
 
@@ -85,7 +86,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                           <CarouselItem key={index}>
                               <div className="p-1">
                                 <p className="text-center text-lg italic text-muted-foreground">
-                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
+                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={feedbackState === 'result' && isCorrect} />&quot;
                                 </p>
                               </div>
                           </CarouselItem>
@@ -97,7 +98,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
               </div>
             )}
             
-            {!isSubmitted ? (
+            {feedbackState === 'idle' ? (
                  <form onSubmit={handleSubmit} className="pt-4 space-y-4">
                     <div className="relative">
                         <Input 
@@ -105,7 +106,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                             onChange={(e) => setUserInput(e.target.value)}
                             placeholder="Type the word..."
                             className="h-12 text-center text-lg font-mono tracking-widest"
-                            disabled={isSubmitted}
+                            disabled={feedbackState !== 'idle'}
                             autoCapitalize="none"
                             autoCorrect="off"
                             spellCheck="false"
@@ -115,14 +116,9 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                 </form>
             ) : (
                 <div className="space-y-4 text-center pt-4">
-                    {feedbackState === 'checking' && !isCorrect && (
-                         <div className="relative rounded-md bg-destructive/10 p-4 text-destructive font-semibold">
-                            <p>Incorrect answer: keep trying!</p>
-                        </div>
-                    )}
-                    {feedbackState === 'checking' && isCorrect && (
-                         <div className="relative rounded-md bg-green-500/10 p-4 text-green-600 font-semibold">
-                            <p>Correct answer: nice one!</p>
+                    {feedbackState === 'checking' && (
+                         <div className={`relative rounded-md p-4 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
+                            <p>{isCorrect ? "Correct answer: nice one!" : "Incorrect answer: keep trying!"}</p>
                         </div>
                     )}
 
@@ -144,7 +140,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                             )}
 
                             <div className="rounded-lg border bg-muted/50 p-4">
-                                <Button onClick={() => onNext(isCorrect ? 5 : 1)} className="w-full">
+                                <Button onClick={handleContinue} className="w-full">
                                     Continue <ChevronsRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </div>

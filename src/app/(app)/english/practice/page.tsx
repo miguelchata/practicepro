@@ -32,6 +32,8 @@ type PracticeItem = {
     recentQualities?: number[];
 };
 
+const MAX_CARDS_PER_SESSION = 20;
+
 function PracticeSession() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -122,16 +124,17 @@ function PracticeSession() {
     
     updateVocabularyItem(item.id, updates);
     
-    const isCorrect = quality >= 5;
+    const isCorrect = quality >= 4;
     if (!isCorrect) {
-        const updatedFailedItem: PracticeItem = {
-            ...currentItem,
-            recentQualities: [...(currentItem.recentQualities || []), quality]
-        };
-        // Use a functional update to ensure we're working with the latest state
         setPracticeList(prev => {
-            const newList = [...prev, updatedFailedItem];
-            return newList;
+            if (prev.length < MAX_CARDS_PER_SESSION) {
+                const updatedFailedItem: PracticeItem = {
+                    ...currentItem,
+                    recentQualities: [...(currentItem.recentQualities || []), quality]
+                };
+                return [...prev, updatedFailedItem];
+            }
+            return prev;
         });
     }
     

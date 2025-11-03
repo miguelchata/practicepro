@@ -119,8 +119,10 @@ function PracticeSession() {
       } else {
           updates.status = 'learning';
           // A simple interval for learning phase
-          let nextIntervalDays = Math.pow(2, item.repetitions - 1);
-          if (quality < 3) nextIntervalDays = 1; // If failed, review next day.
+          let nextIntervalDays = 1;
+          if (quality >= 3) {
+            nextIntervalDays = Math.pow(2, Math.max(0, item.repetitions - 1));
+          }
           updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * oneDay).toISOString();
       }
       
@@ -137,7 +139,7 @@ function PracticeSession() {
         setPracticeList(prev => [...prev, updatedFailedItem]);
     }
 
-    if (currentIndex + 1 < practiceList.length) {
+    if (currentIndex + 1 < totalItems) {
       setCurrentIndex(prev => prev + 1);
     } else {
       setSessionFinished(true);
@@ -157,7 +159,7 @@ function PracticeSession() {
     return (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
             <h2 className="text-2xl font-bold font-headline mb-2">Session Complete!</h2>
-            <p className="text-muted-foreground mb-4">You completed {currentIndex} exercises. Keep up the great work!</p>
+            <p className="text-muted-foreground mb-4">You completed your review session. Keep up the great work!</p>
             <Button onClick={() => router.push('/english')}>
                 Back to Vocabulary
             </Button>
@@ -173,6 +175,15 @@ function PracticeSession() {
         </div>
       );
   }
+
+  // This function is now only responsible for advancing the session.
+  const advanceSession = () => {
+    if (currentIndex + 1 < practiceList.length) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      setSessionFinished(true);
+    }
+  };
 
   return (
     <>
@@ -205,7 +216,7 @@ function PracticeSession() {
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onNext={handleNext} />}
-        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onNext={handleNext} />}
+        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onNext={(isCorrect, quality) => { handleNext(isCorrect, quality); advanceSession(); }} />}
       </main>
     </>
   );

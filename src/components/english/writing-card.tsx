@@ -47,7 +47,19 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
     } else {
         setFeedbackState('checking_incorrect');
     }
+    
+    // Update DB immediately
+    const quality = correct ? 5 : 1;
+    onNext(correct, quality);
   };
+
+  const handleContinue = () => {
+    // onNext is already called, so this just resets the component state for the next card.
+    setUserInput('');
+    setIsSubmitted(false);
+    setIsCorrect(false);
+    setFeedbackState('idle');
+  }
 
   useEffect(() => {
     if (feedbackState === 'checking_incorrect' || feedbackState === 'checking_correct') {
@@ -56,17 +68,12 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
         }, 1000);
         return () => clearTimeout(timer);
     }
-  }, [feedbackState]);
+    // Check if the user has finished reviewing the result and wants to move on
+    if (feedbackState === 'idle' && isSubmitted) {
+        onNext(isCorrect);
+    }
+  }, [feedbackState, isSubmitted, isCorrect, onNext]);
 
-
-  const handleNext = () => {
-    const quality = isCorrect ? 5 : 1;
-    onNext(isCorrect, quality);
-    setUserInput('');
-    setIsSubmitted(false);
-    setIsCorrect(false);
-    setFeedbackState('idle');
-  }
 
   return (
     <Card className="w-full max-w-2xl">
@@ -149,7 +156,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                         </div>
                     )}
                      <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
-                        <Button onClick={handleNext} className="w-full">
+                        <Button onClick={handleContinue} className="w-full">
                             Continue <ChevronsRight className="ml-2 h-5 w-5" />
                         </Button>
                     </div>

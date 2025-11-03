@@ -97,10 +97,7 @@ export default function WordDetailPage() {
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <div className="flex items-baseline justify-between">
-                 <div className="h-10"></div> 
-                <p className="text-sm font-medium text-muted-foreground">{wordData.type}</p>
-            </div>
+            <p className="text-sm font-medium text-muted-foreground">{wordData.type}</p>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
@@ -116,8 +113,8 @@ export default function WordDetailPage() {
             {showExamples && (
                 <>
                     <Separator/>
-                    <div className="relative">
-                        <Carousel className="w-full px-12">
+                    <div className="relative pt-6">
+                        <Carousel className="w-full px-4">
                             <CarouselContent>
                                 {wordData.examples.map((example, index) => (
                                 <CarouselItem key={index}>

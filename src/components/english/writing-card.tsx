@@ -31,44 +31,28 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
   const [userInput, setUserInput] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<'idle' | 'checking_incorrect' | 'checking_correct' | 'result'>('idle');
+  const [feedbackState, setFeedbackState] = useState<'idle' | 'checking' | 'result'>('idle');
 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitted) return;
+    if (feedbackState !== 'idle') return;
     
     const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
     setIsCorrect(correct);
     setIsSubmitted(true);
-
-    if (correct) {
-        setFeedbackState('checking_correct');
-        onNext(5);
-    } else {
-        setFeedbackState('checking_incorrect');
-        onNext(1);
-    }
+    setFeedbackState('checking');
+    onNext(correct ? 5 : 1);
   };
 
-  const handleContinue = () => {
-    setUserInput('');
-    setIsSubmitted(false);
-    setIsCorrect(false);
-    setFeedbackState('idle');
-  }
-
   useEffect(() => {
-    if (feedbackState === 'checking_incorrect' || feedbackState === 'checking_correct') {
+    if (feedbackState === 'checking' && isSubmitted) {
         const timer = setTimeout(() => {
             setFeedbackState('result');
-        }, 1000);
+        }, 800); // ~1 second delay for incorrect answers
         return () => clearTimeout(timer);
     }
-    if (feedbackState === 'idle' && isSubmitted) {
-        onNext(isCorrect ? 5 : 1);
-    }
-  }, [feedbackState, isSubmitted, isCorrect, onNext]);
+  }, [feedbackState, isSubmitted]);
 
 
   return (
@@ -124,38 +108,42 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                     <Button type="submit" className="w-full">Check Answer</Button>
                 </form>
             ) : (
-                <div className="space-y-4 text-center">
-                    {feedbackState === 'checking_incorrect' ? (
-                        <div className="text-center pt-4 space-y-2">
-                             <div className="relative rounded-md bg-destructive/10 p-4 text-destructive font-semibold">
-                                <p>Incorrect answer: keep trying!</p>
-                            </div>
-                        </div>
-                    ) : feedbackState === 'checking_correct' ? (
-                         <div className="text-center pt-4 space-y-2">
-                             <div className="relative rounded-md bg-green-500/10 p-4 text-green-600 font-semibold">
-                                <p>Correct answer: nice one!</p>
-                            </div>
-                        </div>
-                    ) : feedbackState === 'result' && !isCorrect ? (
-                         <div className="text-center pt-4 space-y-2">
-                            <CardTitle className="font-headline text-4xl text-primary">{wordData.word}</CardTitle>
-                             {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
-                             <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
-                                <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center pt-4 space-y-1">
-                             <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
-                             {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
+                <div className="space-y-4 text-center pt-4">
+                    {feedbackState === 'checking' && !isCorrect && (
+                         <div className="relative rounded-md bg-destructive/10 p-4 text-destructive font-semibold">
+                            <p>Incorrect answer: keep trying!</p>
                         </div>
                     )}
-                     <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
-                        <Button onClick={handleContinue} className="w-full">
-                            Continue <ChevronsRight className="ml-2 h-5 w-5" />
-                        </Button>
-                    </div>
+                    {feedbackState === 'checking' && isCorrect && (
+                         <div className="relative rounded-md bg-green-500/10 p-4 text-green-600 font-semibold">
+                            <p>Correct answer: nice one!</p>
+                        </div>
+                    )}
+
+                    {feedbackState === 'result' && (
+                        <>
+                             {isCorrect ? (
+                                <div className="text-center space-y-1">
+                                    <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
+                                    {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
+                                </div>
+                            ) : (
+                                <div className="text-center space-y-2">
+                                    <CardTitle className="font-headline text-4xl text-primary">{wordData.word}</CardTitle>
+                                    {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
+                                    <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
+                                        <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="rounded-lg border bg-muted/50 p-4">
+                                <Button onClick={() => onNext(isCorrect ? 5 : 1)} className="w-full">
+                                    Continue <ChevronsRight className="ml-2 h-5 w-5" />
+                                </Button>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </CardContent>

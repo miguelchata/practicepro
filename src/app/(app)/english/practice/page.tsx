@@ -135,6 +135,7 @@ function PracticeSession() {
         });
     }
 
+    advanceSession();
     return newAccuracy;
   };
 
@@ -206,8 +207,8 @@ function PracticeSession() {
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onNext={handleNext} onAdvance={advanceSession} />}
-        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onNext={(quality) => { handleNext(quality); advanceSession(); }} />}
+        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onNext={handleNext} />}
+        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onNext={handleNext} />}
       </main>
     </>
   );

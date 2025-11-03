@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Header } from '@/components/layout/header';
@@ -40,8 +41,7 @@ const progressPercentage = (learnedCount / totalCount) * 100;
 
 export default function EnglishPage() {
   const [practiceAmount, setPracticeAmount] = useState(10);
-  const firstUnlearnedWord = vocabularyList.find(item => !item.learned);
-  const reviewLink = firstUnlearnedWord ? `/english/${firstUnlearnedWord.word.toLowerCase()}` : `/english/${vocabularyList[0].word.toLowerCase()}`;
+  const reviewLink = `/english/practice?amount=${practiceAmount}`;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -133,3 +133,5 @@ export default function EnglishPage() {
     </div>
   );
 }
+
+    

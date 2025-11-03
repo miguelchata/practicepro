@@ -8,18 +8,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel'
 import { Separator } from '@/components/ui/separator'
-import { useState } from 'react'
-import { BlurredWord } from '@/components/english/blurred-word'
 
 const vocabularyList = [
   {
@@ -72,8 +64,6 @@ export default function WordDetailPage() {
   const params = useParams()
   const word = params.word as string
   const wordData = vocabularyList.find(item => item.word === word)
-  const [showWord, setShowWord] = useState(false)
-  const [showExamples, setShowExamples] = useState(false)
 
   if (!wordData) {
     return (
@@ -89,93 +79,31 @@ export default function WordDetailPage() {
     )
   }
   
-  const headerTitle = "Guess the Word";
-
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header title={headerTitle} backButtonHref="/english" />
+      <Header title={wordData.word.charAt(0).toUpperCase() + wordData.word.slice(1)} backButtonHref="/english" />
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <p className="text-sm font-medium text-muted-foreground">{wordData.type}</p>
+            <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
+            <div className="flex items-baseline justify-between">
+                <CardDescription>{wordData.type}</CardDescription>
+                <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
+                <p className="font-semibold">Definition</p>
                 <p className="text-muted-foreground text-lg">{wordData.definition}</p>
             </div>
-            
-            {!showExamples && (
-                <div className="text-center pt-4">
-                    <Button variant="outline" onClick={() => setShowExamples(true)}>Show Examples</Button>
-                </div>
-            )}
-
-            {showExamples && (
-                <>
-                    <Separator/>
-                    <div className="relative pt-6">
-                        <Carousel
-                            opts={{
-                                align: "start",
-                            }}
-                            className="w-full px-4"
-                        >
-                            <CarouselContent>
-                                {wordData.examples.map((example, index) => (
-                                <CarouselItem key={index}>
-                                    <div className="p-1">
-                                    <p className="text-center text-lg italic text-muted-foreground">
-                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
-                                    </p>
-                                    </div>
-                                </CarouselItem>
-                                ))}
-                            </CarouselContent>
-                            <CarouselPrevious className="absolute left-0 top-full mt-4" />
-                            <CarouselNext className="absolute right-0 top-full mt-4" />
-                        </Carousel>
-                    </div>
-                </>
-            )}
-
-            {showWord && (
-                <div className="text-center pt-4 space-y-1">
-                    <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
-                    <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
-                </div>
-            )}
-
-
-             <div className="pt-6">
-                {!showWord ? (
-                    <div className="text-center">
-                        <Button onClick={() => setShowWord(true)}>Show Answer</Button>
-                    </div>
-                ) : (
-                    <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
-                        <p className="text-center font-semibold">Did you remember it right?</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <Button variant="destructive" className="h-auto">
-                                <div className="flex flex-col items-center p-2">
-                                    <span className="font-bold">NO</span>
-                                    <span className="text-xs font-normal">Repeat</span>
-                                </div>
-                            </Button>
-                             <Button variant="outline" className="h-auto">
-                                <div className="flex flex-col items-center p-2">
-                                    <span className="font-bold">Sort of</span>
-                                    <span className="text-xs font-normal">Keep studying</span>
-                                </div>
-                            </Button>
-                             <Button variant="default" className="h-auto">
-                                <div className="flex flex-col items-center p-2">
-                                    <span className="font-bold">YES</span>
-                                    <span className="text-xs font-normal">I've learned</span>
-                                </div>
-                            </Button>
-                        </div>
-                    </div>
-                )}
+            <Separator/>
+            <div>
+                <p className="font-semibold">Examples</p>
+                <ul className="list-disc pl-5 mt-2 space-y-2 text-muted-foreground">
+                    {wordData.examples.map((example, index) => (
+                        <li key={index} className="italic">&quot;{example}&quot;</li>
+                    ))}
+                </ul>
             </div>
           </CardContent>
         </Card>
@@ -183,3 +111,5 @@ export default function WordDetailPage() {
     </div>
   )
 }
+
+    

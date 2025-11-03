@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { BlurredWord } from '@/components/english/blurred-word';
 import { CardTitle } from '../ui/card';
 import type { VocabularyItem } from '@/lib/types';
+import { Badge } from '../ui/badge';
 
 type FlashcardProps = {
     wordData: VocabularyItem;
@@ -27,7 +28,6 @@ type FlashcardProps = {
 
 export function Flashcard({ wordData, onNext }: FlashcardProps) {
   const [showWord, setShowWord] = useState(false);
-  const [showExamples, setShowExamples] = useState(false);
 
   const handleShowAnswer = () => {
     setShowWord(true);
@@ -35,27 +35,23 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
 
   const handleFeedback = (quality: number) => {
     setShowWord(false);
-    setShowExamples(false);
     onNext(quality >= 3, quality);
   }
 
   return (
     <Card className="w-full max-w-2xl">
         <CardHeader>
-            <p className="text-sm font-medium text-muted-foreground">Flashcard</p>
+            <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-muted-foreground">Can you remember the vocab?</p>
+                {wordData.type && <Badge variant="outline">{wordData.type}</Badge>}
+            </div>
         </CardHeader>
         <CardContent className="space-y-6">
         <div>
             <p className="text-muted-foreground text-lg">{wordData.definition}</p>
         </div>
         
-        {!showExamples && !showWord && (
-            <div className="text-center pt-4">
-                <Button variant="outline" onClick={() => setShowExamples(true)}>Show Examples</Button>
-            </div>
-        )}
-
-        {showExamples && !showWord && wordData.examples.length > 0 && (
+        {wordData.examples && wordData.examples.length > 0 && (
             <>
                 <Separator/>
                 <div className="relative pt-6">
@@ -84,35 +80,10 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
         )}
 
         {showWord && (
-            <>
-             {wordData.examples.length > 0 && <Separator/>}
-                <div className="relative pt-6">
-                    <Carousel
-                        opts={{
-                            align: "start",
-                        }}
-                        className="w-full px-4"
-                    >
-                        <CarouselContent>
-                            {wordData.examples.map((example, index) => (
-                            <CarouselItem key={index}>
-                                <div className="p-1">
-                                    <p className="text-center text-lg italic text-muted-foreground">
-                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
-                                    </p>
-                                </div>
-                            </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
-                </div>
             <div className="text-center pt-4 space-y-1">
                 <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
                 {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
             </div>
-            </>
         )}
 
 

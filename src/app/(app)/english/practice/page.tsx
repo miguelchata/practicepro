@@ -17,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { useUpdateVocabularyItem } from '@/firebase/firestore/use-vocabulary';
@@ -29,6 +28,8 @@ type ExerciseType = 'guess' | 'write';
 type PracticeItem = {
     wordData: VocabularyItem;
     type: ExerciseType;
+    // Keep track of recent qualities for lapse detection
+    recentQualities?: number[];
 };
 
 function PracticeSession() {
@@ -81,73 +82,76 @@ function PracticeSession() {
     if (quality !== undefined) {
       const item = currentItem.wordData;
       const now = new Date();
+      
+      const newRepetitions = item.repetitions + 1;
+      
       let newAccuracy = item.accuracy;
       if (item.repetitions > 0) {
         newAccuracy = (1 - item.alpha) * item.accuracy + item.alpha * (quality / 5);
       } else {
         newAccuracy = quality / 5;
       }
-
+      
       const updates: Partial<VocabularyItem> = {
         lastQuality: quality,
-        repetitions: item.repetitions + 1,
+        repetitions: newRepetitions,
         accuracy: newAccuracy,
         lastReviewedAt: now.toISOString(),
         updatedAt: now.toISOString(),
       };
       
-      // Basic SM-2 like interval calculation
-      let nextInterval;
-      if (item.repetitions === 1) {
-        nextInterval = 1;
-      } else if (item.repetitions === 2) {
-        nextInterval = 6;
-      } else {
-        nextInterval = Math.ceil(item.repetitions * 2.5 * newAccuracy);
-      }
+      const oneDay = 24 * 60 * 60 * 1000;
+      
+      const twoRecentQualities = (currentItem.recentQualities || []).slice(-1).concat(quality);
+      const hasTwoPoorRecentReviews = twoRecentQualities.filter(q => q <= 1).length >= 2;
+      const lastReviewDate = item.lastReviewedAt ? new Date(item.lastReviewedAt) : now;
+      const daysSinceLastReview = (now.getTime() - lastReviewDate.getTime()) / oneDay;
 
-      if (quality < 3) {
-        nextInterval = 1; // Repeat tomorrow if score is low
-      }
-      
-      const nextReviewDate = new Date(now.getTime() + nextInterval * 24 * 60 * 60 * 1000);
-      updates.nextReviewAt = nextReviewDate.toISOString();
-      
-      if (newAccuracy > 0.9 && item.repetitions > 5) {
-        updates.status = 'mastered';
+      // Apply the user's specified logic
+      if (newRepetitions >= 5 && newAccuracy >= 0.80) {
+          updates.status = 'mastered';
+          updates.nextReviewAt = new Date(now.getTime() + 21 * oneDay).toISOString();
+      } else if (
+          item.status === 'mastered' &&
+          (newAccuracy < 0.60 || (hasTwoPoorRecentReviews && daysSinceLastReview <= 14))
+      ) {
+          updates.status = 'learning';
+          updates.nextReviewAt = new Date(now.getTime() + oneDay).toISOString();
       } else {
-        updates.status = 'learning';
+          updates.status = 'learning';
+          // A simple interval for learning phase
+          let nextIntervalDays = Math.pow(2, item.repetitions - 1);
+          if (quality < 3) nextIntervalDays = 1; // If failed, review next day.
+          updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * oneDay).toISOString();
       }
       
       updateVocabularyItem(item.id, updates);
     }
     
     // Session progress logic
-    if (isCorrect) {
-        setCompletedCount(prev => prev + 1);
-    } else {
-        // Re-add the failed item to the end of the list
-        setPracticeList(prev => [...prev, currentItem]);
+    const nextCompletedCount = completedCount + (isCorrect ? 1 : 0);
+    setCompletedCount(nextCompletedCount);
+
+    if (!isCorrect) {
+        // Re-add failed item with updated quality history
+        const updatedFailedItem: PracticeItem = {
+            ...currentItem,
+            recentQualities: [...(currentItem.recentQualities || []), quality || 0]
+        };
+        setPracticeList(prev => [...prev, updatedFailedItem]);
     }
 
-    if (currentIndex + 1 < practiceList.length) {
+    if (currentIndex + 1 < initialPracticeList.length) {
       setCurrentIndex(prev => prev + 1);
     } else {
-       if (completedCount + (isCorrect ? 1 : 0) >= totalItems) {
+        if (nextCompletedCount >= totalItems) {
             setSessionFinished(true);
-       } else {
+        } else {
             setCurrentIndex(prev => prev + 1);
-       }
+        }
     }
   };
 
-  useEffect(() => {
-    if(completedCount >= totalItems && totalItems > 0) {
-        if (currentIndex >= practiceList.length) {
-            setSessionFinished(true);
-        }
-    }
-  }, [completedCount, totalItems, currentIndex, practiceList.length]);
 
   if (loading || (practiceList.length === 0 && !sessionFinished)) {
       return (
@@ -170,6 +174,10 @@ function PracticeSession() {
   }
 
   if (!currentItem) {
+      // This state can be hit when incorrect items are being processed
+      if (completedCount >= totalItems) {
+          setSessionFinished(true);
+      }
       return (
         <div className="flex-1 flex flex-col items-center justify-center">
             <p>Loading next card...</p>
@@ -224,3 +232,5 @@ export default function PracticePage() {
         </div>
     )
 }
+
+    

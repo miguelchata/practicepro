@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import Link from 'next/link';
 
 const vocabularyList = [
     { word: 'Ephemeral', definition: 'Lasting for a very short time.', learned: true },
@@ -41,18 +42,20 @@ export default function EnglishPage() {
             <h3 className="text-lg font-semibold mb-4">Practice List</h3>
             <div className="space-y-4">
                 {vocabularyList.map((item, index) => (
-                    <div key={index}>
-                        <div className="grid gap-2">
-                            <div className="flex justify-between items-center">
-                                <p className="font-semibold">{item.word}</p>
-                                <span className="text-sm font-medium text-muted-foreground">
-                                    {item.learned ? '100%' : '0%'}
-                                </span>
+                    <Link href={`/english/${item.word.toLowerCase()}`} key={index} className="block hover:bg-muted/50 rounded-lg p-4 -m-4">
+                        <div>
+                            <div className="grid gap-2">
+                                <div className="flex justify-between items-center">
+                                    <p className="font-semibold">{item.word}</p>
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        {item.learned ? '100%' : '0%'}
+                                    </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">{item.definition}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground">{item.definition}</p>
+                            {index < vocabularyList.length - 1 && <Separator className="mt-4" />}
                         </div>
-                        {index < vocabularyList.length - 1 && <Separator className="mt-4" />}
-                    </div>
+                    </Link>
                 ))}
             </div>
           </CardContent>

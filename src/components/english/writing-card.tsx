@@ -24,7 +24,7 @@ import type { VocabularyItem } from '@/lib/types';
 
 type WritingCardProps = {
     wordData: VocabularyItem;
-    onNext: (isCorrect: boolean, quality?: number) => void;
+    onNext: (quality: number) => void;
 }
 
 export function WritingCard({ wordData, onNext }: WritingCardProps) {
@@ -44,17 +44,14 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
 
     if (correct) {
         setFeedbackState('checking_correct');
+        onNext(5);
     } else {
         setFeedbackState('checking_incorrect');
+        onNext(1);
     }
-    
-    // Update DB immediately
-    const quality = correct ? 5 : 1;
-    onNext(correct, quality);
   };
 
   const handleContinue = () => {
-    // onNext is already called, so this just resets the component state for the next card.
     setUserInput('');
     setIsSubmitted(false);
     setIsCorrect(false);
@@ -68,9 +65,8 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
         }, 1000);
         return () => clearTimeout(timer);
     }
-    // Check if the user has finished reviewing the result and wants to move on
     if (feedbackState === 'idle' && isSubmitted) {
-        onNext(isCorrect);
+        onNext(isCorrect ? 5 : 1);
     }
   }, [feedbackState, isSubmitted, isCorrect, onNext]);
 
@@ -132,7 +128,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                     {feedbackState === 'checking_incorrect' ? (
                         <div className="text-center pt-4 space-y-2">
                              <div className="relative rounded-md bg-destructive/10 p-4 text-destructive font-semibold">
-                                <p>Incorrect answer: keep trying</p>
+                                <p>Incorrect answer: keep trying!</p>
                             </div>
                         </div>
                     ) : feedbackState === 'checking_correct' ? (
@@ -143,7 +139,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                         </div>
                     ) : feedbackState === 'result' && !isCorrect ? (
                          <div className="text-center pt-4 space-y-2">
-                            <CardTitle className="font-headline text-4xl text-green-600">{wordData.word}</CardTitle>
+                            <CardTitle className="font-headline text-4xl text-primary">{wordData.word}</CardTitle>
                              {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                              <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
                                 <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>

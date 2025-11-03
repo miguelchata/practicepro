@@ -28,6 +28,8 @@ type FlashcardProps = {
 
 export function Flashcard({ wordData, onNext }: FlashcardProps) {
   const [showWord, setShowWord] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
+
 
   const handleShowAnswer = () => {
     setShowWord(true);
@@ -35,7 +37,12 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
 
   const handleFeedback = (quality: number) => {
     setShowWord(false);
+    setShowExamples(false);
     onNext(quality >= 3, quality);
+  }
+  
+  const handleShowExamples = () => {
+    setShowExamples(true);
   }
 
   return (
@@ -51,7 +58,13 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
             <p className="text-muted-foreground text-lg">{wordData.definition}</p>
         </div>
         
-        {wordData.examples && wordData.examples.length > 0 && (
+        {wordData.examples && wordData.examples.length > 0 && !showExamples && !showWord && (
+            <div className="text-center">
+                <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
+            </div>
+        )}
+        
+        {wordData.examples && wordData.examples.length > 0 && (showExamples || showWord) && (
             <>
                 <Separator/>
                 <div className="relative pt-6">

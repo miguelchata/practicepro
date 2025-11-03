@@ -12,6 +12,15 @@ import { Input } from '@/components/ui/input';
 import { CardTitle } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { Check, X, ChevronsRight } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import { BlurredWord } from '@/components/english/blurred-word';
+import { Separator } from '../ui/separator';
 
 type WordData = {
     word: string;
@@ -55,11 +64,35 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
   return (
     <Card className="w-full max-w-2xl">
         <CardHeader>
-            <p className="text-lg font-medium text-muted-foreground">Write the word for:</p>
+            <p className="text-sm font-medium text-muted-foreground">{wordData.type}</p>
         </CardHeader>
         <CardContent className="space-y-6">
             <div>
-                <p className="text-center text-2xl font-semibold font-headline text-foreground">{wordData.definition}</p>
+                <p className="text-muted-foreground text-lg">{wordData.definition}</p>
+            </div>
+            
+            <Separator/>
+            <div className="relative pt-6">
+                <Carousel
+                    opts={{
+                        align: "start",
+                    }}
+                    className="w-full px-4"
+                >
+                    <CarouselContent>
+                        {wordData.examples.map((example, index) => (
+                        <CarouselItem key={index}>
+                            <div className="p-1">
+                            <p className="text-center text-lg italic text-muted-foreground">
+                                &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
+                            </p>
+                            </div>
+                        </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                </Carousel>
             </div>
             
             <form onSubmit={handleSubmit} className="pt-4 space-y-4">

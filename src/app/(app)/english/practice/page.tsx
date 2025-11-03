@@ -130,21 +130,6 @@ function PracticeSession() {
     
     updateVocabularyItem(item.id, updates);
     
-    const isCorrect = quality >= 4;
-    if (!isCorrect && currentItem.attempts < MAX_ATTEMPTS) {
-        setPracticeList(prev => {
-            if (prev.length < MAX_CARDS_PER_SESSION) {
-                const updatedFailedItem: PracticeItem = {
-                    ...currentItem,
-                    recentQualities: [...(currentItem.recentQualities || []), quality],
-                    attempts: currentItem.attempts + 1,
-                };
-                return [...prev, updatedFailedItem];
-            }
-            return prev;
-        });
-    }
-    
     return newAccuracy;
   };
 

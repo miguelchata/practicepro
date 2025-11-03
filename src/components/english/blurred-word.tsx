@@ -2,7 +2,6 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 
 type BlurredWordProps = {
   sentence: string;
@@ -21,12 +20,10 @@ export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordP
           if (showFullWord) {
             return <strong key={index} className="text-foreground font-semibold">{part}</strong>;
           }
+          const dashes = '—'.repeat(part.length - 1);
           return (
-            <span key={index} className="relative inline-block">
-              <span className="blur-sm select-none" aria-hidden="true">
-                {part}
-              </span>
-               <span className="absolute left-0 top-0 font-semibold">{part[0]}</span>
+            <span key={index} className="font-mono tracking-wider">
+              <span className="font-semibold">{part[0]}</span>{dashes}
             </span>
           );
         }

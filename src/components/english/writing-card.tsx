@@ -100,7 +100,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                         <CarouselItem key={index}>
                             <div className="p-1">
                             <p className="text-center text-lg italic text-muted-foreground">
-                                "&lt;BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
+                                &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
                             </p>
                             </div>
                         </CarouselItem>

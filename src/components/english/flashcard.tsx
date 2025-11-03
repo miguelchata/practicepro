@@ -79,7 +79,7 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
                             <CarouselItem key={index}>
                                 <div className="p-1">
                                 <p className="text-center text-lg italic text-muted-foreground">
-                                    "&lt;BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
+                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
                                 </p>
                                 </div>
                             </CarouselItem>
@@ -107,7 +107,7 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
                             <CarouselItem key={index}>
                                 <div className="p-1">
                                 <p className="text-center text-lg italic text-muted-foreground">
-                                    "&lt;BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
+                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
                                 </p>
                                 </div>
                             </CarouselItem>

@@ -17,6 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { useUpdateVocabularyItem } from '@/firebase/firestore/use-vocabulary';
@@ -63,7 +64,6 @@ function PracticeSession() {
   const [practiceList, setPracticeList] = useState<PracticeItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(false);
-  const [completedCount, setCompletedCount] = useState(0);
   
   useEffect(() => {
       if(initialPracticeList.length > 0) {
@@ -71,9 +71,8 @@ function PracticeSession() {
       }
   }, [initialPracticeList]);
 
-  const totalItems = useMemo(() => initialPracticeList.length, [initialPracticeList]);
-
-  const progressPercentage = totalItems > 0 ? ((completedCount) / totalItems) * 100 : 0;
+  const totalItems = useMemo(() => practiceList.length, [practiceList]);
+  const progressPercentage = totalItems > 0 ? ((currentIndex) / totalItems) * 100 : 0;
   const currentItem = practiceList[currentIndex];
 
   const handleNext = (isCorrect: boolean, quality?: number) => {
@@ -129,11 +128,8 @@ function PracticeSession() {
     }
     
     // Session progress logic
-    const nextCompletedCount = completedCount + (isCorrect ? 1 : 0);
-    setCompletedCount(nextCompletedCount);
-
     if (!isCorrect) {
-        // Re-add failed item with updated quality history
+        // Re-add failed item to the end of the list
         const updatedFailedItem: PracticeItem = {
             ...currentItem,
             recentQualities: [...(currentItem.recentQualities || []), quality || 0]
@@ -141,14 +137,10 @@ function PracticeSession() {
         setPracticeList(prev => [...prev, updatedFailedItem]);
     }
 
-    if (currentIndex + 1 < initialPracticeList.length) {
+    if (currentIndex + 1 < practiceList.length) {
       setCurrentIndex(prev => prev + 1);
     } else {
-        if (nextCompletedCount >= totalItems) {
-            setSessionFinished(true);
-        } else {
-            setCurrentIndex(prev => prev + 1);
-        }
+      setSessionFinished(true);
     }
   };
 
@@ -165,7 +157,7 @@ function PracticeSession() {
     return (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
             <h2 className="text-2xl font-bold font-headline mb-2">Session Complete!</h2>
-            <p className="text-muted-foreground mb-4">You completed {totalItems} exercises. Keep up the great work!</p>
+            <p className="text-muted-foreground mb-4">You completed {currentIndex} exercises. Keep up the great work!</p>
             <Button onClick={() => router.push('/english')}>
                 Back to Vocabulary
             </Button>
@@ -174,10 +166,7 @@ function PracticeSession() {
   }
 
   if (!currentItem) {
-      // This state can be hit when incorrect items are being processed
-      if (completedCount >= totalItems) {
-          setSessionFinished(true);
-      }
+      // This can happen if the list is being updated.
       return (
         <div className="flex-1 flex flex-col items-center justify-center">
             <p>Loading next card...</p>
@@ -211,7 +200,7 @@ function PracticeSession() {
         </AlertDialog>
         <Progress value={progressPercentage} className="flex-1" />
         <div className="w-16 text-right font-semibold">
-          {completedCount} / {totalItems}
+          {currentIndex} / {totalItems}
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
@@ -232,5 +221,3 @@ export default function PracticePage() {
         </div>
     )
 }
-
-    

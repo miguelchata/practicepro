@@ -20,10 +20,10 @@ export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordP
           if (showFullWord) {
             return <strong key={index} className="text-foreground font-semibold">{part}</strong>;
           }
-          const dashes = '—'.repeat(part.length - 1);
+          const shapes = '■'.repeat(part.length - 1);
           return (
-            <span key={index} className="font-mono tracking-wider">
-              <span className="font-semibold">{part[0]}</span>{dashes}
+            <span key={index} className="font-mono tracking-widest text-muted-foreground/70">
+              <span className="font-semibold text-foreground">{part[0]}</span>{shapes}
             </span>
           );
         }

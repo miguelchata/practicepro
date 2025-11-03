@@ -41,7 +41,9 @@ const progressPercentage = (learnedCount / totalCount) * 100;
 
 export default function EnglishPage() {
   const [practiceAmount, setPracticeAmount] = useState(10);
-  const reviewLink = `/english/practice?amount=${practiceAmount}`;
+  const [exerciseType, setExerciseType] = useState('both');
+  
+  const reviewLink = `/english/practice?amount=${practiceAmount}&type=${exerciseType}`;
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -98,7 +100,7 @@ export default function EnglishPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label>Exercise Type</Label>
-                    <RadioGroup defaultValue="both" className="flex gap-4">
+                    <RadioGroup value={exerciseType} onValueChange={setExerciseType} className="flex gap-4">
                         <div>
                             <RadioGroupItem value="both" id="r1" className="peer sr-only" />
                             <Label htmlFor="r1" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
@@ -108,13 +110,13 @@ export default function EnglishPage() {
                         <div>
                             <RadioGroupItem value="flashcards" id="r2" className="peer sr-only" />
                             <Label htmlFor="r2" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                Flashcards only
+                                Flashcards
                             </Label>
                         </div>
                         <div>
                             <RadioGroupItem value="writing" id="r3" className="peer sr-only" />
                             <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                Writing only
+                                Writing
                             </Label>
                         </div>
                     </RadioGroup>
@@ -133,5 +135,3 @@ export default function EnglishPage() {
     </div>
   );
 }
-
-    

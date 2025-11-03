@@ -22,7 +22,6 @@ import {
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { useUpdateVocabularyItem } from '@/firebase/firestore/use-vocabulary';
 import type { VocabularyItem } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
 
 
 type ExerciseType = 'guess' | 'write';
@@ -75,71 +74,72 @@ function PracticeSession() {
   const progressPercentage = totalItems > 0 ? ((currentIndex) / totalItems) * 100 : 0;
   const currentItem = practiceList[currentIndex];
 
-  const handleNext = (isCorrect: boolean, quality?: number) => {
+  const handleNext = (quality: number): number => {
+    const item = currentItem.wordData;
+    const now = new Date();
     
-    // Spaced Repetition System (SRS) update logic
-    if (quality !== undefined) {
-      const item = currentItem.wordData;
-      const now = new Date();
-      
-      const newRepetitions = item.repetitions + 1;
-      
-      let newAccuracy = item.accuracy;
-      if (item.repetitions > 0) {
-        newAccuracy = (1 - item.alpha) * item.accuracy + item.alpha * (quality / 5);
-      } else {
-        newAccuracy = quality / 5;
-      }
-      
-      const updates: Partial<VocabularyItem> = {
-        lastQuality: quality,
-        repetitions: newRepetitions,
-        accuracy: newAccuracy,
-        lastReviewedAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      };
-      
-      const oneDay = 24 * 60 * 60 * 1000;
-      
-      const twoRecentQualities = (currentItem.recentQualities || []).slice(-1).concat(quality);
-      const hasTwoPoorRecentReviews = twoRecentQualities.filter(q => q <= 1).length >= 2;
-      const lastReviewDate = item.lastReviewedAt ? new Date(item.lastReviewedAt) : now;
-      const daysSinceLastReview = (now.getTime() - lastReviewDate.getTime()) / oneDay;
-
-      // Apply the user's specified logic
-      if (newRepetitions >= 5 && newAccuracy >= 0.80) {
-          updates.status = 'mastered';
-          updates.nextReviewAt = new Date(now.getTime() + 21 * oneDay).toISOString();
-      } else if (
-          item.status === 'mastered' &&
-          (newAccuracy < 0.60 || (hasTwoPoorRecentReviews && daysSinceLastReview <= 14))
-      ) {
-          updates.status = 'learning';
-          updates.nextReviewAt = new Date(now.getTime() + oneDay).toISOString();
-      } else {
-          updates.status = 'learning';
-          // A simple interval for learning phase
-          let nextIntervalDays = 1;
-          if (quality >= 3) {
-            nextIntervalDays = Math.pow(2, Math.max(0, item.repetitions - 1));
-          }
-          updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * oneDay).toISOString();
-      }
-      
-      updateVocabularyItem(item.id, updates);
+    const newRepetitions = item.repetitions + 1;
+    
+    let newAccuracy = item.accuracy;
+    if (item.repetitions > 0) {
+      newAccuracy = (1 - item.alpha) * item.accuracy + item.alpha * (quality / 5);
+    } else {
+      newAccuracy = quality / 5;
     }
     
-    // Session progress logic
+    const updates: Partial<VocabularyItem> = {
+      lastQuality: quality,
+      repetitions: newRepetitions,
+      accuracy: newAccuracy,
+      lastReviewedAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    const twoRecentQualities = (currentItem.recentQualities || []).slice(-1).concat(quality);
+    const hasTwoPoorRecentReviews = twoRecentQualities.filter(q => q <= 1).length >= 2;
+    const lastReviewDate = item.lastReviewedAt ? new Date(item.lastReviewedAt) : now;
+    const daysSinceLastReview = (now.getTime() - lastReviewDate.getTime()) / oneDay;
+
+    if (newRepetitions >= 5 && newAccuracy >= 0.80) {
+        updates.status = 'mastered';
+        updates.nextReviewAt = new Date(now.getTime() + 21 * oneDay).toISOString();
+    } else if (
+        item.status === 'mastered' &&
+        (newAccuracy < 0.60 || (hasTwoPoorRecentReviews && daysSinceLastReview <= 14))
+    ) {
+        updates.status = 'learning';
+        updates.nextReviewAt = new Date(now.getTime() + oneDay).toISOString();
+    } else {
+        updates.status = 'learning';
+        let nextIntervalDays = 1;
+        if (quality >= 3) {
+          nextIntervalDays = Math.pow(2, Math.max(0, item.repetitions - 1));
+        }
+        updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * oneDay).toISOString();
+    }
+    
+    updateVocabularyItem(item.id, updates);
+    
+    const isCorrect = quality >= 3;
     if (!isCorrect) {
-        // Re-add failed item to the end of the list
         const updatedFailedItem: PracticeItem = {
             ...currentItem,
-            recentQualities: [...(currentItem.recentQualities || []), quality || 0]
+            recentQualities: [...(currentItem.recentQualities || []), quality]
         };
-        setPracticeList(prev => [...prev, updatedFailedItem]);
+        // Use a functional update to ensure we're working with the latest state
+        setPracticeList(prev => {
+            const newList = [...prev, updatedFailedItem];
+            return newList;
+        });
     }
 
-    if (currentIndex + 1 < totalItems) {
+    return newAccuracy;
+  };
+
+  const advanceSession = () => {
+    if (currentIndex + 1 < practiceList.length) {
       setCurrentIndex(prev => prev + 1);
     } else {
       setSessionFinished(true);
@@ -168,7 +168,6 @@ function PracticeSession() {
   }
 
   if (!currentItem) {
-      // This can happen if the list is being updated.
       return (
         <div className="flex-1 flex flex-col items-center justify-center">
             <p>Loading next card...</p>
@@ -176,14 +175,6 @@ function PracticeSession() {
       );
   }
 
-  // This function is now only responsible for advancing the session.
-  const advanceSession = () => {
-    if (currentIndex + 1 < practiceList.length) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      setSessionFinished(true);
-    }
-  };
 
   return (
     <>
@@ -211,12 +202,12 @@ function PracticeSession() {
         </AlertDialog>
         <Progress value={progressPercentage} className="flex-1" />
         <div className="w-16 text-right font-semibold">
-          {currentIndex} / {totalItems}
+          {currentIndex + 1} / {totalItems}
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onNext={handleNext} />}
-        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onNext={(isCorrect, quality) => { handleNext(isCorrect, quality); advanceSession(); }} />}
+        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onNext={handleNext} onAdvance={advanceSession} />}
+        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onNext={(quality) => { handleNext(quality); advanceSession(); }} />}
       </main>
     </>
   );

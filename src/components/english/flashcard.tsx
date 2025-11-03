@@ -20,25 +20,33 @@ import { BlurredWord } from '@/components/english/blurred-word';
 import { CardTitle } from '../ui/card';
 import type { VocabularyItem } from '@/lib/types';
 import { Badge } from '../ui/badge';
+import { ChevronsRight } from 'lucide-react';
 
 type FlashcardProps = {
     wordData: VocabularyItem;
-    onNext: (isCorrect: boolean, quality?: number) => void;
+    onNext: (quality: number) => number; // Returns the new accuracy
+    onAdvance: () => void; // Function to advance to the next card
 }
 
-export function Flashcard({ wordData, onNext }: FlashcardProps) {
+export function Flashcard({ wordData, onNext, onAdvance }: FlashcardProps) {
   const [showWord, setShowWord] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
-
+  const [feedbackResult, setFeedbackResult] = useState<{ quality: number, newAccuracy: number } | null>(null);
 
   const handleShowAnswer = () => {
     setShowWord(true);
   }
 
   const handleFeedback = (quality: number) => {
-    setShowWord(false);
-    setShowExamples(false);
-    onNext(quality >= 3, quality);
+    const newAccuracy = onNext(quality);
+    setFeedbackResult({ quality, newAccuracy });
+  }
+
+  const handleContinue = () => {
+      setShowWord(false);
+      setShowExamples(false);
+      setFeedbackResult(null);
+      onAdvance();
   }
   
   const handleShowExamples = () => {
@@ -104,6 +112,18 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
             {!showWord ? (
                 <div className="text-center">
                     <Button onClick={handleShowAnswer}>Show Answer</Button>
+                </div>
+            ) : feedbackResult ? (
+                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4 text-center">
+                    <div>
+                        <p className="font-semibold">New Accuracy Score</p>
+                        <p className="font-mono text-2xl font-bold text-primary">
+                            {Math.round(feedbackResult.newAccuracy * 100)}%
+                        </p>
+                    </div>
+                    <Button onClick={handleContinue} className="w-full">
+                        Continue <ChevronsRight className="ml-2 h-5 w-5" />
+                    </Button>
                 </div>
             ) : (
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4">

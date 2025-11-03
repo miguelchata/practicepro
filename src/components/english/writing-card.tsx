@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardTitle } from '../ui/card';
 import { cn } from '@/lib/utils';
-import { Check, X, ChevronsRight } from 'lucide-react';
+import { ChevronsRight } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -40,7 +40,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
   const [userInput, setUserInput] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<'idle' | 'checking' | 'result'>('idle');
+  const [feedbackState, setFeedbackState] = useState<'idle' | 'checking_incorrect' | 'checking_correct' | 'result'>('idle');
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -52,14 +52,14 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
     setIsSubmitted(true);
 
     if (correct) {
-        setFeedbackState('result');
+        setFeedbackState('checking_correct');
     } else {
-        setFeedbackState('checking');
+        setFeedbackState('checking_incorrect');
     }
   };
 
   useEffect(() => {
-    if (feedbackState === 'checking') {
+    if (feedbackState === 'checking_incorrect' || feedbackState === 'checking_correct') {
         const timer = setTimeout(() => {
             setFeedbackState('result');
         }, 1000);
@@ -74,11 +74,6 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
     setIsCorrect(false);
     setFeedbackState('idle');
     onNext();
-  }
-
-  const getBorderColor = () => {
-    if (!isSubmitted) return '';
-    return isCorrect ? 'border-green-500' : 'border-destructive';
   }
 
   return (
@@ -122,26 +117,27 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                             value={userInput}
                             onChange={(e) => setUserInput(e.target.value)}
                             placeholder="Type the word..."
-                            className={cn("h-12 text-center text-lg font-mono tracking-widest", getBorderColor())}
+                            className="h-12 text-center text-lg font-mono tracking-widest"
                             disabled={isSubmitted}
                             autoCapitalize="none"
                             autoCorrect="off"
                             spellCheck="false"
                         />
-                        {isSubmitted && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                {isCorrect ? <Check className="h-6 w-6 text-green-500" /> : <X className="h-6 w-6 text-destructive" />}
-                            </div>
-                        )}
                     </div>
                     <Button type="submit" className="w-full">Check Answer</Button>
                 </form>
             ) : (
                 <div className="space-y-4 text-center">
-                    {feedbackState === 'checking' ? (
+                    {feedbackState === 'checking_incorrect' ? (
                         <div className="text-center pt-4 space-y-2">
                              <div className="relative rounded-md bg-destructive/10 p-4 text-destructive font-semibold">
                                 <p>Incorrect answer: keep trying</p>
+                            </div>
+                        </div>
+                    ) : feedbackState === 'checking_correct' ? (
+                         <div className="text-center pt-4 space-y-2">
+                             <div className="relative rounded-md bg-green-500/10 p-4 text-green-600 font-semibold">
+                                <p>Correct answer: nice one!</p>
                             </div>
                         </div>
                     ) : feedbackState === 'result' && !isCorrect ? (

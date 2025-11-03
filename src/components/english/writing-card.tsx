@@ -122,7 +122,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                          <div className="text-center pt-4 space-y-2">
                             <CardTitle className="font-headline text-4xl text-green-600">{wordData.word}</CardTitle>
                             <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
-                             <div className="relative rounded-md bg-destructive/10 p-2 text-destructive-foreground">
+                             <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
                                 <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
                             </div>
                         </div>
@@ -133,9 +133,8 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                         </div>
                     )}
                      <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
-                        <p className="text-center font-semibold">{isCorrect ? 'Excellent!' : 'Review this word'}</p>
                         <Button onClick={handleNext} className="w-full">
-                            Next <ChevronsRight className="ml-2 h-5 w-5" />
+                            Continue <ChevronsRight className="ml-2 h-5 w-5" />
                         </Button>
                     </div>
                 </div>

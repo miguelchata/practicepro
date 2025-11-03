@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -48,6 +48,16 @@ export function Flashcard({ wordData, onNext, onAdvance }: FlashcardProps) {
       setFeedbackResult(null);
       onAdvance();
   }
+
+  useEffect(() => {
+    if (feedbackResult) {
+        const timer = setTimeout(() => {
+            handleContinue();
+        }, 800); // Automatically advance after 800ms
+
+        return () => clearTimeout(timer);
+    }
+  }, [feedbackResult]);
   
   const handleShowExamples = () => {
     setShowExamples(true);
@@ -121,9 +131,6 @@ export function Flashcard({ wordData, onNext, onAdvance }: FlashcardProps) {
                             {Math.round(feedbackResult.newAccuracy * 100)}%
                         </p>
                     </div>
-                    <Button onClick={handleContinue} className="w-full">
-                        Continue <ChevronsRight className="ml-2 h-5 w-5" />
-                    </Button>
                 </div>
             ) : (
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4">

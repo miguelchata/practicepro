@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -40,19 +40,39 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
   const [userInput, setUserInput] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [feedbackState, setFeedbackState] = useState<'idle' | 'checking' | 'result'>('idle');
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitted) return;
+    
     const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
     setIsCorrect(correct);
     setIsSubmitted(true);
+
+    if (correct) {
+        setFeedbackState('result');
+    } else {
+        setFeedbackState('checking');
+    }
   };
+
+  useEffect(() => {
+    if (feedbackState === 'checking') {
+        const timer = setTimeout(() => {
+            setFeedbackState('result');
+        }, 1000);
+        return () => clearTimeout(timer);
+    }
+  }, [feedbackState]);
+
 
   const handleNext = () => {
     setUserInput('');
     setIsSubmitted(false);
     setIsCorrect(false);
+    setFeedbackState('idle');
     onNext();
   }
 
@@ -118,7 +138,13 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                 </form>
             ) : (
                 <div className="space-y-4 text-center">
-                    {!isCorrect ? (
+                    {feedbackState === 'checking' ? (
+                        <div className="text-center pt-4 space-y-2">
+                             <div className="relative rounded-md bg-destructive/10 p-4 text-destructive font-semibold">
+                                <p>Incorrect answer: keep trying</p>
+                            </div>
+                        </div>
+                    ) : feedbackState === 'result' && !isCorrect ? (
                          <div className="text-center pt-4 space-y-2">
                             <CardTitle className="font-headline text-4xl text-green-600">{wordData.word}</CardTitle>
                             <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>

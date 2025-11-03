@@ -95,7 +95,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                 </Carousel>
             </div>
             
-            {!isSubmitted && (
+            {!isSubmitted ? (
                  <form onSubmit={handleSubmit} className="pt-4 space-y-4">
                     <div className="relative">
                         <Input 
@@ -116,23 +116,14 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                     </div>
                     <Button type="submit" className="w-full">Check Answer</Button>
                 </form>
-            )}
-
-            {isSubmitted && (
+            ) : (
                 <div className="space-y-4 text-center">
                     {!isCorrect ? (
                          <div className="text-center pt-4 space-y-2">
-                            <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
+                            <CardTitle className="font-headline text-4xl text-green-600">{wordData.word}</CardTitle>
                             <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>
-                             <div className="relative pt-2">
-                                <Input 
-                                    value={userInput}
-                                    readOnly
-                                    className={cn("h-12 text-center text-lg font-mono tracking-widest bg-destructive/10 text-destructive-foreground", getBorderColor())}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pt-2">
-                                    <X className="h-6 w-6 text-destructive" />
-                                </div>
+                             <div className="relative rounded-md bg-destructive/10 p-2 text-destructive-foreground">
+                                <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
                             </div>
                         </div>
                     ) : (

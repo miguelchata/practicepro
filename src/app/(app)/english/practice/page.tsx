@@ -17,7 +17,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { useUpdateVocabularyItem } from '@/firebase/firestore/use-vocabulary';
@@ -30,14 +29,21 @@ type PracticeItem = {
     type: ExerciseType;
     // Keep track of recent qualities for lapse detection
     recentQualities?: number[];
-    attempts: number;
+    sessionAttempts?: number;
+    sessionConsecutiveFails?: number;
+    lastShownAt?: number;
 };
 
 const MAX_CARDS_PER_SESSION = 20;
-const MASTERED_INTERVAL_DAYS = 10;
-const LEARNING_INTERVAL_DAYS = 1;
-const MAX_INTERVAL_DAYS = 15;
-const MAX_ATTEMPTS = 2;
+const MAX_PER_CARD_PER_SESSION = 2; // new max
+const MASTERED_INTERVAL_DAYS = 21;
+const LEARNING_INTERVAL_DEFAULT = 1;
+const MAX_INTERVAL_DAYS = 60;
+const POOR_QUALITY_THRESHOLD = 1;
+const MASTERED_ACCURACY_THRESHOLD = 0.80;
+const UNMASTERED_DROP_THRESHOLD = 0.60;
+const MIN_REPETITIONS_FOR_MASTER = 5;
+const RECENT_POOR_WINDOW_DAYS = 14;
 
 
 function PracticeSession() {
@@ -56,15 +62,15 @@ function PracticeSession() {
     const words = vocabularyList.slice(0, amount);
 
     if (exerciseType === 'flashcards') {
-        return words.map(wordData => ({ wordData, type: 'guess', attempts: 0 }));
+        return words.map(wordData => ({ wordData, type: 'guess' }));
     }
     if (exerciseType === 'writing') {
-        return words.map(wordData => ({ wordData, type: 'write', attempts: 0 }));
+        return words.map(wordData => ({ wordData, type: 'write' }));
     }
     // 'both'
     return words.flatMap(wordData => ([
-        { wordData, type: 'guess', attempts: 0 },
-        { wordData, type: 'write', attempts: 0 },
+        { wordData, type: 'guess' },
+        { wordData, type: 'write' },
     ]));
   }, [searchParams, vocabularyList, loading]);
   
@@ -82,64 +88,93 @@ function PracticeSession() {
   const progressPercentage = totalItems > 0 ? ((currentIndex) / totalItems) * 100 : 0;
   const currentItem = practiceList[currentIndex];
 
-  const handleNext = (quality: number) => {
+
+  const handleCardAdvance = async (quality: number, exerciseType: ExerciseType) => {
+    if (!currentItem) return;
+
+    function daysBetween(a: Date, b: Date) {
+        return Math.abs((a.getTime() - b.getTime()) / (24 * 60 * 60 * 1000));
+    }
+    
     const item = currentItem.wordData;
     const now = new Date();
-    
-    const newRepetitions = item.repetitions + 1;
-    
-    let newAccuracy = item.accuracy;
-    if (item.repetitions > 0) {
-      newAccuracy = (1 - item.alpha) * item.accuracy + item.alpha * (quality / 5);
+    const nowIsoStr = now.toISOString();
+  
+    // --- 1) EWMA update ---
+    const newRepetitions = (item.repetitions || 0) + 1;
+    const alpha = item.alpha ?? 0.2;
+    let newAccuracy: number;
+    if ((item.repetitions ?? 0) > 0) {
+      newAccuracy = (1 - alpha) * (item.accuracy ?? 0) + alpha * (quality / 5);
     } else {
       newAccuracy = quality / 5;
     }
-    
+    newAccuracy = Math.max(0, Math.min(1, newAccuracy));
+  
+    // --- 2) recent-poor detection ---
+    const persisted = item.recentAttempts ?? [];
+    const inMemoryNums = currentItem.recentQualities ?? [];
+    const inMemoryMapped = inMemoryNums.map(q => ({ quality: q, at: nowIsoStr }));
+    const unified = [...persisted.slice(-5), ...inMemoryMapped].slice(-5);
+    const poorRecent = unified.filter(a => a.quality <= POOR_QUALITY_THRESHOLD && daysBetween(new Date(a.at), now) <= RECENT_POOR_WINDOW_DAYS);
+    const hasTwoPoorRecentReviews = poorRecent.length >= 2;
+    const lastReviewDate = item.lastReviewedAt ? new Date(item.lastReviewedAt) : now;
+    const daysSinceLastReview = daysBetween(now, lastReviewDate);
+  
+    // --- 3) status & nextReviewAt rules (unchanged) ---
     const updates: Partial<VocabularyItem> = {
       lastQuality: quality,
       repetitions: newRepetitions,
       accuracy: newAccuracy,
-      lastReviewedAt: now.toISOString(),
-      updatedAt: now.toISOString(),
+      lastReviewedAt: nowIsoStr,
+      updatedAt: nowIsoStr,
+      recentAttempts: unified,
     };
-    
-    const oneDay = 24 * 60 * 60 * 1000;
-    
-    const twoRecentQualities = (currentItem.recentQualities || []).slice(-1).concat(quality);
-    const hasTwoPoorRecentReviews = twoRecentQualities.filter(q => q <= 1).length >= 2;
-    const lastReviewDate = item.lastReviewedAt ? new Date(item.lastReviewedAt) : now;
-    const daysSinceLastReview = (now.getTime() - lastReviewDate.getTime()) / oneDay;
-
-    if (newRepetitions >= 5 && newAccuracy >= 0.80) {
-        updates.status = 'mastered';
-        updates.nextReviewAt = new Date(now.getTime() + MASTERED_INTERVAL_DAYS * oneDay).toISOString();
+  
+    const computeLearningIntervalDays = (baseReps: number, q: number) => {
+      if (q >= 3) {
+        const interval = Math.pow(2, Math.max(0, (baseReps - 1)));
+        return Math.min(MAX_INTERVAL_DAYS, Math.max(LEARNING_INTERVAL_DEFAULT, Math.round(interval)));
+      }
+      return LEARNING_INTERVAL_DEFAULT;
+    };
+  
+    if (newRepetitions >= MIN_REPETITIONS_FOR_MASTER && newAccuracy >= MASTERED_ACCURACY_THRESHOLD) {
+      updates.status = 'mastered';
+      updates.nextReviewAt = new Date(now.getTime() + MASTERED_INTERVAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
     } else if (
-        item.status === 'mastered' &&
-        (newAccuracy < 0.60 || (hasTwoPoorRecentReviews && daysSinceLastReview <= 14))
+      item.status === 'mastered' &&
+      (newAccuracy < UNMASTERED_DROP_THRESHOLD || (hasTwoPoorRecentReviews && daysSinceLastReview <= RECENT_POOR_WINDOW_DAYS))
     ) {
-        updates.status = 'learning';
-        updates.nextReviewAt = new Date(now.getTime() + LEARNING_INTERVAL_DAYS * oneDay).toISOString();
+      updates.status = 'learning';
+      updates.nextReviewAt = new Date(now.getTime() + LEARNING_INTERVAL_DEFAULT * 24 * 60 * 60 * 1000).toISOString();
     } else {
-        updates.status = 'learning';
-        let nextIntervalDays = LEARNING_INTERVAL_DAYS;
-        if (quality >= 3) {
-          nextIntervalDays = Math.min(MAX_INTERVAL_DAYS, Math.pow(2, Math.max(0, item.repetitions - 1)));
-        }
-        updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * oneDay).toISOString();
+      updates.status = 'learning';
+      const nextIntervalDays = computeLearningIntervalDays(item.repetitions ?? 0, quality);
+      updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * 24 * 60 * 60 * 1000).toISOString();
     }
-    
-    updateVocabularyItem(item.id, updates);
-    
-    return newAccuracy;
-  };
+  
+    // Persist once
+    await updateVocabularyItem(item.id, updates);
+  
+    // --- 4) improved requeue rules with MAX_PER_CARD_PER_SESSION = 2 ---
+    const previousSessionAttempts = currentItem.sessionAttempts ?? 0;
+    const sessionAttempts = previousSessionAttempts + 1;
+  
+    let shouldRequeue = false;
+    if (quality <= POOR_QUALITY_THRESHOLD) { // e.g. 1
+      shouldRequeue = sessionAttempts < MAX_PER_CARD_PER_SESSION;
+    } else if (quality < 5) { // e.g. 3
+      shouldRequeue = previousSessionAttempts === 0 && sessionAttempts < MAX_PER_CARD_PER_SESSION;
+    }
 
-  const advanceSession = (quality: number) => {
-    // Logic to repeat failed cards
-    if (quality < 5 && currentItem.attempts < MAX_ATTEMPTS) {
-        setPracticeList(prevList => [
-            ...prevList,
-            { ...currentItem, attempts: currentItem.attempts + 1 }
-        ]);
+    if (shouldRequeue) {
+        const updatedPracticeItem: PracticeItem = {
+          ...currentItem,
+          sessionAttempts: sessionAttempts,
+          recentQualities: [...(currentItem.recentQualities ?? []), quality],
+        };
+        setPracticeList(prev => [...prev, updatedPracticeItem]);
     }
 
     if (currentIndex + 1 < practiceList.length) {
@@ -147,7 +182,7 @@ function PracticeSession() {
     } else {
       setSessionFinished(true);
     }
-  };
+  }
 
 
   if (loading || (practiceList.length === 0 && !sessionFinished)) {
@@ -178,12 +213,6 @@ function PracticeSession() {
       );
   }
 
-  const handleCardAdvance = (quality: number) => {
-      handleNext(quality);
-      advanceSession(quality);
-  }
-
-
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
@@ -210,12 +239,12 @@ function PracticeSession() {
         </AlertDialog>
         <Progress value={progressPercentage} className="flex-1" />
         <div className="w-16 text-right font-semibold">
-          {currentIndex + 1} / {totalItems}
+          {Math.min(currentIndex + 1, totalItems)} / {totalItems}
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onAdvance={handleCardAdvance} />}
-        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onAdvance={handleCardAdvance} />}
+        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q, 'guess')} />}
+        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q, 'write')} />}
       </main>
     </>
   );

@@ -126,4 +126,5 @@ export type VocabularyItem = {
   createdAt: string;
   updatedAt: string;
   ipa?: string;
+  recentAttempts?: { quality: number; at: string }[];
 };

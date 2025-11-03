@@ -7,10 +7,12 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const vocabularyList = [
     { word: 'ephemeral', type: 'Adjective', definition: 'Lasting for a very short time.', learned: true },
@@ -25,6 +27,9 @@ const progressPercentage = (learnedCount / totalCount) * 100;
 
 
 export default function EnglishPage() {
+  const firstUnlearnedWord = vocabularyList.find(item => !item.learned);
+  const reviewLink = firstUnlearnedWord ? `/english/${firstUnlearnedWord.word.toLowerCase()}` : `/english/${vocabularyList[0].word.toLowerCase()}`;
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title="English" />
@@ -59,6 +64,13 @@ export default function EnglishPage() {
                 ))}
             </div>
           </CardContent>
+           <CardFooter>
+            <Button className="w-full" asChild>
+                <Link href={reviewLink}>
+                    Start Vocabulary Review
+                </Link>
+            </Button>
+           </CardFooter>
         </Card>
       </main>
     </div>

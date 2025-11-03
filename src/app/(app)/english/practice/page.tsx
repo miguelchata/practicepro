@@ -122,7 +122,7 @@ function PracticeSession() {
     
     updateVocabularyItem(item.id, updates);
     
-    const isCorrect = quality >= 3;
+    const isCorrect = quality >= 5;
     if (!isCorrect) {
         const updatedFailedItem: PracticeItem = {
             ...currentItem,

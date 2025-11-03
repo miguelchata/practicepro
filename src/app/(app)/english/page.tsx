@@ -13,10 +13,10 @@ import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
 
 const vocabularyList = [
-    { word: 'Ephemeral', definition: 'Lasting for a very short time.', learned: true },
-    { word: 'Ubiquitous', definition: 'Present, appearing, or found everywhere.', learned: true },
-    { word: 'Mellifluous', definition: 'A sound that is sweet and musical; pleasant to hear.', learned: false },
-    { word: 'Pulchritudinous', definition: 'Having great physical beauty.', learned: false },
+    { word: 'ephemeral', type: 'Adjective', definition: 'Lasting for a very short time.', learned: true },
+    { word: 'ubiquitous', type: 'Adjective', definition: 'Present, appearing, or found everywhere.', learned: true },
+    { word: 'mellifluous', type: 'Adjective', definition: 'A sound that is sweet and musical; pleasant to hear.', learned: false },
+    { word: 'pulchritudinous', type: 'Adjective', definition: 'Having great physical beauty.', learned: false },
 ];
 
 const learnedCount = vocabularyList.filter(item => item.learned).length;
@@ -46,7 +46,7 @@ export default function EnglishPage() {
                         <div>
                             <div className="grid gap-2">
                                 <div className="flex justify-between items-center">
-                                    <p className="font-semibold">{item.word}</p>
+                                    <p className="font-semibold">{item.word.charAt(0).toUpperCase() + item.word.slice(1)}</p>
                                     <span className="text-sm font-medium text-muted-foreground">
                                         {item.learned ? '100%' : '0%'}
                                     </span>

@@ -8,7 +8,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +19,7 @@ import {
 } from '@/components/ui/carousel'
 import { Separator } from '@/components/ui/separator'
 import { useState } from 'react'
+import { BlurredWord } from '@/components/english/blurred-word'
 
 const vocabularyList = [
   {
@@ -123,7 +123,9 @@ export default function WordDetailPage() {
                                 {wordData.examples.map((example, index) => (
                                 <CarouselItem key={index}>
                                     <div className="p-1">
-                                    <p className="text-center text-lg italic text-muted-foreground">&quot;{example}&quot;</p>
+                                    <p className="text-center text-lg italic text-muted-foreground">
+                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
+                                    </p>
                                     </div>
                                 </CarouselItem>
                                 ))}

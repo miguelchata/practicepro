@@ -42,10 +42,9 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
   }
 
   const handleFeedback = () => {
-    // In a real app, you'd save the feedback here
     setShowWord(false);
     setShowExamples(false);
-    onNext(true); // Assume flashcard review is always "correct" for session progress
+    onNext(true); // Flashcard review is always "correct" for session progress
   }
 
   return (

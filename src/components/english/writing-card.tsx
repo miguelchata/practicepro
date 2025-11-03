@@ -49,10 +49,16 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
     if (feedbackState === 'checking' && isSubmitted) {
         const timer = setTimeout(() => {
             setFeedbackState('result');
-        }, 800); // ~1 second delay for incorrect answers
+        }, 800);
         return () => clearTimeout(timer);
     }
   }, [feedbackState, isSubmitted]);
+
+  // This is the function to advance to the next card. It is passed down via `onNext`.
+  // The `quality` parameter is not used here, but it's part of the `onNext` signature.
+  const handleContinue = () => {
+      onNext(isCorrect ? 5 : 1);
+  }
 
 
   return (

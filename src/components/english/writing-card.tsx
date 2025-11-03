@@ -25,14 +25,18 @@ import { Badge } from '../ui/badge';
 
 type WritingCardProps = {
     wordData: VocabularyItem;
-    onNext: (quality: number) => void;
+    onNext: (quality: number) => number;
     onAdvance: () => void;
 }
+
+type FeedbackState = 'idle' | 'checking' | 'showingAccuracy' | 'result';
+
 
 export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
   const [userInput, setUserInput] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<'idle' | 'checking' | 'result'>('idle');
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
+  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,24 +45,32 @@ export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
     
     const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
     setIsCorrect(correct);
+    const accuracy = onNext(correct ? 5 : 1);
+    setNewAccuracy(accuracy);
     setFeedbackState('checking');
-    onNext(correct ? 5 : 1);
   };
 
   useEffect(() => {
     if (feedbackState === 'checking') {
         const timer = setTimeout(() => {
-            setFeedbackState('result');
-        }, isCorrect ? 500 : 800);
+            setFeedbackState('showingAccuracy');
+        }, 800);
         return () => clearTimeout(timer);
     }
-  }, [feedbackState, isCorrect]);
+    if (feedbackState === 'showingAccuracy') {
+        const timer = setTimeout(() => {
+            setFeedbackState('result');
+        }, 800);
+        return () => clearTimeout(timer);
+    }
+  }, [feedbackState]);
 
   const handleContinue = () => {
     // Reset state for next card
     setUserInput('');
     setIsCorrect(false);
     setFeedbackState('idle');
+    setNewAccuracy(null);
     onAdvance();
   }
 
@@ -123,6 +135,15 @@ export function WritingCard({ wordData, onNext, onAdvance }: WritingCardProps) {
                     {feedbackState === 'checking' && (
                          <div className={`relative rounded-md p-4 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
                             <p>{isCorrect ? "Correct answer: nice one!" : "Incorrect answer: keep trying!"}</p>
+                        </div>
+                    )}
+
+                    {feedbackState === 'showingAccuracy' && newAccuracy !== null && (
+                         <div className="rounded-lg border bg-muted/50 p-4 space-y-2 text-center">
+                            <p className="font-semibold">New Accuracy Score</p>
+                            <p className="font-mono text-2xl font-bold text-primary">
+                                {Math.round(newAccuracy * 100)}%
+                            </p>
                         </div>
                     )}
 

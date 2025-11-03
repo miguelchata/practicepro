@@ -33,7 +33,7 @@ type WordData = {
 
 type WritingCardProps = {
     wordData: WordData;
-    onNext: () => void;
+    onNext: (isCorrect: boolean) => void;
 }
 
 export function WritingCard({ wordData, onNext }: WritingCardProps) {
@@ -69,11 +69,12 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
 
 
   const handleNext = () => {
+    const wasCorrect = isCorrect;
     setUserInput('');
     setIsSubmitted(false);
     setIsCorrect(false);
     setFeedbackState('idle');
-    onNext();
+    onNext(wasCorrect);
   }
 
   return (
@@ -99,7 +100,7 @@ export function WritingCard({ wordData, onNext }: WritingCardProps) {
                         <CarouselItem key={index}>
                             <div className="p-1">
                             <p className="text-center text-lg italic text-muted-foreground">
-                                &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
+                                "&lt;BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={isSubmitted && isCorrect} />&quot;
                             </p>
                             </div>
                         </CarouselItem>

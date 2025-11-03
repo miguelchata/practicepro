@@ -78,10 +78,9 @@ function PracticeSession() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const amount = parseInt(searchParams.get('amount') || '10', 10);
-  const exerciseType = searchParams.get('type') || 'both';
-
-  const practiceList: PracticeItem[] = useMemo(() => {
+  const initialPracticeList: PracticeItem[] = useMemo(() => {
+    const amount = parseInt(searchParams.get('amount') || '10', 10);
+    const exerciseType = searchParams.get('type') || 'both';
     const words = vocabularyList.slice(0, amount);
     if (exerciseType === 'flashcards') {
         return words.map(wordData => ({ wordData, type: 'guess' }));
@@ -94,17 +93,28 @@ function PracticeSession() {
         { wordData, type: 'guess' },
         { wordData, type: 'write' },
     ]));
-  }, [amount, exerciseType]);
+  }, [searchParams]);
   
+  const [practiceList, setPracticeList] = useState<PracticeItem[]>(initialPracticeList);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(false);
+  const [completedCount, setCompletedCount] = useState(0);
 
-  const progressPercentage = ((currentIndex + 1) / practiceList.length) * 100;
+
+  const progressPercentage = ((completedCount) / practiceList.length) * 100;
   const currentItem = practiceList[currentIndex];
 
-  const handleNext = () => {
+  const handleNext = (isCorrect?: boolean) => {
+    if (!isCorrect && currentItem.type === 'write') {
+        // Re-add the failed item to the end of the list
+        setPracticeList(prev => [...prev, currentItem]);
+    }
+
     if (currentIndex < practiceList.length - 1) {
       setCurrentIndex(prev => prev + 1);
+      if (isCorrect !== false) {
+        setCompletedCount(prev => prev + 1);
+      }
     } else {
       setSessionFinished(true);
     }
@@ -152,7 +162,7 @@ function PracticeSession() {
         </AlertDialog>
         <Progress value={progressPercentage} className="flex-1" />
         <div className="w-16 text-right font-semibold">
-          {currentIndex + 1} / {practiceList.length}
+          {completedCount} / {practiceList.length}
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">

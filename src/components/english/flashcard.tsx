@@ -30,7 +30,7 @@ type WordData = {
 
 type FlashcardProps = {
     wordData: WordData;
-    onNext: () => void;
+    onNext: (isCorrect?: boolean) => void;
 }
 
 export function Flashcard({ wordData, onNext }: FlashcardProps) {
@@ -45,7 +45,7 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
     // In a real app, you'd save the feedback here
     setShowWord(false);
     setShowExamples(false);
-    onNext();
+    onNext(true); // Assume flashcard review is always "correct" for session progress
   }
 
   return (
@@ -79,7 +79,7 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
                             <CarouselItem key={index}>
                                 <div className="p-1">
                                 <p className="text-center text-lg italic text-muted-foreground">
-                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
+                                    "&lt;BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
                                 </p>
                                 </div>
                             </CarouselItem>
@@ -107,7 +107,7 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
                             <CarouselItem key={index}>
                                 <div className="p-1">
                                 <p className="text-center text-lg italic text-muted-foreground">
-                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
+                                    "&lt;BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
                                 </p>
                                 </div>
                             </CarouselItem>
@@ -160,5 +160,3 @@ export function Flashcard({ wordData, onNext }: FlashcardProps) {
     </Card>
   );
 }
-
-    

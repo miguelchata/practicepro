@@ -9,6 +9,7 @@ import {
   Settings,
   Target,
   Timer,
+  Languages,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/practice', label: 'Practice', icon: Timer },
   { href: '/journal', label: 'Journal', icon: Book },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
+  { href: '/english', label: 'English', icon: Languages },
 ];
 
 const bottomNavItems = [

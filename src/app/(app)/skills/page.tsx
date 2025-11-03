@@ -220,12 +220,12 @@ export default function SkillsPage() {
                         <CardContent className="flex-grow flex flex-col justify-end">
                             <div className="space-y-2">
                                 <Progress value={(skill.totalHours / 250) * 100} />
-                                <div className="flex items-baseline justify-between">
-                                    <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                                        <Timer className="h-5 w-5 text-muted-foreground" />
+                                <div className="flex items-baseline justify-between text-sm font-medium text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                        <Timer className="h-4 w-4" />
                                         <span>{formatTotalHours(skill.totalHours)}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                    <div className="flex items-center gap-2">
                                         <ListChecks className="h-4 w-4" />
                                         <span>{allGoals(skill).length} Goals</span>
                                     </div>

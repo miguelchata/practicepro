@@ -29,20 +29,21 @@ type FlashcardProps = {
     advanceToNextCard: (updatedItem: VocabularyItem) => void;
 }
 
+type FeedbackState = 'idle' | 'answerVisible' | 'showingAccuracy';
+
 export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: FlashcardProps) {
   const { wordData } = practiceItem;
-  const [showWord, setShowWord] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<'idle' | 'showingAccuracy'>('idle');
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
   const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
 
   const handleShowAnswer = () => {
-    setShowWord(true);
+    setFeedbackState('answerVisible');
   }
 
   const handleFeedback = async (quality: number) => {
-    if (feedbackState !== 'idle') return;
-
+    if (feedbackState !== 'answerVisible') return;
+    
     const updatedItem = await updateWordStats(wordData, quality, practiceItem);
     setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
     setFeedbackState('showingAccuracy');
@@ -50,12 +51,11 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
     // Automatically advance after a short delay
     setTimeout(() => {
         advanceToNextCard(updatedItem);
-    }, 800);
+    }, 1200);
   }
 
   useEffect(() => {
     // Reset state when wordData changes
-    setShowWord(false);
     setShowExamples(false);
     setFeedbackState('idle');
     setNewAccuracy(null);
@@ -64,6 +64,8 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
   const handleShowExamples = () => {
     setShowExamples(true);
   }
+
+  const wordIsVisible = feedbackState === 'answerVisible' || feedbackState === 'showingAccuracy';
 
   return (
     <Card className="w-full max-w-2xl">
@@ -78,13 +80,13 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
             <p className="text-muted-foreground text-lg">{wordData.definition}</p>
         </div>
         
-        {wordData.examples && wordData.examples.length > 0 && !showExamples && !showWord && (
+        {wordData.examples && wordData.examples.length > 0 && !showExamples && !wordIsVisible && (
             <div className="text-center">
                 <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
             </div>
         )}
         
-        {wordData.examples && wordData.examples.length > 0 && (showExamples || showWord) && (
+        {wordData.examples && wordData.examples.length > 0 && (showExamples || wordIsVisible) && (
             <>
                 <Separator/>
                 <div className="relative pt-6">
@@ -99,7 +101,7 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
                             <CarouselItem key={index}>
                                 <div className="p-1">
                                     <p className="text-center text-lg italic text-muted-foreground">
-                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
+                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={wordIsVisible} />&quot;
                                     </p>
                                 </div>
                             </CarouselItem>
@@ -112,7 +114,7 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
             </>
         )}
 
-        {showWord && (
+        {wordIsVisible && (
             <div className="text-center pt-4 space-y-1">
                 <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
                 {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
@@ -121,32 +123,27 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
 
 
         <div className="pt-6">
-            {!showWord ? (
+            {feedbackState === 'idle' ? (
                 <div className="text-center">
                     <Button onClick={handleShowAnswer}>Show Answer</Button>
                 </div>
-            ) : feedbackState === 'showingAccuracy' ? (
-                <div className="space-y-2 text-center">
-                    <Progress value={newAccuracy} />
-                    <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
-                </div>
-            ) : (
+            ) : feedbackState === 'answerVisible' ? (
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
                     <p className="text-center font-semibold">How well did you remember it?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <Button variant="destructive" className="h-auto" onClick={() => handleFeedback(1)} disabled={feedbackState !== 'idle'}>
+                        <Button variant="destructive" className="h-auto" onClick={() => handleFeedback(1)}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">NO</span>
                                 <span className="text-xs font-normal">Repeat</span>
                             </div>
                         </Button>
-                            <Button variant="outline" className="h-auto" onClick={() => handleFeedback(3)} disabled={feedbackState !== 'idle'}>
+                            <Button variant="outline" className="h-auto" onClick={() => handleFeedback(3)}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">Sort of</span>
                                 <span className="text-xs font-normal">Keep studying</span>
                             </div>
                         </Button>
-                            <Button variant="default" className="h-auto" onClick={() => handleFeedback(5)} disabled={feedbackState !== 'idle'}>
+                            <Button variant="default" className="h-auto" onClick={() => handleFeedback(5)}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">YES</span>
                                 <span className="text-xs font-normal">I've learned</span>
@@ -154,7 +151,12 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
                         </Button>
                     </div>
                 </div>
-            )}
+            ) : feedbackState === 'showingAccuracy' ? (
+                 <div className="space-y-2 text-center">
+                    <Progress value={newAccuracy} />
+                    <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
+                </div>
+            ) : null}
         </div>
         </CardContent>
     </Card>

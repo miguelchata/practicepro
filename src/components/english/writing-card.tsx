@@ -41,6 +41,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
   const [itemToAdvance, setItemToAdvance] = useState<VocabularyItem | null>(null);
   const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
+  const [showExamples, setShowExamples] = useState(false);
   
   useEffect(() => {
     // Reset state for next card
@@ -49,6 +50,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
     setFeedbackState('idle');
     setItemToAdvance(null);
     setNewAccuracy(null);
+    setShowExamples(false);
   }, [wordData.id]);
   
   useEffect(() => {
@@ -83,6 +85,10 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
     advanceToNextCard(itemToAdvance);
   }
 
+  const handleShowExamples = () => {
+    setShowExamples(true);
+  }
+
 
   return (
     <Card className="w-full max-w-2xl">
@@ -97,30 +103,38 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                 <p className="text-muted-foreground text-lg">{wordData.definition}</p>
             </div>
             
-            {wordData.examples && wordData.examples.length > 0 && <Separator/>}
-            {wordData.examples && wordData.examples.length > 0 && (
-              <div className="relative pt-6">
-                  <Carousel
-                      opts={{
-                          align: "start",
-                      }}
-                      className="w-full px-4"
-                  >
-                      <CarouselContent>
-                          {wordData.examples.map((example, index) => (
-                          <CarouselItem key={index}>
-                              <div className="p-1">
-                                <p className="text-center text-lg italic text-muted-foreground">
-                                    &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={feedbackState !== 'idle' && !isCorrect} />&quot;
-                                </p>
-                              </div>
-                          </CarouselItem>
-                          ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                  </Carousel>
-              </div>
+            {wordData.examples && wordData.examples.length > 0 && !showExamples && feedbackState === 'idle' && (
+                <div className="text-center">
+                    <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
+                </div>
+            )}
+
+            {wordData.examples && wordData.examples.length > 0 && showExamples && (
+              <>
+                <Separator/>
+                <div className="relative pt-6">
+                    <Carousel
+                        opts={{
+                            align: "start",
+                        }}
+                        className="w-full px-4"
+                    >
+                        <CarouselContent>
+                            {wordData.examples.map((example, index) => (
+                            <CarouselItem key={index}>
+                                <div className="p-1">
+                                  <p className="text-center text-lg italic text-muted-foreground">
+                                      &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={feedbackState !== 'idle' && !isCorrect} />&quot;
+                                  </p>
+                                </div>
+                            </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                    </Carousel>
+                </div>
+              </>
             )}
             
             {feedbackState === 'idle' && (
@@ -156,7 +170,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                         </div>
                     )}
                     <div className={`relative rounded-md p-2 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
-                        <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
+                        {feedbackState === 'showingResult' && <p>{isCorrect ? "Correct!" : "Incorrect."}</p>}
                     </div>
                     
                     {(feedbackState === 'showingAccuracy' || feedbackState === 'showingFinal') && newAccuracy !== null && (

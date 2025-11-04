@@ -28,13 +28,12 @@ type ExerciseType = 'guess' | 'write';
 type PracticeItem = {
     wordData: VocabularyItem;
     type: ExerciseType;
-    // Keep track of recent qualities for lapse detection
-    recentQualities?: number[];
+    sessionAttempts?: number;
     sessionConsecutiveFails?: number;
+    recentQualities?: number[];
     lastShownAt?: number;
 };
 
-const MAX_CARDS_PER_SESSION = 20;
 const MASTERED_INTERVAL_DAYS = 21;
 const LEARNING_INTERVAL_DEFAULT = 1;
 const MAX_INTERVAL_DAYS = 60;
@@ -74,18 +73,19 @@ function PracticeSession() {
   }, [searchParams, vocabularyList, loading]);
   
   const [practiceList, setPracticeList] = useState<PracticeItem[]>([]);
+  const [practiceIndexes, setPracticeIndexes] = useState<number[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(false);
   
   useEffect(() => {
       if(initialPracticeList.length > 0) {
           setPracticeList(initialPracticeList);
+          setPracticeIndexes(Array.from({ length: initialPracticeList.length }, (_, i) => i));
       }
   }, [initialPracticeList]);
 
-  const totalItems = useMemo(() => practiceList.length, [practiceList]);
-  const progressPercentage = totalItems > 0 ? ((currentIndex) / totalItems) * 100 : 0;
-  const currentItem = practiceList[currentIndex];
+  const totalItems = useMemo(() => practiceIndexes.length, [practiceIndexes]);
+  const currentItem = practiceList[practiceIndexes[currentIndex]];
 
 
   const handleCardAdvance = async (quality: number, exerciseType: ExerciseType) => {
@@ -155,25 +155,37 @@ function PracticeSession() {
   
     // Persist once
     await updateVocabularyItem(item.id, updates);
+
+    // Update item in main list to have latest data
+    const updatedItemInPracticeList = { ...currentItem, wordData: { ...item, ...updates }};
+    setPracticeList(prev => prev.map(p => p.wordData.id === updatedItemInPracticeList.wordData.id ? updatedItemInPracticeList : p));
   
-    let shouldRequeue = false;
-    if (quality < 5) {
-      shouldRequeue = true;
+    let newIndexes = [...practiceIndexes];
+    if (newAccuracy >= 0.70) {
+        const indexToRemove = practiceIndexes[currentIndex];
+        newIndexes = practiceIndexes.filter(idx => idx !== indexToRemove);
     }
 
-    if (shouldRequeue) {
-        const updatedPracticeItem: PracticeItem = {
-          ...currentItem,
-          recentQualities: [...(currentItem.recentQualities ?? []), quality],
-        };
-        setPracticeList(prev => [...prev, updatedPracticeItem]);
+    if (newIndexes.length === 0) {
+        setSessionFinished(true);
+        return;
     }
 
-    if (currentIndex + 1 < practiceList.length) {
-      setCurrentIndex(prev => prev + 1);
+    let nextIndex = currentIndex;
+    if (newAccuracy >= 0.70) {
+      // If we removed an item, and it was before the last one in the old list,
+      // the index effectively stays the same to point to the next item.
+      // If we removed the last item, we need to wrap around.
+      if (currentIndex >= newIndexes.length) {
+          nextIndex = 0; // wrap around
+      }
     } else {
-      setSessionFinished(true);
+        // If we didn't remove, just move to the next.
+        nextIndex = (currentIndex + 1) % newIndexes.length;
     }
+
+    setPracticeIndexes(newIndexes);
+    setCurrentIndex(nextIndex);
   }
 
 
@@ -185,7 +197,7 @@ function PracticeSession() {
       )
   }
 
-  if (sessionFinished) {
+  if (sessionFinished || practiceIndexes.length === 0) {
     return (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
             <h2 className="text-2xl font-bold font-headline mb-2">Session Complete!</h2>
@@ -204,6 +216,9 @@ function PracticeSession() {
         </div>
       );
   }
+
+  const initialTotal = initialPracticeList.length;
+  const progressPercentage = initialTotal > 0 ? ((initialTotal - totalItems) / initialTotal) * 100 : 0;
 
   return (
     <>
@@ -231,7 +246,7 @@ function PracticeSession() {
         </AlertDialog>
         <Progress value={progressPercentage} className="flex-1" />
         <div className="w-16 text-right font-semibold">
-          {Math.min(currentIndex + 1, totalItems)} / {totalItems}
+          {initialTotal - totalItems} / {initialTotal}
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">

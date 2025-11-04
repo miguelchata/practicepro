@@ -160,5 +160,3 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
     </Card>
   );
 }
-
-    

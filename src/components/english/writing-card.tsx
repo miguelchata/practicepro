@@ -24,7 +24,6 @@ import type { VocabularyItem } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import type { PracticeItem } from '@/app/(app)/english/practice/page';
 import { Progress } from '../ui/progress';
-import { cn } from '@/lib/utils';
 
 type WritingCardProps = {
     practiceItem: PracticeItem;
@@ -56,11 +55,11 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
   
   useEffect(() => {
     if (feedbackState === 'showingResult') {
-      const timer = setTimeout(() => setFeedbackState('showingAccuracy'), 400);
+      const timer = setTimeout(() => setFeedbackState('showingAccuracy'), 800);
       return () => clearTimeout(timer);
     }
     if (feedbackState === 'showingAccuracy') {
-      const timer = setTimeout(() => setFeedbackState('showingFinal'), 400);
+      const timer = setTimeout(() => setFeedbackState('showingFinal'), 800);
       return () => clearTimeout(timer);
     }
   }, [feedbackState]);
@@ -110,7 +109,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                 </div>
             )}
 
-            {wordData.examples && wordData.examples.length > 0 && (showExamples || feedbackState !== 'idle') && (
+            {(showExamples || feedbackState !== 'idle') && wordData.examples && wordData.examples.length > 0 && (
               <>
                 <Separator/>
                 <div className="relative pt-6">
@@ -160,25 +159,22 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
             {feedbackState !== 'idle' && (
                 <div className="space-y-4 text-center pt-4">
                     <div className="text-center space-y-1">
-                        <CardTitle className={`font-headline text-4xl ${!isCorrect && 'text-primary'}`}>{wordData.word}</CardTitle>
+                        <CardTitle className={`font-headline text-4xl`}>{wordData.word}</CardTitle>
                         {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                     </div>
 
                      <div className="rounded-lg border bg-muted/50 p-4 space-y-4 min-h-[140px] flex flex-col justify-center">
-                        
                         {feedbackState === 'showingResult' && (
                             <div className={`relative rounded-md p-2 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
                                 <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
                             </div>
                         )}
-
                         {feedbackState === 'showingAccuracy' && newAccuracy !== null && (
                             <div className="space-y-2 text-center pt-2">
                                 <Progress value={newAccuracy} />
                                 <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
                             </div>
                         )}
-
                         {feedbackState === 'showingFinal' && (
                           <>
                             {!isCorrect && (

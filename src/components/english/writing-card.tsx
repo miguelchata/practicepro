@@ -81,7 +81,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
   };
 
   const handleContinue = () => {
-    if (!itemToAdvance) return;
+    if (!itemToAdvance || feedbackState !== 'showingFinal') return;
     advanceToNextCard(itemToAdvance);
   }
   

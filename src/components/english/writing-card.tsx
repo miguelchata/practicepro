@@ -144,10 +144,6 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
 
             {feedbackState !== 'idle' && (
                 <div className="space-y-4 text-center pt-4">
-                    <div className={`relative rounded-md p-2 mb-4 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
-                        <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
-                    </div>
-
                     {isCorrect ? (
                         <div className="text-center space-y-1">
                             <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
@@ -159,6 +155,9 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                             {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                         </div>
                     )}
+                    <div className={`relative rounded-md p-2 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
+                        <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
+                    </div>
                     
                     {(feedbackState === 'showingAccuracy' || feedbackState === 'showingFinal') && newAccuracy !== null && (
                         <div className="space-y-2 text-center pt-2">

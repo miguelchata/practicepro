@@ -22,16 +22,19 @@ import { BlurredWord } from '@/components/english/blurred-word';
 import { Separator } from '../ui/separator';
 import type { VocabularyItem } from '@/lib/types';
 import { Badge } from '../ui/badge';
+import type { PracticeItem } from '@/app/(app)/english/practice/page';
 
 type WritingCardProps = {
-    wordData: VocabularyItem;
-    onAdvance: (quality: number) => void;
+    practiceItem: PracticeItem;
+    updateWordStats: (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem) => Promise<VocabularyItem>;
+    advanceToNextCard: (updatedItem: VocabularyItem) => void;
 }
 
 type FeedbackState = 'idle' | 'checking' | 'showingAccuracy' | 'result';
 
 
-export function WritingCard({ wordData, onAdvance }: WritingCardProps) {
+export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }: WritingCardProps) {
+  const { wordData } = practiceItem;
   const [userInput, setUserInput] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
@@ -58,8 +61,10 @@ export function WritingCard({ wordData, onAdvance }: WritingCardProps) {
     }, 800);
   };
 
-  const handleContinue = () => {
-    onAdvance(isCorrect ? 5 : 1);
+  const handleContinue = async () => {
+    const quality = isCorrect ? 5 : 1;
+    const updatedItem = await updateWordStats(wordData, quality, practiceItem);
+    advanceToNextCard(updatedItem);
   }
 
 
@@ -152,3 +157,5 @@ export function WritingCard({ wordData, onAdvance }: WritingCardProps) {
     </Card>
   );
 }
+
+    

@@ -25,7 +25,7 @@ import type { VocabularyItem } from '@/lib/types';
 
 
 type ExerciseType = 'guess' | 'write';
-type PracticeItem = {
+export type PracticeItem = {
     wordData: VocabularyItem;
     type: ExerciseType;
     sessionAttempts?: number;
@@ -151,6 +151,7 @@ function PracticeSession() {
   
     await updateVocabularyItem(item.id, updates);
 
+    // Return the locally updated item so the UI can react instantly
     return { ...item, ...updates };
   };
 
@@ -187,19 +188,6 @@ function PracticeSession() {
     setPracticeIndexes(newIndexes);
     setCurrentIndex(nextIndex);
   };
-
-
-  const handleCardAdvance = async (quality: number) => {
-    if (!currentItem) return;
-    
-    const updatedItem = await updateWordStats(currentItem.wordData, quality, currentItem);
-
-    // Short delay to allow user to see feedback (e.g. on flashcard)
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    advanceToNextCard(updatedItem);
-  }
-
 
   if (loading || (practiceList.length === 0 && !sessionFinished)) {
       return (
@@ -262,8 +250,8 @@ function PracticeSession() {
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q)} />}
-        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q)} />}
+        {currentItem.type === 'guess' && <Flashcard practiceItem={currentItem} updateWordStats={updateWordStats} advanceToNextCard={advanceToNextCard} />}
+        {currentItem.type === 'write' && <WritingCard practiceItem={currentItem} updateWordStats={updateWordStats} advanceToNextCard={advanceToNextCard} />}
       </main>
     </>
   );
@@ -279,3 +267,5 @@ export default function PracticePage() {
         </div>
     )
 }
+
+    

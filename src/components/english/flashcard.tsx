@@ -21,13 +21,16 @@ import { CardTitle } from '../ui/card';
 import type { VocabularyItem } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
+import type { PracticeItem } from '@/app/(app)/english/practice/page';
 
 type FlashcardProps = {
-    wordData: VocabularyItem;
-    onAdvance: (quality: number) => Promise<number | undefined>; // Function to advance to the next card, returns new accuracy
+    practiceItem: PracticeItem;
+    updateWordStats: (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem) => Promise<VocabularyItem>;
+    advanceToNextCard: (updatedItem: VocabularyItem) => void;
 }
 
-export function Flashcard({ wordData, onAdvance }: FlashcardProps) {
+export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: FlashcardProps) {
+  const { wordData } = practiceItem;
   const [showWord, setShowWord] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [feedbackState, setFeedbackState] = useState<'idle' | 'showingAccuracy'>('idle');
@@ -39,12 +42,15 @@ export function Flashcard({ wordData, onAdvance }: FlashcardProps) {
 
   const handleFeedback = async (quality: number) => {
     if (feedbackState !== 'idle') return;
-    
-    const accuracy = await onAdvance(quality);
-    if (accuracy !== undefined) {
-        setNewAccuracy(accuracy * 100); // Convert to percentage
-    }
+
+    const updatedItem = await updateWordStats(wordData, quality, practiceItem);
+    setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
     setFeedbackState('showingAccuracy');
+    
+    // Automatically advance after a short delay
+    setTimeout(() => {
+        advanceToNextCard(updatedItem);
+    }, 800);
   }
 
   useEffect(() => {
@@ -154,3 +160,5 @@ export function Flashcard({ wordData, onAdvance }: FlashcardProps) {
     </Card>
   );
 }
+
+    

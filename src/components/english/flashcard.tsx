@@ -37,6 +37,7 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
   const [showWord, setShowWord] = useState(false);
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
   const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
+  const [itemToAdvance, setItemToAdvance] = useState<VocabularyItem | null>(null);
 
   const handleShowAnswer = () => {
     setShowWord(true);
@@ -46,14 +47,20 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
     if (!showWord || feedbackState === 'showingAccuracy') return;
     
     const updatedItem = await updateWordStats(wordData, quality, practiceItem);
+    setItemToAdvance(updatedItem);
     setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
     setFeedbackState('showingAccuracy');
-    
-    // Automatically advance after a short delay
-    setTimeout(() => {
-        advanceToNextCard(updatedItem);
-    }, 800);
   }
+
+  useEffect(() => {
+    if (feedbackState === 'showingAccuracy' && itemToAdvance) {
+      const timer = setTimeout(() => {
+        advanceToNextCard(itemToAdvance);
+      }, 1200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [feedbackState, itemToAdvance, advanceToNextCard]);
 
   useEffect(() => {
     // Reset state when wordData.id changes, not the whole object
@@ -61,6 +68,7 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
     setShowWord(false);
     setFeedbackState('idle');
     setNewAccuracy(null);
+    setItemToAdvance(null);
   }, [wordData.id]);
   
   const handleShowExamples = () => {

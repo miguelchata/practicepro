@@ -30,13 +30,11 @@ type PracticeItem = {
     type: ExerciseType;
     // Keep track of recent qualities for lapse detection
     recentQualities?: number[];
-    sessionAttempts?: number;
     sessionConsecutiveFails?: number;
     lastShownAt?: number;
 };
 
 const MAX_CARDS_PER_SESSION = 20;
-const MAX_PER_CARD_PER_SESSION = 2; // new max
 const MASTERED_INTERVAL_DAYS = 21;
 const LEARNING_INTERVAL_DEFAULT = 1;
 const MAX_INTERVAL_DAYS = 60;
@@ -158,21 +156,14 @@ function PracticeSession() {
     // Persist once
     await updateVocabularyItem(item.id, updates);
   
-    // --- 4) improved requeue rules with MAX_PER_CARD_PER_SESSION = 2 ---
-    const previousSessionAttempts = currentItem.sessionAttempts ?? 0;
-    const sessionAttempts = previousSessionAttempts + 1;
-  
     let shouldRequeue = false;
-    if (quality <= POOR_QUALITY_THRESHOLD) { // e.g. 1
-      shouldRequeue = sessionAttempts < MAX_PER_CARD_PER_SESSION;
-    } else if (quality < 5) { // e.g. 3
-      shouldRequeue = previousSessionAttempts === 0 && sessionAttempts < MAX_PER_CARD_PER_SESSION;
+    if (quality < 5) {
+      shouldRequeue = true;
     }
 
     if (shouldRequeue) {
         const updatedPracticeItem: PracticeItem = {
           ...currentItem,
-          sessionAttempts: sessionAttempts,
           recentQualities: [...(currentItem.recentQualities ?? []), quality],
         };
         setPracticeList(prev => [...prev, updatedPracticeItem]);

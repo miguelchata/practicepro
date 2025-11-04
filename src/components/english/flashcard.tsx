@@ -20,35 +20,39 @@ import { BlurredWord } from '@/components/english/blurred-word';
 import { CardTitle } from '../ui/card';
 import type { VocabularyItem } from '@/lib/types';
 import { Badge } from '../ui/badge';
-import { ChevronsRight } from 'lucide-react';
+import { Progress } from '../ui/progress';
 
 type FlashcardProps = {
     wordData: VocabularyItem;
-    onAdvance: (quality: number) => void; // Function to advance to the next card
+    onAdvance: (quality: number) => Promise<number | undefined>; // Function to advance to the next card, returns new accuracy
 }
 
 export function Flashcard({ wordData, onAdvance }: FlashcardProps) {
   const [showWord, setShowWord] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
-  const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [feedbackState, setFeedbackState] = useState<'idle' | 'showingAccuracy'>('idle');
+  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
 
   const handleShowAnswer = () => {
     setShowWord(true);
   }
 
-  const handleFeedback = (quality: number) => {
-    setFeedbackGiven(true);
-    // Automatically advance after a short delay
-    setTimeout(() => {
-        onAdvance(quality);
-    }, 800);
+  const handleFeedback = async (quality: number) => {
+    if (feedbackState !== 'idle') return;
+    
+    const accuracy = await onAdvance(quality);
+    if (accuracy !== undefined) {
+        setNewAccuracy(accuracy * 100); // Convert to percentage
+    }
+    setFeedbackState('showingAccuracy');
   }
 
   useEffect(() => {
     // Reset state when wordData changes
     setShowWord(false);
     setShowExamples(false);
-    setFeedbackGiven(false);
+    setFeedbackState('idle');
+    setNewAccuracy(null);
   }, [wordData]);
   
   const handleShowExamples = () => {
@@ -115,23 +119,28 @@ export function Flashcard({ wordData, onAdvance }: FlashcardProps) {
                 <div className="text-center">
                     <Button onClick={handleShowAnswer}>Show Answer</Button>
                 </div>
+            ) : feedbackState === 'showingAccuracy' ? (
+                <div className="space-y-2 text-center">
+                    <Progress value={newAccuracy} />
+                    <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
+                </div>
             ) : (
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
                     <p className="text-center font-semibold">How well did you remember it?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <Button variant="destructive" className="h-auto" onClick={() => handleFeedback(1)} disabled={feedbackGiven}>
+                        <Button variant="destructive" className="h-auto" onClick={() => handleFeedback(1)} disabled={feedbackState !== 'idle'}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">NO</span>
                                 <span className="text-xs font-normal">Repeat</span>
                             </div>
                         </Button>
-                            <Button variant="outline" className="h-auto" onClick={() => handleFeedback(3)} disabled={feedbackGiven}>
+                            <Button variant="outline" className="h-auto" onClick={() => handleFeedback(3)} disabled={feedbackState !== 'idle'}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">Sort of</span>
                                 <span className="text-xs font-normal">Keep studying</span>
                             </div>
                         </Button>
-                            <Button variant="default" className="h-auto" onClick={() => handleFeedback(5)} disabled={feedbackGiven}>
+                            <Button variant="default" className="h-auto" onClick={() => handleFeedback(5)} disabled={feedbackState !== 'idle'}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">YES</span>
                                 <span className="text-xs font-normal">I've learned</span>

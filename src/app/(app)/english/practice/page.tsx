@@ -159,6 +159,8 @@ function PracticeSession() {
     // Update item in main list to have latest data
     const updatedItemInPracticeList = { ...currentItem, wordData: { ...item, ...updates }};
     setPracticeList(prev => prev.map(p => p.wordData.id === updatedItemInPracticeList.wordData.id ? updatedItemInPracticeList : p));
+
+    await new Promise(resolve => setTimeout(resolve, 800));
   
     let newIndexes = [...practiceIndexes];
     if (newAccuracy >= 0.70) {
@@ -168,7 +170,7 @@ function PracticeSession() {
 
     if (newIndexes.length === 0) {
         setSessionFinished(true);
-        return;
+        return newAccuracy;
     }
 
     let nextIndex = currentIndex;
@@ -186,6 +188,7 @@ function PracticeSession() {
 
     setPracticeIndexes(newIndexes);
     setCurrentIndex(nextIndex);
+    return newAccuracy;
   }
 
 

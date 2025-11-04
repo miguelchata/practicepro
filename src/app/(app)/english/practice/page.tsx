@@ -87,15 +87,11 @@ function PracticeSession() {
   const totalItems = useMemo(() => practiceIndexes.length, [practiceIndexes]);
   const currentItem = practiceList[practiceIndexes[currentIndex]];
 
-
-  const handleCardAdvance = async (quality: number, exerciseType: ExerciseType) => {
-    if (!currentItem) return;
-
+  const updateWordStats = async (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem): Promise<VocabularyItem> => {
     function daysBetween(a: Date, b: Date) {
         return Math.abs((a.getTime() - b.getTime()) / (24 * 60 * 60 * 1000));
     }
-    
-    const item = currentItem.wordData;
+
     const now = new Date();
     const nowIsoStr = now.toISOString();
   
@@ -112,7 +108,7 @@ function PracticeSession() {
   
     // --- 2) recent-poor detection ---
     const persisted = item.recentAttempts ?? [];
-    const inMemoryNums = currentItem.recentQualities ?? [];
+    const inMemoryNums = currentPracticeItem.recentQualities ?? [];
     const inMemoryMapped = inMemoryNums.map(q => ({ quality: q, at: nowIsoStr }));
     const unified = [...persisted.slice(-5), ...inMemoryMapped].slice(-5);
     const poorRecent = unified.filter(a => a.quality <= POOR_QUALITY_THRESHOLD && daysBetween(new Date(a.at), now) <= RECENT_POOR_WINDOW_DAYS);
@@ -120,7 +116,7 @@ function PracticeSession() {
     const lastReviewDate = item.lastReviewedAt ? new Date(item.lastReviewedAt) : now;
     const daysSinceLastReview = daysBetween(now, lastReviewDate);
   
-    // --- 3) status & nextReviewAt rules (unchanged) ---
+    // --- 3) status & nextReviewAt rules ---
     const updates: Partial<VocabularyItem> = {
       lastQuality: quality,
       repetitions: newRepetitions,
@@ -153,33 +149,35 @@ function PracticeSession() {
       updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * 24 * 60 * 60 * 1000).toISOString();
     }
   
-    // Persist once
     await updateVocabularyItem(item.id, updates);
 
-    // Update item in main list to have latest data
-    const updatedItemInPracticeList = { ...currentItem, wordData: { ...item, ...updates }};
-    setPracticeList(prev => prev.map(p => p.wordData.id === updatedItemInPracticeList.wordData.id ? updatedItemInPracticeList : p));
+    return { ...item, ...updates };
+  };
 
-    await new Promise(resolve => setTimeout(resolve, 800));
-  
+  const advanceToNextCard = (updatedItem: VocabularyItem) => {
+    const originalIndex = practiceIndexes[currentIndex];
+    
+    // Update item in main list to have latest data
+    setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
+
     let newIndexes = [...practiceIndexes];
+    const newAccuracy = updatedItem.accuracy ?? 0;
+
     if (newAccuracy >= 0.70) {
-        const indexToRemove = practiceIndexes[currentIndex];
-        newIndexes = practiceIndexes.filter(idx => idx !== indexToRemove);
+        newIndexes = practiceIndexes.filter((_, i) => i !== currentIndex);
     }
 
     if (newIndexes.length === 0) {
         setSessionFinished(true);
-        return newAccuracy;
+        return;
     }
 
     let nextIndex = currentIndex;
     if (newAccuracy >= 0.70) {
-      // If we removed an item, and it was before the last one in the old list,
-      // the index effectively stays the same to point to the next item.
-      // If we removed the last item, we need to wrap around.
+      // If we removed an item, the index effectively stays the same to point to the next item,
+      // unless it was the last item, in which case we wrap around.
       if (currentIndex >= newIndexes.length) {
-          nextIndex = 0; // wrap around
+          nextIndex = 0;
       }
     } else {
         // If we didn't remove, just move to the next.
@@ -188,7 +186,18 @@ function PracticeSession() {
 
     setPracticeIndexes(newIndexes);
     setCurrentIndex(nextIndex);
-    return newAccuracy;
+  };
+
+
+  const handleCardAdvance = async (quality: number) => {
+    if (!currentItem) return;
+    
+    const updatedItem = await updateWordStats(currentItem.wordData, quality, currentItem);
+
+    // Short delay to allow user to see feedback (e.g. on flashcard)
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    advanceToNextCard(updatedItem);
   }
 
 
@@ -253,8 +262,8 @@ function PracticeSession() {
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q, 'guess')} />}
-        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q, 'write')} />}
+        {currentItem.type === 'guess' && <Flashcard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q)} />}
+        {currentItem.type === 'write' && <WritingCard wordData={currentItem.wordData} onAdvance={(q) => handleCardAdvance(q)} />}
       </main>
     </>
   );

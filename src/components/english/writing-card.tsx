@@ -31,7 +31,7 @@ type WritingCardProps = {
     advanceToNextCard: (updatedItem: VocabularyItem) => void;
 }
 
-type FeedbackState = 'idle' | 'checking' | 'result' | 'showingAccuracy';
+type FeedbackState = 'idle' | 'result';
 
 
 export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }: WritingCardProps) {
@@ -51,38 +51,25 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
     setNewAccuracy(null);
   }, [wordData.id]);
 
-  useEffect(() => {
-    if (feedbackState === 'showingAccuracy' && itemToAdvance) {
-        const timer = setTimeout(() => {
-            advanceToNextCard(itemToAdvance);
-        }, 800);
-        return () => clearTimeout(timer);
-    }
-  }, [feedbackState, itemToAdvance, advanceToNextCard]);
 
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (feedbackState !== 'idle') return;
     
     const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
     setIsCorrect(correct);
-    setFeedbackState('checking');
-
-    // Show result after a short delay
-    setTimeout(() => {
-      setFeedbackState('result');
-    }, 800);
-  };
-
-  const handleContinue = async () => {
-    if (feedbackState !== 'result') return;
-
-    const quality = isCorrect ? 5 : 1;
+    
+    const quality = correct ? 5 : 1;
     const updatedItem = await updateWordStats(wordData, quality, practiceItem);
     setItemToAdvance(updatedItem);
     setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
-    setFeedbackState('showingAccuracy');
+
+    setFeedbackState('result');
+  };
+
+  const handleContinue = async () => {
+    if (feedbackState !== 'result' || !itemToAdvance) return;
+    advanceToNextCard(itemToAdvance);
   }
 
 
@@ -143,16 +130,13 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                 </form>
             )}
 
-            {feedbackState === 'checking' && (
-                <div className="space-y-4 text-center pt-4">
-                     <div className={`relative rounded-md p-4 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
-                        <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
-                    </div>
-                </div>
-            )}
 
             {feedbackState === 'result' && (
                 <div className="space-y-4 text-center pt-4">
+                     <div className={`relative rounded-md p-2 mb-4 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
+                        <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
+                    </div>
+
                     {isCorrect ? (
                         <div className="text-center space-y-1">
                             <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
@@ -167,19 +151,20 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                             </div>
                         </div>
                     )}
+                    
+                    {newAccuracy !== null && (
+                        <div className="space-y-2 text-center pt-2">
+                            <Progress value={newAccuracy} />
+                            <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
+                        </div>
+                    )}
+
 
                     <div className="rounded-lg border bg-muted/50 p-4">
                         <Button onClick={handleContinue} className="w-full">
                             Continue <ChevronsRight className="ml-2 h-5 w-5" />
                         </Button>
                     </div>
-                </div>
-            )}
-
-            {feedbackState === 'showingAccuracy' && (
-                 <div className="space-y-2 text-center pt-4">
-                    <Progress value={newAccuracy} />
-                    <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
                 </div>
             )}
         </CardContent>

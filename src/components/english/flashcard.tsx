@@ -51,14 +51,14 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
     // Automatically advance after a short delay
     setTimeout(() => {
         advanceToNextCard(updatedItem);
-    }, 1200);
+    }, 800);
   }
 
   useEffect(() => {
     // Reset state when wordData changes
-    setShowExamples(false);
-    setFeedbackState('idle');
-    setNewAccuracy(null);
+        setShowExamples(false);
+        setFeedbackState('idle');
+        setNewAccuracy(null);
   }, [wordData]);
   
   const handleShowExamples = () => {

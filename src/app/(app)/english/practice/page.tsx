@@ -158,9 +158,6 @@ function PracticeSession() {
   const advanceToNextCard = (updatedItem: VocabularyItem) => {
     const originalIndex = practiceIndexes[currentIndex];
     
-    // Update item in main list to have latest data
-    setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
-
     let newIndexes = [...practiceIndexes];
     const newAccuracy = updatedItem.accuracy ?? 0;
 
@@ -187,6 +184,9 @@ function PracticeSession() {
 
     setPracticeIndexes(newIndexes);
     setCurrentIndex(nextIndex);
+    
+    // Update item in main list to have latest data
+    setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
   };
 
   if (loading || (practiceList.length === 0 && !sessionFinished)) {

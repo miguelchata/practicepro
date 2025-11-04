@@ -158,7 +158,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
 
             {feedbackState !== 'idle' && (
                 <div className="space-y-4 text-center pt-4">
-                    <div className="text-center space-y-1">
+                     <div className="text-center space-y-1">
                         <CardTitle className={`font-headline text-4xl`}>{wordData.word}</CardTitle>
                         {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                     </div>

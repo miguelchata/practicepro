@@ -182,11 +182,11 @@ function PracticeSession() {
         nextIndex = (currentIndex + 1) % newIndexes.length;
     }
 
+    // Update item in main list to have latest data
+    setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
     setPracticeIndexes(newIndexes);
     setCurrentIndex(nextIndex);
     
-    // Update item in main list to have latest data
-    setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
   };
 
   if (loading || (practiceList.length === 0 && !sessionFinished)) {

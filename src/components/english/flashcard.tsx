@@ -29,20 +29,21 @@ type FlashcardProps = {
     advanceToNextCard: (updatedItem: VocabularyItem) => void;
 }
 
-type FeedbackState = 'idle' | 'answerVisible' | 'showingAccuracy';
+type FeedbackState = 'idle' | 'showingAccuracy';
 
 export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: FlashcardProps) {
   const { wordData } = practiceItem;
   const [showExamples, setShowExamples] = useState(false);
+  const [showWord, setShowWord] = useState(false);
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
   const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
 
   const handleShowAnswer = () => {
-    setFeedbackState('answerVisible');
+    setShowWord(true);
   }
 
   const handleFeedback = async (quality: number) => {
-    if (feedbackState !== 'answerVisible') return;
+    if (!showWord || feedbackState === 'showingAccuracy') return;
     
     const updatedItem = await updateWordStats(wordData, quality, practiceItem);
     setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
@@ -55,17 +56,16 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
   }
 
   useEffect(() => {
-    // Reset state when wordData changes
-        setShowExamples(false);
-        setFeedbackState('idle');
-        setNewAccuracy(null);
-  }, [wordData]);
+    // Reset state when wordData.id changes, not the whole object
+    setShowExamples(false);
+    setShowWord(false);
+    setFeedbackState('idle');
+    setNewAccuracy(null);
+  }, [wordData.id]);
   
   const handleShowExamples = () => {
     setShowExamples(true);
   }
-
-  const wordIsVisible = feedbackState === 'answerVisible' || feedbackState === 'showingAccuracy';
 
   return (
     <Card className="w-full max-w-2xl">
@@ -80,13 +80,13 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
             <p className="text-muted-foreground text-lg">{wordData.definition}</p>
         </div>
         
-        {wordData.examples && wordData.examples.length > 0 && !showExamples && !wordIsVisible && (
+        {wordData.examples && wordData.examples.length > 0 && !showExamples && !showWord && (
             <div className="text-center">
                 <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
             </div>
         )}
         
-        {wordData.examples && wordData.examples.length > 0 && (showExamples || wordIsVisible) && (
+        {wordData.examples && wordData.examples.length > 0 && (showExamples || showWord) && (
             <>
                 <Separator/>
                 <div className="relative pt-6">
@@ -101,7 +101,7 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
                             <CarouselItem key={index}>
                                 <div className="p-1">
                                     <p className="text-center text-lg italic text-muted-foreground">
-                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={wordIsVisible} />&quot;
+                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
                                     </p>
                                 </div>
                             </CarouselItem>
@@ -114,7 +114,7 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
             </>
         )}
 
-        {wordIsVisible && (
+        {showWord && (
             <div className="text-center pt-4 space-y-1">
                 <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
                 {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
@@ -123,11 +123,11 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
 
 
         <div className="pt-6">
-            {feedbackState === 'idle' ? (
+            {!showWord ? (
                 <div className="text-center">
                     <Button onClick={handleShowAnswer}>Show Answer</Button>
                 </div>
-            ) : feedbackState === 'answerVisible' ? (
+            ) : feedbackState === 'idle' ? (
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
                     <p className="text-center font-semibold">How well did you remember it?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

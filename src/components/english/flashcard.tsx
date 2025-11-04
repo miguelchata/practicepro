@@ -56,7 +56,7 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
     if (feedbackState === 'showingAccuracy' && itemToAdvance) {
       const timer = setTimeout(() => {
         advanceToNextCard(itemToAdvance);
-      }, 1200);
+      }, 800);
 
       return () => clearTimeout(timer);
     }

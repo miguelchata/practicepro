@@ -62,7 +62,13 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
       const timer = setTimeout(() => setFeedbackState('showingFinal'), 800);
       return () => clearTimeout(timer);
     }
-  }, [feedbackState]);
+    if (feedbackState === 'showingFinal' && itemToAdvance) {
+        const timer = setTimeout(() => {
+            advanceToNextCard(itemToAdvance);
+        }, 1200); // Wait a bit longer on the final screen
+        return () => clearTimeout(timer);
+    }
+  }, [feedbackState, itemToAdvance, advanceToNextCard]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,11 +85,6 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
     setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
     setFeedbackState('showingResult');
   };
-
-  const handleContinue = () => {
-    if (!itemToAdvance || feedbackState !== 'showingFinal') return;
-    advanceToNextCard(itemToAdvance);
-  }
   
   const handleShowExamples = () => {
     setShowExamples(true);
@@ -182,9 +183,11 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                                     <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
                                 </div>
                             )}
-                            <Button onClick={handleContinue} className="w-full mt-4">
-                                Continue <ChevronsRight className="ml-2 h-5 w-5" />
-                            </Button>
+                            {isCorrect && (
+                                <div className="relative rounded-md p-2 text-muted-foreground">
+                                    <p>Moving to the next card...</p>
+                                </div>
+                            )}
                           </>
                         )}
                     </div>

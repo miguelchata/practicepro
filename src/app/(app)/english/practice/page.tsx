@@ -22,6 +22,7 @@ import {
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { useUpdateVocabularyItem } from '@/firebase/firestore/use-vocabulary';
 import type { VocabularyItem } from '@/lib/types';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 type ExerciseType = 'guess' | 'write';
@@ -137,10 +138,9 @@ function PracticeSession() {
   const [sessionFinished, setSessionFinished] = useState(false);
   const [correctlyAnswered, setCorrectlyAnswered] = useState(0);
 
-  // State lifted from child cards
+  // State for parent-controlled animation
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
   const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
-  const [itemToAdvance, setItemToAdvance] = useState<VocabularyItem | null>(null);
   
   
   useEffect(() => {
@@ -152,31 +152,30 @@ function PracticeSession() {
 
   // This effect controls the animation sequence and card advancement
   useEffect(() => {
-    if (!itemToAdvance || feedbackState === 'idle') return;
+    if (feedbackState === 'idle' || !currentItem) return;
 
     let timer: NodeJS.Timeout;
 
     if (feedbackState === 'showingResult') { // For WritingCard
         timer = setTimeout(() => setFeedbackState('showingAccuracy'), 800);
     } else if (feedbackState === 'showingAccuracy') {
-        // Flashcard jumps straight here. WritingCard follows.
         const nextStep = currentItem.type === 'write' ? 'showingFinal' : 'idle';
-        const delay = currentItem.type === 'write' ? 800 : 1200; // Longer delay for flashcard
+        const delay = currentItem.type === 'write' ? 800 : 1200;
         timer = setTimeout(() => {
             if (nextStep === 'idle') {
-                advanceToNextCard(itemToAdvance);
+                advanceToNextCard();
             } else {
                 setFeedbackState(nextStep as FeedbackState);
             }
         }, delay);
     } else if (feedbackState === 'showingFinal') { // For WritingCard
         timer = setTimeout(() => {
-            advanceToNextCard(itemToAdvance);
+            advanceToNextCard();
         }, 1200);
     }
 
     return () => clearTimeout(timer);
-  }, [feedbackState, itemToAdvance]);
+  }, [feedbackState, currentItem]);
 
 
   const totalItems = useMemo(() => practiceIndexes.length, [practiceIndexes]);
@@ -193,13 +192,13 @@ function PracticeSession() {
     // --- 1) EWMA update ---
     const newRepetitions = (item.repetitions || 0) + 1;
     const alpha = item.alpha ?? 0.2;
-    let newAccuracy: number;
+    let newAccuracyValue: number;
     if ((item.repetitions ?? 0) > 0) {
-      newAccuracy = (1 - alpha) * (item.accuracy ?? 0) + alpha * (quality / 5);
+      newAccuracyValue = (1 - alpha) * (item.accuracy ?? 0) + alpha * (quality / 5);
     } else {
-      newAccuracy = quality / 5;
+      newAccuracyValue = quality / 5;
     }
-    newAccuracy = Math.max(0, Math.min(1, newAccuracy));
+    newAccuracyValue = Math.max(0, Math.min(1, newAccuracyValue));
   
     // --- 2) recent-poor detection ---
     const persisted = item.recentAttempts ?? [];
@@ -215,7 +214,7 @@ function PracticeSession() {
     const updates: Partial<VocabularyItem> = {
       lastQuality: quality,
       repetitions: newRepetitions,
-      accuracy: newAccuracy,
+      accuracy: newAccuracyValue,
       lastReviewedAt: nowIsoStr,
       updatedAt: nowIsoStr,
       recentAttempts: unified,
@@ -229,12 +228,12 @@ function PracticeSession() {
       return LEARNING_INTERVAL_DEFAULT;
     };
   
-    if (newRepetitions >= MIN_REPETITIONS_FOR_MASTER && newAccuracy >= MASTERED_ACCURACY_THRESHOLD) {
+    if (newRepetitions >= MIN_REPETITIONS_FOR_MASTER && newAccuracyValue >= MASTERED_ACCURACY_THRESHOLD) {
       updates.status = 'mastered';
       updates.nextReviewAt = new Date(now.getTime() + MASTERED_INTERVAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
     } else if (
       item.status === 'mastered' &&
-      (newAccuracy < UNMASTERED_DROP_THRESHOLD || (hasTwoPoorRecentReviews && daysSinceLastReview <= RECENT_POOR_WINDOW_DAYS))
+      (newAccuracyValue < UNMASTERED_DROP_THRESHOLD || (hasTwoPoorRecentReviews && daysSinceLastReview <= RECENT_POOR_WINDOW_DAYS))
     ) {
       updates.status = 'learning';
       updates.nextReviewAt = new Date(now.getTime() + LEARNING_INTERVAL_DEFAULT * 24 * 60 * 60 * 1000).toISOString();
@@ -254,8 +253,12 @@ function PracticeSession() {
   const handleFeedback = (quality: number) => {
     if (feedbackState !== 'idle') return;
 
+    const originalIndex = practiceIndexes[currentIndex];
     const updatedItem = updateWordStats(currentItem.wordData, quality, currentItem);
-    setItemToAdvance(updatedItem);
+    
+    // Update the item in the master list for this session
+    setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
+
     setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
     
     // Kick off the animation sequence
@@ -265,8 +268,8 @@ function PracticeSession() {
 
   const initialTotal = initialPracticeList.length;
 
-  const advanceToNextCard = (updatedItem: VocabularyItem) => {
-    const originalIndex = practiceIndexes[currentIndex];
+  const advanceToNextCard = () => {
+    const updatedItem = currentItem.wordData;
     
     let newIndexes = [...practiceIndexes];
     const newAccuracyValue = updatedItem.accuracy ?? 0;
@@ -281,7 +284,6 @@ function PracticeSession() {
     // Reset animation states for the next card
     setFeedbackState('idle');
     setNewAccuracy(null);
-    setItemToAdvance(null);
 
     const newCorrectCount = correctlyAnswered + (isCorrect ? 1 : 0);
     if (newCorrectCount === initialTotal) {
@@ -303,10 +305,8 @@ function PracticeSession() {
         nextIndex = (currentIndex + 1) % newIndexes.length;
     }
 
-    setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
     setPracticeIndexes(newIndexes);
     setCurrentIndex(nextIndex);
-    
   };
 
   if (loading || (practiceList.length === 0 && !sessionFinished)) {
@@ -368,9 +368,20 @@ function PracticeSession() {
           {correctlyAnswered} / {initialTotal}
         </div>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard practiceItem={currentItem} handleFeedback={handleFeedback} feedbackState={feedbackState} newAccuracy={newAccuracy} />}
-        {currentItem.type === 'write' && <WritingCard practiceItem={currentItem} handleFeedback={handleFeedback} feedbackState={feedbackState} newAccuracy={newAccuracy} />}
+      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden">
+        <AnimatePresence mode="wait">
+            <motion.div
+                key={currentItem.wordData.id}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.3 }}
+                className="w-full flex justify-center"
+            >
+                {currentItem.type === 'guess' && <Flashcard practiceItem={currentItem} handleFeedback={handleFeedback} feedbackState={feedbackState} newAccuracy={newAccuracy} />}
+                {currentItem.type === 'write' && <WritingCard practiceItem={currentItem} handleFeedback={handleFeedback} feedbackState={feedbackState} newAccuracy={newAccuracy} />}
+            </motion.div>
+        </AnimatePresence>
       </main>
     </>
   );

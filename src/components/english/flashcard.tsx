@@ -67,47 +67,51 @@ export function Flashcard({ practiceItem, handleFeedback, feedbackState, newAccu
             <p className="text-muted-foreground text-lg">{wordData.definition}</p>
         </div>
         
-        <div className="relative min-h-[10rem] flex flex-col justify-center">
-            {wordData.examples && wordData.examples.length > 0 && !showExamples && !showWord && (
-                <div className="text-center">
-                    <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
-                </div>
-            )}
-            
-            {wordData.examples && wordData.examples.length > 0 && (showExamples || showWord) && (
-                <>
-                    <Separator/>
-                    <div className="relative pt-6">
-                        <Carousel
-                            opts={{
-                                align: "start",
-                            }}
-                            className="w-full px-4"
-                        >
-                            <CarouselContent>
-                                {wordData.examples.map((example, index) => (
-                                <CarouselItem key={index}>
-                                    <div className="p-1">
-                                        <p className="text-center text-lg italic text-muted-foreground">
-                                            &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
-                                        </p>
-                                    </div>
-                                </CarouselItem>
-                                ))}
-                            </CarouselContent>
-                            <CarouselPrevious />
-                            <CarouselNext />
-                        </Carousel>
+        <div className="relative flex flex-col justify-center">
+            <div className="min-h-[6rem] flex flex-col justify-center">
+                {wordData.examples && wordData.examples.length > 0 && !showExamples && !showWord && (
+                    <div className="text-center">
+                        <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
                     </div>
-                </>
-            )}
+                )}
+                
+                {wordData.examples && wordData.examples.length > 0 && (showExamples || showWord) && (
+                    <>
+                        <Separator/>
+                        <div className="relative pt-6">
+                            <Carousel
+                                opts={{
+                                    align: "start",
+                                }}
+                                className="w-full px-4"
+                            >
+                                <CarouselContent>
+                                    {wordData.examples.map((example, index) => (
+                                    <CarouselItem key={index}>
+                                        <div className="p-1">
+                                            <p className="text-center text-lg italic text-muted-foreground">
+                                                &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={showWord} />&quot;
+                                            </p>
+                                        </div>
+                                    </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious />
+                                <CarouselNext />
+                            </Carousel>
+                        </div>
+                    </>
+                )}
+            </div>
 
-            {showWord && (
-                <div className="text-center pt-4 space-y-1">
-                    <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
-                    {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
-                </div>
-            )}
+            <div className="min-h-[4rem] flex flex-col justify-center">
+                {showWord && (
+                    <div className="text-center pt-4 space-y-1">
+                        <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
+                        {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
+                    </div>
+                )}
+            </div>
         </div>
 
 
@@ -151,5 +155,3 @@ export function Flashcard({ practiceItem, handleFeedback, feedbackState, newAccu
     </Card>
   );
 }
-
-    

@@ -150,6 +150,8 @@ function PracticeSession() {
       }
   }, [initialPracticeList]);
 
+  const currentItem = practiceList[practiceIndexes[currentIndex]];
+
   // This effect controls the animation sequence and card advancement
   useEffect(() => {
     if (feedbackState === 'idle' || !currentItem) return;
@@ -179,7 +181,6 @@ function PracticeSession() {
 
 
   const totalItems = useMemo(() => practiceIndexes.length, [practiceIndexes]);
-  const currentItem = practiceList[practiceIndexes[currentIndex]];
 
   const updateWordStats = (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem): VocabularyItem => {
     function daysBetween(a: Date, b: Date) {

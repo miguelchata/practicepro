@@ -133,6 +133,7 @@ function PracticeSession() {
   const [practiceIndexes, setPracticeIndexes] = useState<number[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(false);
+  const [correctlyAnswered, setCorrectlyAnswered] = useState(0);
   
   useEffect(() => {
       if(initialPracticeList.length > 0) {
@@ -220,6 +221,7 @@ function PracticeSession() {
 
     if (newAccuracy >= 0.70) {
         newIndexes = practiceIndexes.filter((_, i) => i !== currentIndex);
+        setCorrectlyAnswered(prev => prev + 1);
     }
 
     if (newIndexes.length === 0) {
@@ -275,7 +277,7 @@ function PracticeSession() {
   }
 
   const initialTotal = initialPracticeList.length;
-  const progressPercentage = initialTotal > 0 ? ((initialTotal - totalItems) / initialTotal) * 100 : 0;
+  const progressPercentage = initialTotal > 0 ? (correctlyAnswered / initialTotal) * 100 : 0;
 
   return (
     <>
@@ -303,7 +305,7 @@ function PracticeSession() {
         </AlertDialog>
         <Progress value={progressPercentage} className="flex-1" />
         <div className="w-16 text-right font-semibold">
-          {initialTotal - totalItems} / {initialTotal}
+          {correctlyAnswered} / {initialTotal}
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">

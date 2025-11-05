@@ -52,24 +52,81 @@ function PracticeSession() {
 
 
   const initialPracticeList: PracticeItem[] = useMemo(() => {
-    if (loading) return [];
+    if (loading || vocabularyList.length === 0) return [];
+    
     const amount = parseInt(searchParams.get('amount') || '10', 10);
     const exerciseType = searchParams.get('type') || 'both';
+    const now = new Date();
 
-    // For now, let's just take a slice. Later, this could be smarter (e.g., based on nextReviewAt)
-    const words = vocabularyList.slice(0, amount);
+    // 1. Separate words into buckets
+    const dueForReview: VocabularyItem[] = [];
+    const newWords: VocabularyItem[] = [];
+    const learningNotDue: VocabularyItem[] = [];
+    const masteredNotDue: VocabularyItem[] = [];
 
+    vocabularyList.forEach(item => {
+        if (item.repetitions === 0) {
+            newWords.push(item);
+        } else if (item.nextReviewAt && new Date(item.nextReviewAt) <= now) {
+            dueForReview.push(item);
+        } else if (item.status === 'learning') {
+            learningNotDue.push(item);
+        } else {
+            masteredNotDue.push(item);
+        }
+    });
+
+    // 2. Prioritize the practice pool
+    // Sort due words: older reviews and lower accuracy first
+    dueForReview.sort((a, b) => {
+        const aDate = a.nextReviewAt ? new Date(a.nextReviewAt).getTime() : 0;
+        const bDate = b.nextReviewAt ? new Date(b.nextReviewAt).getTime() : 0;
+        if (aDate !== bDate) return aDate - bDate;
+        return (a.accuracy ?? 0) - (b.accuracy ?? 0);
+    });
+    
+    let practicePool = [...dueForReview];
+
+    // 3. Fill up the pool if needed
+    const addNewWordsCount = Math.min(newWords.length, Math.max(1, Math.floor(amount * 0.2)));
+    if (practicePool.length < amount) {
+        // Add a controlled number of new words
+        practicePool.push(...newWords.slice(0, addNewWordsCount));
+    }
+
+    if (practicePool.length < amount) {
+        // Add learning words, sorted by lowest accuracy
+        learningNotDue.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0));
+        practicePool.push(...learningNotDue);
+    }
+    
+    if (practicePool.length < amount) {
+        // Add mastered words if absolutely necessary, sorted by lowest accuracy
+        masteredNotDue.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0));
+        practicePool.push(...masteredNotDue);
+    }
+
+    // 4. Take the final slice and shuffle it
+    let selectedWords = practicePool.slice(0, amount);
+    selectedWords.sort(() => Math.random() - 0.5); // Shuffle the list
+
+    // 5. Create exercise items
     if (exerciseType === 'flashcards') {
-        return words.map(wordData => ({ wordData, type: 'guess' }));
+        return selectedWords.map(wordData => ({ wordData, type: 'guess' }));
     }
     if (exerciseType === 'writing') {
-        return words.map(wordData => ({ wordData, type: 'write' }));
+        return selectedWords.map(wordData => ({ wordData, type: 'write' }));
     }
+    
     // 'both'
-    return words.flatMap(wordData => ([
+    const bothList = selectedWords.flatMap(wordData => ([
         { wordData, type: 'guess' },
         { wordData, type: 'write' },
     ]));
+    // Shuffle again to mix up guess/write types
+    bothList.sort(() => Math.random() - 0.5); 
+    return bothList;
+
   }, [searchParams, vocabularyList, loading]);
   
   const [practiceList, setPracticeList] = useState<PracticeItem[]>([]);

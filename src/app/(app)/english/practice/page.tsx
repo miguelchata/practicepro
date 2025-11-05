@@ -213,15 +213,24 @@ function PracticeSession() {
     return { ...item, ...updates };
   };
 
+  const initialTotal = initialPracticeList.length;
+
   const advanceToNextCard = (updatedItem: VocabularyItem) => {
     const originalIndex = practiceIndexes[currentIndex];
     
     let newIndexes = [...practiceIndexes];
     const newAccuracy = updatedItem.accuracy ?? 0;
+    let isCorrect = false;
 
     if (newAccuracy >= 0.70) {
         newIndexes = practiceIndexes.filter((_, i) => i !== currentIndex);
         setCorrectlyAnswered(prev => prev + 1);
+        isCorrect = true;
+    }
+
+    if ((correctlyAnswered + (isCorrect ? 1 : 0)) === initialTotal) {
+      setSessionFinished(true);
+      return;
     }
 
     if (newIndexes.length === 0) {
@@ -231,17 +240,13 @@ function PracticeSession() {
 
     let nextIndex = currentIndex;
     if (newAccuracy >= 0.70) {
-      // If we removed an item, the index effectively stays the same to point to the next item,
-      // unless it was the last item, in which case we wrap around.
       if (currentIndex >= newIndexes.length) {
           nextIndex = 0;
       }
     } else {
-        // If we didn't remove, just move to the next.
         nextIndex = (currentIndex + 1) % newIndexes.length;
     }
 
-    // Update item in main list to have latest data
     setPracticeList(prev => prev.map((p, i) => (i === originalIndex ? { ...p, wordData: updatedItem } : p)));
     setPracticeIndexes(newIndexes);
     setCurrentIndex(nextIndex);
@@ -276,7 +281,6 @@ function PracticeSession() {
       );
   }
 
-  const initialTotal = initialPracticeList.length;
   const progressPercentage = initialTotal > 0 ? (correctlyAnswered / initialTotal) * 100 : 0;
 
   return (
@@ -326,5 +330,3 @@ export default function PracticePage() {
         </div>
     )
 }
-
-    

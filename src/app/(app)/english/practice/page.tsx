@@ -182,7 +182,7 @@ function PracticeSession() {
   const totalItems = useMemo(() => practiceIndexes.length, [practiceIndexes]);
   const currentItem = practiceList[practiceIndexes[currentIndex]];
 
-  const updateWordStats = async (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem): Promise<VocabularyItem> => {
+  const updateWordStats = (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem): VocabularyItem => {
     function daysBetween(a: Date, b: Date) {
         return Math.abs((a.getTime() - b.getTime()) / (24 * 60 * 60 * 1000));
     }
@@ -244,16 +244,17 @@ function PracticeSession() {
       updates.nextReviewAt = new Date(now.getTime() + nextIntervalDays * 24 * 60 * 60 * 1000).toISOString();
     }
   
-    await updateVocabularyItem(item.id, updates);
+    // Fire-and-forget the database update. Do not await it.
+    updateVocabularyItem(item.id, updates);
 
     // Return the locally updated item so the UI can react instantly
     return { ...item, ...updates };
   };
 
-  const handleFeedback = async (quality: number) => {
+  const handleFeedback = (quality: number) => {
     if (feedbackState !== 'idle') return;
 
-    const updatedItem = await updateWordStats(currentItem.wordData, quality, currentItem);
+    const updatedItem = updateWordStats(currentItem.wordData, quality, currentItem);
     setItemToAdvance(updatedItem);
     setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
     

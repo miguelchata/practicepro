@@ -21,55 +21,30 @@ import { BlurredWord } from '@/components/english/blurred-word';
 import { Separator } from '../ui/separator';
 import type { VocabularyItem } from '@/lib/types';
 import { Badge } from '../ui/badge';
-import type { PracticeItem } from '@/app/(app)/english/practice/page';
+import type { PracticeItem, FeedbackState } from '@/app/(app)/english/practice/page';
 import { Progress } from '../ui/progress';
 
 type WritingCardProps = {
     practiceItem: PracticeItem;
-    updateWordStats: (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem) => Promise<VocabularyItem>;
-    advanceToNextCard: (updatedItem: VocabularyItem) => void;
+    handleFeedback: (quality: number) => void;
+    feedbackState: FeedbackState;
+    newAccuracy: number | null;
 }
 
-type FeedbackState = 'idle' | 'showingResult' | 'showingAccuracy' | 'showingFinal';
-
-
-export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }: WritingCardProps) {
+export function WritingCard({ practiceItem, handleFeedback, feedbackState, newAccuracy }: WritingCardProps) {
   const { wordData } = practiceItem;
   const [userInput, setUserInput] = useState('');
   const [isCorrect, setIsCorrect] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
-  const [itemToAdvance, setItemToAdvance] = useState<VocabularyItem | null>(null);
-  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
   const [showExamples, setShowExamples] = useState(false);
   
   useEffect(() => {
     // Reset state for next card
     setUserInput('');
     setIsCorrect(false);
-    setFeedbackState('idle');
-    setItemToAdvance(null);
-    setNewAccuracy(null);
     setShowExamples(false);
   }, [wordData.id]);
   
-  useEffect(() => {
-    if (feedbackState === 'idle' || !itemToAdvance) return;
-    
-    let timer: NodeJS.Timeout;
-
-    if (feedbackState === 'showingResult') {
-      timer = setTimeout(() => setFeedbackState('showingAccuracy'), 800);
-    } else if (feedbackState === 'showingAccuracy') {
-      timer = setTimeout(() => setFeedbackState('showingFinal'), 800);
-    } else if (feedbackState === 'showingFinal') {
-      timer = setTimeout(() => advanceToNextCard(itemToAdvance), 1200);
-    }
-
-    return () => clearTimeout(timer);
-  }, [feedbackState, itemToAdvance, advanceToNextCard]);
-
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (feedbackState !== 'idle') return;
     
@@ -77,11 +52,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
     setIsCorrect(correct);
     
     const quality = correct ? 5 : 1;
-    const updatedItem = await updateWordStats(wordData, quality, practiceItem);
-    
-    setItemToAdvance(updatedItem);
-    setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
-    setFeedbackState('showingResult');
+    handleFeedback(quality);
   };
   
   const handleShowExamples = () => {
@@ -160,7 +131,7 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
                         <Button type="submit" className="w-full">Check Answer</Button>
                     </form>
                 ) : (
-                    <div className="rounded-lg border bg-muted/50 p-4 space-y-4 min-h-[140px] flex flex-col justify-center">
+                    <div className="rounded-lg border bg-muted/50 p-4 space-y-4 min-h-[140px] flex flex-col justify-center text-center">
                     {feedbackState === 'showingResult' && (
                         <div className={`relative rounded-md p-2 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
                             <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
@@ -193,3 +164,5 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
     </Card>
   );
 }
+
+    

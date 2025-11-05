@@ -21,56 +21,35 @@ import { CardTitle } from '../ui/card';
 import type { VocabularyItem } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
-import type { PracticeItem } from '@/app/(app)/english/practice/page';
+import type { PracticeItem, FeedbackState } from '@/app/(app)/english/practice/page';
 
 type FlashcardProps = {
     practiceItem: PracticeItem;
-    updateWordStats: (item: VocabularyItem, quality: number, currentPracticeItem: PracticeItem) => Promise<VocabularyItem>;
-    advanceToNextCard: (updatedItem: VocabularyItem) => void;
+    handleFeedback: (quality: number) => void;
+    feedbackState: FeedbackState;
+    newAccuracy: number | null;
 }
 
-type FeedbackState = 'idle' | 'showingAccuracy';
-
-export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: FlashcardProps) {
+export function Flashcard({ practiceItem, handleFeedback, feedbackState, newAccuracy }: FlashcardProps) {
   const { wordData } = practiceItem;
   const [showExamples, setShowExamples] = useState(false);
   const [showWord, setShowWord] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
-  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
-  const [itemToAdvance, setItemToAdvance] = useState<VocabularyItem | null>(null);
 
   const handleShowAnswer = () => {
     setShowWord(true);
   }
 
-  const handleFeedback = async (quality: number) => {
-    if (!showWord || feedbackState === 'showingAccuracy') return;
-    
-    const updatedItem = await updateWordStats(wordData, quality, practiceItem);
-    setItemToAdvance(updatedItem);
-    setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
-    setFeedbackState('showingAccuracy');
+  const onFeedback = (quality: number) => {
+    if (!showWord || feedbackState !== 'idle') return;
+    handleFeedback(quality);
   }
 
+  // Reset local state when the card changes
   useEffect(() => {
-    if (feedbackState === 'showingAccuracy' && itemToAdvance) {
-      const timer = setTimeout(() => {
-        advanceToNextCard(itemToAdvance);
-      }, 800);
-
-      return () => clearTimeout(timer);
-    }
-  }, [feedbackState, itemToAdvance, advanceToNextCard]);
-
-  useEffect(() => {
-    // Reset state when wordData.id changes, not the whole object
     setShowExamples(false);
     setShowWord(false);
-    setFeedbackState('idle');
-    setNewAccuracy(null);
-    setItemToAdvance(null);
   }, [wordData.id]);
-  
+
   const handleShowExamples = () => {
     setShowExamples(true);
   }
@@ -141,19 +120,19 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
                 <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
                     <p className="text-center font-semibold">How well did you remember it?</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <Button variant="destructive" className="h-auto" onClick={() => handleFeedback(1)}>
+                        <Button variant="destructive" className="h-auto" onClick={() => onFeedback(1)}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">NO</span>
                                 <span className="text-xs font-normal">Repeat</span>
                             </div>
                         </Button>
-                            <Button variant="outline" className="h-auto" onClick={() => handleFeedback(3)}>
+                            <Button variant="outline" className="h-auto" onClick={() => onFeedback(3)}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">Sort of</span>
                                 <span className="text-xs font-normal">Keep studying</span>
                             </div>
                         </Button>
-                            <Button variant="default" className="h-auto" onClick={() => handleFeedback(5)}>
+                            <Button variant="default" className="h-auto" onClick={() => onFeedback(5)}>
                             <div className="flex flex-col items-center p-2">
                                 <span className="font-bold">YES</span>
                                 <span className="text-xs font-normal">I've learned</span>
@@ -172,3 +151,5 @@ export function Flashcard({ practiceItem, updateWordStats, advanceToNextCard }: 
     </Card>
   );
 }
+
+    

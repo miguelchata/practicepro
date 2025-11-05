@@ -25,6 +25,8 @@ import type { VocabularyItem } from '@/lib/types';
 
 
 type ExerciseType = 'guess' | 'write';
+export type FeedbackState = 'idle' | 'showingResult' | 'showingAccuracy' | 'showingFinal';
+
 export type PracticeItem = {
     wordData: VocabularyItem;
     type: ExerciseType;
@@ -134,6 +136,12 @@ function PracticeSession() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [correctlyAnswered, setCorrectlyAnswered] = useState(0);
+
+  // State lifted from child cards
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
+  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
+  const [itemToAdvance, setItemToAdvance] = useState<VocabularyItem | null>(null);
+  
   
   useEffect(() => {
       if(initialPracticeList.length > 0) {
@@ -141,6 +149,35 @@ function PracticeSession() {
           setPracticeIndexes(Array.from({ length: initialPracticeList.length }, (_, i) => i));
       }
   }, [initialPracticeList]);
+
+  // This effect controls the animation sequence and card advancement
+  useEffect(() => {
+    if (!itemToAdvance || feedbackState === 'idle') return;
+
+    let timer: NodeJS.Timeout;
+
+    if (feedbackState === 'showingResult') { // For WritingCard
+        timer = setTimeout(() => setFeedbackState('showingAccuracy'), 800);
+    } else if (feedbackState === 'showingAccuracy') {
+        // Flashcard jumps straight here. WritingCard follows.
+        const nextStep = currentItem.type === 'write' ? 'showingFinal' : 'idle';
+        const delay = currentItem.type === 'write' ? 800 : 1200; // Longer delay for flashcard
+        timer = setTimeout(() => {
+            if (nextStep === 'idle') {
+                advanceToNextCard(itemToAdvance);
+            } else {
+                setFeedbackState(nextStep as FeedbackState);
+            }
+        }, delay);
+    } else if (feedbackState === 'showingFinal') { // For WritingCard
+        timer = setTimeout(() => {
+            advanceToNextCard(itemToAdvance);
+        }, 1200);
+    }
+
+    return () => clearTimeout(timer);
+  }, [feedbackState, itemToAdvance]);
+
 
   const totalItems = useMemo(() => practiceIndexes.length, [practiceIndexes]);
   const currentItem = practiceList[practiceIndexes[currentIndex]];
@@ -213,22 +250,40 @@ function PracticeSession() {
     return { ...item, ...updates };
   };
 
+  const handleFeedback = async (quality: number) => {
+    if (feedbackState !== 'idle') return;
+
+    const updatedItem = await updateWordStats(currentItem.wordData, quality, currentItem);
+    setItemToAdvance(updatedItem);
+    setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
+    
+    // Kick off the animation sequence
+    const nextState = currentItem.type === 'write' ? 'showingResult' : 'showingAccuracy';
+    setFeedbackState(nextState);
+  };
+
   const initialTotal = initialPracticeList.length;
 
   const advanceToNextCard = (updatedItem: VocabularyItem) => {
     const originalIndex = practiceIndexes[currentIndex];
     
     let newIndexes = [...practiceIndexes];
-    const newAccuracy = updatedItem.accuracy ?? 0;
+    const newAccuracyValue = updatedItem.accuracy ?? 0;
     let isCorrect = false;
 
-    if (newAccuracy >= 0.70) {
+    if (newAccuracyValue >= 0.70) {
         newIndexes = practiceIndexes.filter((_, i) => i !== currentIndex);
         setCorrectlyAnswered(prev => prev + 1);
         isCorrect = true;
     }
 
-    if ((correctlyAnswered + (isCorrect ? 1 : 0)) === initialTotal) {
+    // Reset animation states for the next card
+    setFeedbackState('idle');
+    setNewAccuracy(null);
+    setItemToAdvance(null);
+
+    const newCorrectCount = correctlyAnswered + (isCorrect ? 1 : 0);
+    if (newCorrectCount === initialTotal) {
       setSessionFinished(true);
       return;
     }
@@ -239,7 +294,7 @@ function PracticeSession() {
     }
 
     let nextIndex = currentIndex;
-    if (newAccuracy >= 0.70) {
+    if (newAccuracyValue >= 0.70) {
       if (currentIndex >= newIndexes.length) {
           nextIndex = 0;
       }
@@ -313,8 +368,8 @@ function PracticeSession() {
         </div>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8">
-        {currentItem.type === 'guess' && <Flashcard practiceItem={currentItem} updateWordStats={updateWordStats} advanceToNextCard={advanceToNextCard} />}
-        {currentItem.type === 'write' && <WritingCard practiceItem={currentItem} updateWordStats={updateWordStats} advanceToNextCard={advanceToNextCard} />}
+        {currentItem.type === 'guess' && <Flashcard practiceItem={currentItem} handleFeedback={handleFeedback} feedbackState={feedbackState} newAccuracy={newAccuracy} />}
+        {currentItem.type === 'write' && <WritingCard practiceItem={currentItem} handleFeedback={handleFeedback} feedbackState={feedbackState} newAccuracy={newAccuracy} />}
       </main>
     </>
   );
@@ -330,3 +385,5 @@ export default function PracticePage() {
         </div>
     )
 }
+
+    

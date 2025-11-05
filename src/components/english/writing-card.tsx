@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardTitle } from '../ui/card';
-import { ChevronsRight } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -54,20 +53,19 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
   }, [wordData.id]);
   
   useEffect(() => {
+    if (feedbackState === 'idle' || !itemToAdvance) return;
+    
+    let timer: NodeJS.Timeout;
+
     if (feedbackState === 'showingResult') {
-      const timer = setTimeout(() => setFeedbackState('showingAccuracy'), 800);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setFeedbackState('showingAccuracy'), 800);
+    } else if (feedbackState === 'showingAccuracy') {
+      timer = setTimeout(() => setFeedbackState('showingFinal'), 800);
+    } else if (feedbackState === 'showingFinal') {
+      timer = setTimeout(() => advanceToNextCard(itemToAdvance), 1200);
     }
-    if (feedbackState === 'showingAccuracy') {
-      const timer = setTimeout(() => setFeedbackState('showingFinal'), 800);
-      return () => clearTimeout(timer);
-    }
-    if (feedbackState === 'showingFinal' && itemToAdvance) {
-        const timer = setTimeout(() => {
-            advanceToNextCard(itemToAdvance);
-        }, 1200); // Wait a bit longer on the final screen
-        return () => clearTimeout(timer);
-    }
+
+    return () => clearTimeout(timer);
   }, [feedbackState, itemToAdvance, advanceToNextCard]);
 
 
@@ -94,105 +92,103 @@ export function WritingCard({ practiceItem, updateWordStats, advanceToNextCard }
   return (
     <Card className="w-full max-w-2xl">
         <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center min-h-[2rem]">
                 <p className="text-sm font-medium text-muted-foreground">Writing Practice</p>
                  {wordData.type && <Badge variant="outline">{wordData.type}</Badge>}
             </div>
         </CardHeader>
         <CardContent className="space-y-6">
-            <div>
+            <div className="min-h-[3rem]">
                 <p className="text-muted-foreground text-lg">{wordData.definition}</p>
             </div>
             
-             {wordData.examples && wordData.examples.length > 0 && !showExamples && feedbackState === 'idle' && (
-                <div className="text-center">
-                    <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
-                </div>
-            )}
-
-            {(showExamples || feedbackState !== 'idle') && wordData.examples && wordData.examples.length > 0 && (
-              <>
-                <Separator/>
-                <div className="relative pt-6">
-                    <Carousel
-                        opts={{
-                            align: "start",
-                        }}
-                        className="w-full px-4"
-                    >
-                        <CarouselContent>
-                            {wordData.examples.map((example, index) => (
-                            <CarouselItem key={index}>
-                                <div className="p-1">
-                                  <p className="text-center text-lg italic text-muted-foreground">
-                                      &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={feedbackState !== 'idle' && !isCorrect} />&quot;
-                                  </p>
-                                </div>
-                            </CarouselItem>
-                            ))}
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
-                </div>
-              </>
-            )}
-            
-            {feedbackState === 'idle' && (
-                 <form onSubmit={handleSubmit} className="pt-4 space-y-4">
-                    <div className="relative">
-                        <Input 
-                            value={userInput}
-                            onChange={(e) => setUserInput(e.target.value)}
-                            placeholder="Type the word..."
-                            className="h-12 text-center text-lg font-mono tracking-widest"
-                            disabled={feedbackState !== 'idle'}
-                            autoCapitalize="none"
-                            autoCorrect="off"
-                            spellCheck="false"
-                        />
+            <div className="relative min-h-[10rem] flex flex-col justify-center">
+                {wordData.examples && wordData.examples.length > 0 && !showExamples && feedbackState === 'idle' && (
+                    <div className="text-center">
+                        <Button variant="outline" onClick={handleShowExamples}>Show Examples</Button>
                     </div>
-                    <Button type="submit" className="w-full">Check Answer</Button>
-                </form>
-            )}
+                )}
 
-
-            {feedbackState !== 'idle' && (
-                <div className="space-y-4 text-center pt-4">
-                     <div className="text-center space-y-1">
+                {(showExamples || feedbackState !== 'idle') && wordData.examples && wordData.examples.length > 0 && (
+                <>
+                    <Separator/>
+                    <div className="relative pt-6">
+                        <Carousel
+                            opts={{ align: "start" }}
+                            className="w-full px-4"
+                        >
+                            <CarouselContent>
+                                {wordData.examples.map((example, index) => (
+                                <CarouselItem key={index}>
+                                    <div className="p-1">
+                                    <p className="text-center text-lg italic text-muted-foreground">
+                                        &quot;<BlurredWord sentence={example} wordToBlur={wordData.word} showFullWord={feedbackState !== 'idle' && !isCorrect} />&quot;
+                                    </p>
+                                    </div>
+                                </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <CarouselPrevious />
+                            <CarouselNext />
+                        </Carousel>
+                    </div>
+                </>
+                )}
+                 {feedbackState !== 'idle' && (
+                     <div className="text-center pt-4 space-y-1">
                         <CardTitle className={`font-headline text-4xl`}>{wordData.word}</CardTitle>
                         {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
                     </div>
-
-                     <div className="rounded-lg border bg-muted/50 p-4 space-y-4 min-h-[140px] flex flex-col justify-center">
-                        {feedbackState === 'showingResult' && (
-                            <div className={`relative rounded-md p-2 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
-                                <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
+                 )}
+            </div>
+            
+            <div className="pt-6 min-h-[8rem] flex flex-col justify-center">
+                {feedbackState === 'idle' ? (
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="relative">
+                            <Input 
+                                value={userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                placeholder="Type the word..."
+                                className="h-12 text-center text-lg font-mono tracking-widest"
+                                disabled={feedbackState !== 'idle'}
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                spellCheck="false"
+                            />
+                        </div>
+                        <Button type="submit" className="w-full">Check Answer</Button>
+                    </form>
+                ) : (
+                    <div className="rounded-lg border bg-muted/50 p-4 space-y-4 min-h-[140px] flex flex-col justify-center">
+                    {feedbackState === 'showingResult' && (
+                        <div className={`relative rounded-md p-2 font-semibold ${isCorrect ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'}`}>
+                            <p>{isCorrect ? "Correct!" : "Incorrect."}</p>
+                        </div>
+                    )}
+                    {feedbackState === 'showingAccuracy' && newAccuracy !== null && (
+                        <div className="space-y-2 text-center pt-2">
+                            <Progress value={newAccuracy} />
+                            <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
+                        </div>
+                    )}
+                    {feedbackState === 'showingFinal' && (
+                        <>
+                        {!isCorrect && (
+                            <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
+                                <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
                             </div>
                         )}
-                        {feedbackState === 'showingAccuracy' && newAccuracy !== null && (
-                            <div className="space-y-2 text-center pt-2">
-                                <Progress value={newAccuracy} />
-                                <p className="text-sm font-medium text-muted-foreground">Accuracy: {Math.round(newAccuracy ?? 0)}%</p>
+                        {isCorrect && (
+                            <div className="relative rounded-md p-2 text-muted-foreground">
+                                <p>Moving to the next card...</p>
                             </div>
                         )}
-                        {feedbackState === 'showingFinal' && (
-                          <>
-                            {!isCorrect && (
-                                <div className="relative rounded-md bg-destructive/10 p-2 text-destructive">
-                                    <p className="text-sm">You wrote: <span className="font-mono font-semibold">{userInput}</span></p>
-                                </div>
-                            )}
-                            {isCorrect && (
-                                <div className="relative rounded-md p-2 text-muted-foreground">
-                                    <p>Moving to the next card...</p>
-                                </div>
-                            )}
-                          </>
-                        )}
+                        </>
+                    )}
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </CardContent>
     </Card>
   );

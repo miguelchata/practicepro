@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useState, useMemo, useEffect } from 'react';
+import { Suspense, useState, useMemo, useEffect, useTransition } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -52,6 +52,7 @@ function PracticeSession() {
   const router = useRouter();
   const { data: vocabularyList, loading } = useVocabulary();
   const updateVocabularyItem = useUpdateVocabularyItem();
+  const [isPending, startTransition] = useTransition();
 
 
   const initialPracticeList: PracticeItem[] = useMemo(() => {
@@ -282,10 +283,6 @@ function PracticeSession() {
         isCorrect = true;
     }
 
-    // Reset animation states for the next card
-    setFeedbackState('idle');
-    setNewAccuracy(null);
-
     const newCorrectCount = correctlyAnswered + (isCorrect ? 1 : 0);
     if (newCorrectCount === initialTotal) {
       setSessionFinished(true);
@@ -305,9 +302,14 @@ function PracticeSession() {
     } else {
         nextIndex = (currentIndex + 1) % newIndexes.length;
     }
-
-    setPracticeIndexes(newIndexes);
-    setCurrentIndex(nextIndex);
+    
+    startTransition(() => {
+        // Reset animation states for the next card
+        setFeedbackState('idle');
+        setNewAccuracy(null);
+        setPracticeIndexes(newIndexes);
+        setCurrentIndex(nextIndex);
+    });
   };
 
   if (loading || (practiceList.length === 0 && !sessionFinished)) {
@@ -369,7 +371,7 @@ function PracticeSession() {
           {correctlyAnswered} / {initialTotal}
         </div>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden">
+      <main className={`flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden transition-opacity duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
         <AnimatePresence mode="wait">
             <motion.div
                 key={currentItem.wordData.id}
@@ -400,3 +402,4 @@ export default function PracticePage() {
 }
 
     
+

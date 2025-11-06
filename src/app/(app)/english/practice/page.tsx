@@ -25,7 +25,7 @@ import type { VocabularyItem } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
 
-type ExerciseType = 'guess' | 'write';
+type ExerciseType = 'guess' | 'write' | 'both';
 export type FeedbackState = 'idle' | 'showingResult' | 'showingAccuracy' | 'showingFinal';
 
 export type PracticeItem = {
@@ -156,7 +156,7 @@ function PracticeSession() {
   // This effect controls the animation sequence and card advancement
   useEffect(() => {
     if (feedbackState === 'idle' || !currentItem) return;
-
+    console.log("Effect controls")
     let timer: NodeJS.Timeout;
 
     if (feedbackState === 'showingResult') { // For WritingCard

@@ -7,14 +7,20 @@ import '@testing-library/jest-dom';
 const mockPracticeItem = {
   wordData: {
     id: '1',
+    userId: 'user123',
     word: 'apple',
     definition: 'A fruit that grows on trees.',
     examples: ['An apple a day keeps the doctor away.'],
     type: 'fruit',
-    repetitions: 0,
     accuracy: 0,
-    status: 'new',
+    alpha: 0.2,
+    repetitions: 0,
+    lastQuality: 0,
+    lastReviewedAt: '2023-08-01T12:00:00.000Z',
+    status: 'learning',
+    nextReviewAt:
   },
+  repetitions: 0,
   type: 'write',
 };
 

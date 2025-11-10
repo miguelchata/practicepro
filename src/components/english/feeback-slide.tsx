@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Progress } from "../ui/progress";
 
 type FeedbackSlideProps = {
   items: string[];
   duration: number;
   onFinish?: () => void;
+  progress?: number;
 };
 
 export const FeedbackSlide = ({
   items,
   duration,
   onFinish,
+  progress,
 }: FeedbackSlideProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -31,7 +34,7 @@ export const FeedbackSlide = ({
   if (items.length === 0) return null;
 
   return (
-    <div className="relative w-full h-64 overflow-hidden rounded-lg bg-gray-100">
+    <div className="relative w-full h-24 overflow-hidden rounded-lg">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentIndex}
@@ -41,9 +44,12 @@ export const FeedbackSlide = ({
           transition={{ duration: 0.4, ease: "easeInOut" }}
           className="absolute inset-0 flex items-center justify-center w-full h-full"
         >
-          <div className="text-normal font-bold text-gray-800">
-            {items[currentIndex]}
-          </div>
+            <div className="w-full px-4 space-y-2">
+                <div className="text-sm font-medium text-gray-800 text-center">
+                    {items[currentIndex]}
+                </div>
+                {progress !== undefined && <Progress value={progress} />}
+            </div>
         </motion.div>
       </AnimatePresence>
     </div>

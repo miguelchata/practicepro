@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -26,7 +25,7 @@ import type {
 
 type FlashcardProps = {
   practiceItem: PracticeItem;
-  handleFeedback: (quality: number) => void;
+  handleFeedback: (quality: number) => Promise<number>;
   nextCard: () => void;
   again: string;
 };
@@ -42,6 +41,7 @@ export function Flashcard({
   const [showWord, setShowWord] = useState(false);
   const [feedback, setFeedback] = useState("idle");
   const [items, setItems] = useState<string[]>([]);
+  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
 
   const handleShowAnswer = () => {
     setShowWord(true);
@@ -51,8 +51,9 @@ export function Flashcard({
     if (!showWord || feedback !== "idle") return;
 
     const accuracy = await handleFeedback(quality);
+    setNewAccuracy(accuracy);
 
-    setItems([`Vocabolary progress: ${Math.round((accuracy ?? 0) * 100)}%`]);
+    setItems([`Vocabulary progress: ${Math.round((accuracy ?? 0) * 100)}%`]);
     setFeedback("showingAccuracy");
   };
 
@@ -62,6 +63,7 @@ export function Flashcard({
     setShowWord(false);
     setFeedback("idle");
     setItems([]);
+    setNewAccuracy(null);
   }, [wordData.id, again]);
 
   const handleShowExamples = () => {
@@ -200,6 +202,7 @@ export function Flashcard({
                 console.log("finished");
               }}
               duration={800}
+              progress={newAccuracy !== null ? newAccuracy * 100 : 0}
             />
           ) : null}
         </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,7 +23,7 @@ import { set } from "date-fns";
 
 type WritingCardProps = {
   practiceItem: PracticeItem;
-  handleFeedback: (quality: number) => void;
+  handleFeedback: (quality: number) => Promise<number>;
   nextCard: () => void;
   again: string;
 };
@@ -42,6 +41,7 @@ export function WritingCard({
   const [feedback, setFeedback] = useState("idle");
   const [items, setItems] = useState<string[]>([]);
   const [showWord, setShowWord] = useState(false);
+  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
 
   useEffect(() => {
     // Reset state for next card
@@ -51,6 +51,7 @@ export function WritingCard({
     setFeedback("idle");
     setItems([]);
     setShowWord(false);
+    setNewAccuracy(null);
   }, [wordData.id, again]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,10 +67,11 @@ export function WritingCard({
 
     const quality = correct ? 5 : 1;
     const accuracy = await handleFeedback(quality);
+    setNewAccuracy(accuracy);
 
     setTimeout(() => {
       let slides = [
-        `Vocabolary progress: ${Math.round((accuracy ?? 0) * 100)}%`,
+        `Vocabulary progress: ${Math.round((accuracy ?? 0) * 100)}%`,
       ];
 
       // if (correct === false)
@@ -189,6 +191,7 @@ export function WritingCard({
               items={items}
               duration={800}
               onFinish={() => setFeedback("showingFinal")}
+              progress={newAccuracy !== null ? newAccuracy * 100 : 0}
             />
           ) : (
             <>

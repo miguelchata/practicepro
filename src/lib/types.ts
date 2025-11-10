@@ -118,10 +118,14 @@ export type VocabularyItem = {
   type: string;
   accuracy: number;
   alpha: number;
+  decayRate: number;
+  threshold: number;
+  consecutiveSuccesses: number;
+  leechCount: number;
   repetitions: number;
   lastQuality: number;
   lastReviewedAt: string | null;
-  status: 'learning' | 'mastered';
+  status: "learning" | "mastered";
   nextReviewAt: string | null;
   createdAt: string;
   updatedAt: string;

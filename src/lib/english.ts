@@ -11,14 +11,23 @@ export type PracticeItem = {
   lastShownAt?: number;
 };
 
+/* Tunable constants */
 const MASTERED_INTERVAL_DAYS = 21;
 const LEARNING_INTERVAL_DEFAULT = 1;
 const MAX_INTERVAL_DAYS = 60;
-const POOR_QUALITY_THRESHOLD = 1;
+const POOR_QUALITY_THRESHOLD = 1; // <= this is considered a poor attempt
 const MASTERED_ACCURACY_THRESHOLD = 0.8;
 const UNMASTERED_DROP_THRESHOLD = 0.6;
 const MIN_REPETITIONS_FOR_MASTER = 5;
 const RECENT_POOR_WINDOW_DAYS = 14;
+
+/* EWMA/decay defaults and guards */
+const DEFAULT_ALPHA = 0.25;
+const DEFAULT_DECAY_RATE = 0.12; // per day
+const REVIEW_THRESHOLD = 0.7; // T
+const SMALL_RELEARN_MINUTES = 10; // when q < 3, next review this many minutes later
+const LEECH_THRESHOLD = 8;
+const MIN_DECAY_RATE = 0.01; // avoid lambda=0
 
 export const updateWordStats = async (
   item: VocabularyItem,
@@ -33,19 +42,29 @@ export const updateWordStats = async (
   const now = new Date();
   const nowIsoStr = now.toISOString();
 
-  // --- 1) EWMA update ---
-  const newRepetitions = (item.repetitions || 0) + 1;
-  const alpha = item.alpha ?? 0.2;
-  let newAccuracyValue: number;
-  if ((item.repetitions ?? 0) > 0) {
-    newAccuracyValue =
-      (1 - alpha) * (item.accuracy ?? 0) + alpha * (quality / 5);
-  } else {
-    newAccuracyValue = quality / 5;
-  }
-  newAccuracyValue = Math.max(0, Math.min(1, newAccuracyValue));
+  // --- 0) Defaults from item (use your fields)
+  const alpha = typeof item.alpha === "number" ? item.alpha : DEFAULT_ALPHA;
+  const decayRate = Math.max(
+    MIN_DECAY_RATE,
+    typeof item.decayRate === "number" ? item.decayRate : DEFAULT_DECAY_RATE
+  );
+  const threshold =
+    typeof item.threshold === "number" ? item.threshold : REVIEW_THRESHOLD;
 
-  // --- 2) recent-poor detection ---
+  const lastReviewDate = item.lastReviewedAt
+    ? new Date(item.lastReviewedAt)
+    : now;
+  const daysSinceLastReview = daysBetween(now, lastReviewDate);
+
+  // --- 1) Compute decayed strength at review time (S_pred)
+  const S_last = typeof item.accuracy === "number" ? item.accuracy : 0.5;
+  const S_pred = S_last * Math.exp(-decayRate * daysSinceLastReview);
+
+  // --- 2) EWMA update (quality normalized to r in [0,1])
+  const r = Math.max(0, Math.min(1, quality / 5));
+  const S_new = Math.max(0, Math.min(1, alpha * r + (1 - alpha) * S_pred));
+
+  // --- 3) recent-poor aggregation (kept from your original logic)
   const persisted = item.recentAttempts ?? [];
   const inMemoryNums = currentPracticeItem.recentQualities ?? [];
   const inMemoryMapped = inMemoryNums.map((q) => ({
@@ -59,35 +78,81 @@ export const updateWordStats = async (
       daysBetween(new Date(a.at), now) <= RECENT_POOR_WINDOW_DAYS
   );
   const hasTwoPoorRecentReviews = poorRecent.length >= 2;
-  const lastReviewDate = item.lastReviewedAt
-    ? new Date(item.lastReviewedAt)
-    : now;
-  const daysSinceLastReview = daysBetween(now, lastReviewDate);
 
-  // --- 3) status & nextReviewAt rules ---
+  // --- 4) Update counters (repetitions now counts successful reviews)
+  const prevReps = typeof item.repetitions === "number" ? item.repetitions : 0;
+  const prevConsec =
+    typeof item.consecutiveSuccesses === "number"
+      ? item.consecutiveSuccesses
+      : 0;
+  let newRepetitions = prevReps;
+  let newConsecutiveSuccesses = prevConsec;
+  if (quality >= 3) {
+    newRepetitions = prevReps + 1;
+    newConsecutiveSuccesses = prevConsec + 1;
+  } else {
+    newConsecutiveSuccesses = 0;
+  }
+
+  // --- 5) Leech handling
+  const prevLeech = typeof item.leechCount === "number" ? item.leechCount : 0;
+  let newLeechCount = prevLeech;
+  if (quality < 3) {
+    newLeechCount = prevLeech + 1;
+  } else {
+    newLeechCount = Math.max(0, prevLeech - 1); // slowly decrement on success
+  }
+
+  // --- 6) Scheduling: compute nextReviewAt
+  const clampDays = (d: number) =>
+    Math.min(MAX_INTERVAL_DAYS, Math.max(0, Math.round(d)));
+
+  let nextReviewAtIso: string;
+  if (quality < 3) {
+    // poor result: force short relearn
+    nextReviewAtIso = new Date(
+      now.getTime() + SMALL_RELEARN_MINUTES * 60 * 1000
+    ).toISOString();
+  } else {
+    // success: compute days until S_new decays to threshold
+    if (S_new <= threshold) {
+      // already below threshold => due now (or schedule next day)
+      nextReviewAtIso = now.toISOString();
+    } else if (decayRate <= 0) {
+      // fallback if decayRate misconfigured
+      nextReviewAtIso = new Date(
+        now.getTime() + LEARNING_INTERVAL_DEFAULT * 24 * 60 * 60 * 1000
+      ).toISOString();
+    } else {
+      const t_next_days = (-1 / decayRate) * Math.log(threshold / S_new);
+      const t_capped = clampDays(t_next_days);
+      const effectiveDays = Math.max(LEARNING_INTERVAL_DEFAULT, t_capped);
+      nextReviewAtIso = new Date(
+        now.getTime() + effectiveDays * 24 * 60 * 60 * 1000
+      ).toISOString();
+    }
+  }
+
+  // --- 7) Compose updates to persist
   const updates: Partial<VocabularyItem> = {
     lastQuality: quality,
-    repetitions: newRepetitions,
-    accuracy: newAccuracyValue,
+    accuracy: S_new,
+    alpha: alpha,
+    decayRate: decayRate,
+    threshold: threshold,
     lastReviewedAt: nowIsoStr,
     updatedAt: nowIsoStr,
     recentAttempts: unified,
+    leechCount: newLeechCount,
+    consecutiveSuccesses: newConsecutiveSuccesses,
+    repetitions: newRepetitions,
+    nextReviewAt: nextReviewAtIso,
   };
 
-  const computeLearningIntervalDays = (baseReps: number, q: number) => {
-    if (q >= 3) {
-      const interval = Math.pow(2, Math.max(0, baseReps - 1));
-      return Math.min(
-        MAX_INTERVAL_DAYS,
-        Math.max(LEARNING_INTERVAL_DEFAULT, Math.round(interval))
-      );
-    }
-    return LEARNING_INTERVAL_DEFAULT;
-  };
-
+  // Mastery promotion/demotion logic
   if (
-    newRepetitions >= MIN_REPETITIONS_FOR_MASTER &&
-    newAccuracyValue >= MASTERED_ACCURACY_THRESHOLD
+    newConsecutiveSuccesses >= MIN_REPETITIONS_FOR_MASTER &&
+    S_new >= MASTERED_ACCURACY_THRESHOLD
   ) {
     updates.status = "mastered";
     updates.nextReviewAt = new Date(
@@ -95,7 +160,7 @@ export const updateWordStats = async (
     ).toISOString();
   } else if (
     item.status === "mastered" &&
-    (newAccuracyValue < UNMASTERED_DROP_THRESHOLD ||
+    (S_new < UNMASTERED_DROP_THRESHOLD ||
       (hasTwoPoorRecentReviews &&
         daysSinceLastReview <= RECENT_POOR_WINDOW_DAYS))
   ) {
@@ -105,18 +170,24 @@ export const updateWordStats = async (
     ).toISOString();
   } else {
     updates.status = "learning";
-    const nextIntervalDays = computeLearningIntervalDays(
-      item.repetitions ?? 0,
-      quality
-    );
-    updates.nextReviewAt = new Date(
-      now.getTime() + nextIntervalDays * 24 * 60 * 60 * 1000
-    ).toISOString();
+    // nextReviewAt already computed from EWMA schedule above
   }
 
-  // Fire-and-forget the database update. Do not await it.
+  // Optional: adapt decayRate slowly (heuristic)
+  const ADAPT_DECAY_ENABLED = true;
+  if (ADAPT_DECAY_ENABLED) {
+    let newDecay = decayRate;
+    if (newConsecutiveSuccesses >= 3) {
+      newDecay = Math.max(MIN_DECAY_RATE, decayRate * 0.9);
+    } else if (quality < 3) {
+      newDecay = Math.min(0.5, decayRate * 1.1);
+    }
+    updates.decayRate = newDecay;
+  }
+
+  // Persist to backend
   await updateVocabularyItem(item.id, updates);
 
-  // Return the locally updated item so the UI can react instantly
-  return { ...item, ...updates };
+  // Return locally merged item for immediate UI reaction
+  return { ...item, ...updates } as VocabularyItem;
 };

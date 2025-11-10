@@ -144,40 +144,8 @@ function PracticeSession() {
     }
   }, [initialPracticeList]);
 
-  let currentItem: PracticeItem = practiceList[practiceIndexes[currentIndex]];
-
-  // This effect controls the animation sequence and card advancement
-  // useEffect(() => {
-  //   if (feedbackState === "idle" || !currentItem) return;
-  //   console.log("Effect controls");
-  //   let timer: NodeJS.Timeout;
-
-  //   if (feedbackState === "showingResult") {
-  //     // For WritingCard
-  //     timer = setTimeout(() => setFeedbackState("showingAccuracy"), 800);
-  //   } else if (feedbackState === "showingAccuracy") {
-  //     const nextStep = currentItem.type === "write" ? "showingFinal" : "idle";
-  //     const delay = currentItem.type === "write" ? 800 : 1200;
-  //     timer = setTimeout(() => {
-  //       if (nextStep === "idle") {
-  //         advanceToNextCard();
-  //       } else {
-  //         setFeedbackState(nextStep as FeedbackState);
-  //       }
-  //     }, delay);
-  //   } else if (feedbackState === "showingFinal") {
-  //     // For WritingCard
-  //     timer = setTimeout(() => {
-  //       advanceToNextCard();
-  //     }, 1200);
-  //   }
-
-  //   return () => clearTimeout(timer);
-  // }, [feedbackState, currentItem]);
-
-  const totalItems = useMemo(() => practiceIndexes.length, [practiceIndexes]);
-
   const handleFeedback = async (quality: number) => {
+    const currentItem = practiceList[practiceIndexes[currentIndex]];
     const originalIndex = practiceIndexes[currentIndex];
     const updatedItem = await updateWordStats(
       currentItem.wordData,
@@ -193,20 +161,13 @@ function PracticeSession() {
       )
     );
 
-    // setNewAccuracy((updatedItem.accuracy ?? 0) * 100);
-
-    // // Kick off the animation sequence
-    // const nextState =
-    //   currentItem.type === "write" ? "showingResult" : "showingAccuracy";
-    // setFeedbackState(nextState);
-
     return updatedItem.accuracy;
   };
 
   const initialTotal = initialPracticeList.length;
 
   const advanceToNextCard = () => {
-    console.log("next card!!!!!!");
+    const currentItem = practiceList[practiceIndexes[currentIndex]];
     const updatedItem = currentItem.wordData;
 
     let newIndexes = [...practiceIndexes];
@@ -240,7 +201,6 @@ function PracticeSession() {
     }
 
     startTransition(() => {
-      // Reset animation states for the next card
       if (currentIndex === nextIndex) setAgain(new Date().toISOString());
 
       setPracticeIndexes(newIndexes);
@@ -271,6 +231,8 @@ function PracticeSession() {
       </div>
     );
   }
+
+  const currentItem: PracticeItem | undefined = practiceList[practiceIndexes[currentIndex]];
 
   if (!currentItem) {
     return (
@@ -361,6 +323,3 @@ export default function PracticePage() {
         </div>
     )
 }
-
-    
-

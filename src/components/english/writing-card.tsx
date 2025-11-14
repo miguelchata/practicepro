@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 // import { CardTitle } from '../ui/card';
 import {
   Carousel,
@@ -11,28 +11,26 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components/ui/carousel';
-import { BlurredWord } from '@/components/english/blurred-word';
-import { Separator } from '../ui/separator';
-import type { VocabularyItem } from '@/lib/types';
-import { Badge } from '../ui/badge';
-import type { PracticeItem, FeedbackState } from '@/app/(app)/english/practice/page';
-import { Progress } from '../ui/progress';
+} from "@/components/ui/carousel";
+import { BlurredWord } from "@/components/english/blurred-word";
+import { Separator } from "../ui/separator";
+import type { VocabularyItem } from "@/lib/types";
+import { Badge } from "../ui/badge";
+import { PracticeItem } from "@/lib/types";
+import { Progress } from "../ui/progress";
 import { FeedbackSlide } from "./feeback-slide";
 import { set } from "date-fns";
 
 type WritingCardProps = {
   practiceItem: PracticeItem;
-  handleFeedback: (quality: number) => Promise<number>;
+  handleFeedback: (quality: number) => Promise<number | null>;
   nextCard: () => void;
-  again: string;
 };
 
 export function WritingCard({
   practiceItem,
   handleFeedback,
   nextCard,
-  again,
 }: WritingCardProps) {
   const { wordData } = practiceItem;
   const [userInput, setUserInput] = useState("");
@@ -43,6 +41,8 @@ export function WritingCard({
   const [showWord, setShowWord] = useState(false);
   const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
 
+  const processingRef = useRef(false);
+
   useEffect(() => {
     // Reset state for next card
     setUserInput("");
@@ -52,7 +52,7 @@ export function WritingCard({
     setItems([]);
     setShowWord(false);
     setNewAccuracy(null);
-  }, [wordData.id, again]);
+  }, [wordData.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

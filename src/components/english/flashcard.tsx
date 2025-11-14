@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,56 +18,107 @@ import { Badge } from "../ui/badge";
 import { Progress } from "../ui/progress";
 import { FeedbackSlide } from "./feeback-slide";
 
-import type {
-  PracticeItem,
-  FeedbackState,
-} from "@/app/(app)/english/practice/page";
+// import type { PracticeItem } from "@/app/(app)/english/practice/page";
+// import { set } from "date-fns";
+import { PracticeItem } from "@/lib/types";
 
 type FlashcardProps = {
   practiceItem: PracticeItem;
-  handleFeedback: (quality: number) => Promise<number>;
-  nextCard: () => void;
-  again: string;
+  handleFeedback: (quality: number) => Promise<number | null>;
+  nextCard: (item: PracticeItem) => void;
 };
+type FeedbackState = "idle" | "showingAccuracy";
+
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export function Flashcard({
   practiceItem,
   handleFeedback,
   nextCard,
-  again,
 }: FlashcardProps) {
   const { wordData } = practiceItem;
   const [showExamples, setShowExamples] = useState(false);
   const [showWord, setShowWord] = useState(false);
-  const [feedback, setFeedback] = useState("idle");
+
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>("idle");
   const [items, setItems] = useState<string[]>([]);
+  const [processing, setProcessing] = useState(false);
   const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
+  const pendingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleShowAnswer = () => {
-    setShowWord(true);
-  };
-
-  const onFeedback = async (quality: number) => {
-    if (!showWord || feedback !== "idle") return;
-
-    const accuracy = await handleFeedback(quality);
-    setNewAccuracy(accuracy);
-
-    setItems([`Vocabulary progress: ${Math.round((accuracy ?? 0) * 100)}%`]);
-    setFeedback("showingAccuracy");
-  };
+  // timeout ref so we can clear delayed navigation on unmount
+  const timeoutRef = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // Reset local state when the card changes
   useEffect(() => {
     setShowExamples(false);
     setShowWord(false);
-    setFeedback("idle");
+    setFeedbackState("idle");
     setItems([]);
     setNewAccuracy(null);
-  }, [wordData.id, again]);
+    setProcessing(false);
 
-  const handleShowExamples = () => {
+    console.log("show defaul values", wordData.id);
+    console.log("resetting state");
+
+    return () => {
+      if (pendingTimeout.current) {
+        clearTimeout(pendingTimeout.current);
+      }
+    };
+  }, [wordData.id]);
+
+  const handleShowAnswer = useCallback(() => {
+    setShowWord(true);
+  }, []);
+
+  const handleShowExamples = useCallback(() => {
     setShowExamples(true);
+  }, []);
+
+  // derived UI helpers
+  const progressPercent = useMemo(() => {
+    return newAccuracy !== null ? Math.round(newAccuracy * 100) : 0;
+  }, [newAccuracy]);
+
+  const onFeedback = async (quality: number) => {
+    if (!showWord) return;
+    if (feedbackState !== "idle") return;
+
+    console.log("onFeedback", quality);
+
+    setProcessing(true);
+    setFeedbackState("idle"); // keep explicit
+    const accuracy = await handleFeedback(quality);
+
+    console.log("onFeedback result", accuracy);
+
+    pendingTimeout.current = setTimeout(() => {
+      setProcessing(false);
+      setNewAccuracy(accuracy ?? null);
+      setItems([`Vocabulary progress: ${Math.round((accuracy ?? 0) * 100)}%`]);
+      setFeedbackState("showingAccuracy");
+    }, 800);
+  };
+
+  // callback handed to FeedbackSlide when it finishes.
+  // we await a short delay for UX and then call nextCard.
+  const handleFeedbackSlideFinish = async () => {
+    // small pause (same behavior as your previous 800ms setTimeout)
+    await new Promise<void>((resolve) => {
+      const id = window.setTimeout(() => resolve(), 800);
+      timeoutRef.current = id;
+    });
+    console.log("handleFeedbackSlideFinish");
+
+    nextCard(practiceItem);
   };
 
   return (
@@ -156,7 +207,7 @@ export function Flashcard({
             <div className="text-center">
               <Button onClick={handleShowAnswer}>Show Answer</Button>
             </div>
-          ) : feedback === "idle" ? (
+          ) : feedbackState === "idle" ? (
             <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
               <p className="text-center font-semibold">
                 How well did you remember it?
@@ -166,6 +217,7 @@ export function Flashcard({
                   variant="destructive"
                   className="h-auto"
                   onClick={() => onFeedback(1)}
+                  disabled={processing}
                 >
                   <div className="flex flex-col items-center p-2">
                     <span className="font-bold">NO</span>
@@ -176,6 +228,7 @@ export function Flashcard({
                   variant="outline"
                   className="h-auto"
                   onClick={() => onFeedback(3)}
+                  disabled={processing}
                 >
                   <div className="flex flex-col items-center p-2">
                     <span className="font-bold">Sort of</span>
@@ -186,6 +239,7 @@ export function Flashcard({
                   variant="default"
                   className="h-auto"
                   onClick={() => onFeedback(5)}
+                  disabled={processing}
                 >
                   <div className="flex flex-col items-center p-2">
                     <span className="font-bold">YES</span>
@@ -194,15 +248,12 @@ export function Flashcard({
                 </Button>
               </div>
             </div>
-          ) : feedback === "showingAccuracy" ? (
+          ) : feedbackState === "showingAccuracy" ? (
             <FeedbackSlide
               items={items}
-              onFinish={() => {
-                nextCard();
-                console.log("finished");
-              }}
+              onFinish={() => nextCard(practiceItem)}
               duration={800}
-              progress={newAccuracy !== null ? newAccuracy * 100 : 0}
+              progress={progressPercent}
             />
           ) : null}
         </div>

@@ -1,13 +1,21 @@
 
 'use client';
 
-import { Suspense, useState, useMemo, useEffect, useTransition } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { X } from 'lucide-react';
-import { Flashcard } from '@/components/english/flashcard';
-import { WritingCard } from '@/components/english/writing-card';
+import {
+  Suspense,
+  useState,
+  useMemo,
+  useEffect,
+  useTransition,
+  useRef,
+  useCallback,
+} from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { X } from "lucide-react";
+import { Flashcard } from "@/components/english/flashcard";
+import { WritingCard } from "@/components/english/writing-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,28 +26,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { useVocabulary } from '@/firebase/firestore/use-collection';
-import { useUpdateVocabularyItem } from '@/firebase/firestore/use-vocabulary';
-import type { VocabularyItem } from '@/lib/types';
-import { motion, AnimatePresence } from 'framer-motion';
+} from "@/components/ui/alert-dialog";
+import { useVocabulary } from "@/firebase/firestore/use-collection";
+import { useUpdateVocabularyItem } from "@/firebase/firestore/use-vocabulary";
+import type { VocabularyItem } from "@/lib/types";
+import { motion, AnimatePresence } from "framer-motion";
 import { updateWordStats } from "@/lib/english";
+import { PracticeItem } from "@/lib/types";
 
-type ExerciseType = "guess" | "write" | "both";
-export type FeedbackState =
-  | "idle"
-  | "showingResult"
-  | "showingAccuracy"
-  | "showingFinal";
+import { generatePracticeList } from "@/utils/generatePracticeList";
+import { usePractice } from "@/hooks/use-practice";
+import { set } from "date-fns";
 
-export type PracticeItem = {
-  wordData: VocabularyItem;
-  type: ExerciseType;
-  sessionAttempts?: number;
-  sessionConsecutiveFails?: number;
-  recentQualities?: number[];
-  lastShownAt?: number;
-};
+// type ExerciseType = "guess" | "write" | "both";
+
+// export type PracticeItem = {
+//   wordData: VocabularyItem;
+//   type: ExerciseType;
+//   sessionAttempts?: number;
+//   sessionConsecutiveFails?: number;
+//   recentQualities?: number[];
+//   lastShownAt?: number;
+// };
 
 function PracticeSession() {
   const searchParams = useSearchParams();
@@ -47,176 +55,230 @@ function PracticeSession() {
   const { data: vocabularyList, loading } = useVocabulary();
   const updateVocabularyItem = useUpdateVocabularyItem();
   const [isPending, startTransition] = useTransition();
-  const [again, setAgain] = useState("");
 
-  const initialPracticeList: PracticeItem[] = useMemo(() => {
-    if (loading || vocabularyList.length === 0) return [];
+  const initialPracticeList: PracticeItem[] = useMemo(
+    () =>
+      generatePracticeList({
+        vocabularyList,
+        searchParams,
+        loading,
+      }),
+    [vocabularyList, searchParams, loading]
+  );
+  const { activeQueue, markCompleted, rotateToEnd, updateData } =
+    usePractice(initialPracticeList);
+  const [activeId, setActiveId] = useState<string | null>(
+    activeQueue[0]?.wordData?.id || null
+  );
+  const active =
+    activeQueue.find((item) => item.wordData.id === activeId) ||
+    activeQueue[0] ||
+    null;
 
-    const amount = parseInt(searchParams.get("amount") || "10", 10);
-    const exerciseType = searchParams.get("type") || "both";
-    const now = new Date();
-
-    // 1. Separate words into buckets
-    const dueForReview: VocabularyItem[] = [];
-    const newWords: VocabularyItem[] = [];
-    const learningNotDue: VocabularyItem[] = [];
-    const masteredNotDue: VocabularyItem[] = [];
-
-    vocabularyList.forEach((item) => {
-      if (item.repetitions === 0) {
-        newWords.push(item);
-      } else if (item.nextReviewAt && new Date(item.nextReviewAt) <= now) {
-        dueForReview.push(item);
-      } else if (item.status === "learning") {
-        learningNotDue.push(item);
-      } else {
-        masteredNotDue.push(item);
-      }
-    });
-
-    // 2. Prioritize the practice pool
-    // Sort due words: older reviews and lower accuracy first
-    dueForReview.sort((a, b) => {
-      const aDate = a.nextReviewAt ? new Date(a.nextReviewAt).getTime() : 0;
-      const bDate = b.nextReviewAt ? new Date(b.nextReviewAt).getTime() : 0;
-      if (aDate !== bDate) return aDate - bDate;
-      return (a.accuracy ?? 0) - (b.accuracy ?? 0);
-    });
-
-    let practicePool = [...dueForReview];
-
-    // 3. Fill up the pool if needed
-    const addNewWordsCount = Math.min(
-      newWords.length,
-      Math.max(1, Math.floor(amount * 0.2))
-    );
-    if (practicePool.length < amount) {
-      // Add a controlled number of new words
-      practicePool.push(...newWords.slice(0, addNewWordsCount));
-    }
-
-    if (practicePool.length < amount) {
-      // Add learning words, sorted by lowest accuracy
-      learningNotDue.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0));
-      practicePool.push(...learningNotDue);
-    }
-
-    if (practicePool.length < amount) {
-      // Add mastered words if absolutely necessary, sorted by lowest accuracy
-      masteredNotDue.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0));
-      practicePool.push(...masteredNotDue);
-    }
-
-    // 4. Take the final slice and shuffle it
-    let selectedWords = practicePool.slice(0, amount);
-    selectedWords.sort(() => Math.random() - 0.5); // Shuffle the list
-
-    // 5. Create exercise items
-    if (exerciseType === "flashcards") {
-      return selectedWords.map((wordData) => ({ wordData, type: "guess" }));
-    }
-    if (exerciseType === "writing") {
-      return selectedWords.map((wordData) => ({ wordData, type: "write" }));
-    }
-
-    // 'both'
-    const bothList = selectedWords.flatMap((wordData) => [
-      { wordData, type: "guess" },
-      { wordData, type: "write" },
-    ]);
-    // Shuffle again to mix up guess/write types
-    bothList.sort(() => Math.random() - 0.5);
-    return bothList;
-  }, [searchParams, vocabularyList, loading]);
-
+  // session state
   const [practiceList, setPracticeList] = useState<PracticeItem[]>([]);
   const [practiceIndexes, setPracticeIndexes] = useState<number[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionFinished, setSessionFinished] = useState(false);
   const [correctlyAnswered, setCorrectlyAnswered] = useState(0);
 
+  // refs to always read latest values (avoid stale closures)
+  const practiceListRef = useRef(practiceList);
+  useEffect(() => {
+    practiceListRef.current = practiceList;
+  }, [practiceList]);
+
+  const practiceIndexesRef = useRef(practiceIndexes);
+  useEffect(() => {
+    practiceIndexesRef.current = practiceIndexes;
+  }, [practiceIndexes]);
+
+  const currentIndexRef = useRef(currentIndex);
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  const correctlyAnsweredRef = useRef(correctlyAnswered);
+  useEffect(() => {
+    correctlyAnsweredRef.current = correctlyAnswered;
+  }, [correctlyAnswered]);
+
+  // initial total (capture when initial list is built). keeps session target stable.
+  const initialTotalRef = useRef(initialPracticeList.length);
+  useEffect(() => {
+    initialTotalRef.current = initialPracticeList.length;
+  }, [initialPracticeList]);
+
+  // small processing guard to prevent concurrent advance calls
+  const advancingRef = useRef(false);
+
+  // initialize session when initialPracticeList becomes available
   useEffect(() => {
     if (initialPracticeList.length > 0) {
       setPracticeList(initialPracticeList);
       setPracticeIndexes(
         Array.from({ length: initialPracticeList.length }, (_, i) => i)
       );
+      setCurrentIndex(0);
+      setCorrectlyAnswered(0);
+      setSessionFinished(false);
+      // update refs immediately
+      practiceListRef.current = initialPracticeList;
+      practiceIndexesRef.current = Array.from(
+        { length: initialPracticeList.length },
+        (_, i) => i
+      );
+      currentIndexRef.current = 0;
+      correctlyAnsweredRef.current = 0;
+      initialTotalRef.current = initialPracticeList.length;
     }
-  }, [initialPracticeList]);
+  }, []);
+
+  // useEffect(() => {
+  //   if (activeQueue.length === 0) {
+  //     setSessionFinished(true);
+  //   }
+  // }, [activeQueue]);
 
   const handleFeedback = async (quality: number) => {
-    const currentItem = practiceList[practiceIndexes[currentIndex]];
-    const originalIndex = practiceIndexes[currentIndex];
+    // read stable indices from refs
+    // const indexes = practiceIndexesRef.current;
+    // const idx = currentIndexRef.current;
+
+    // if (
+    //   !Array.isArray(indexes) ||
+    //   indexes.length === 0 ||
+    //   idx < 0 ||
+    //   idx >= indexes.length
+    // ) {
+    //   return null;
+    // }
+
+    // const practiceListLocal = practiceListRef.current;
+    // const listIndex = indexes[idx]; // index inside practiceList
+    // const currentItem = practiceListLocal[listIndex];
+
+    // call updateWordStats (likely updates accuracy / nextReviewAt)
     const updatedItem = await updateWordStats(
-      currentItem.wordData,
+      active.wordData,
       quality,
-      currentItem,
+      active,
       updateVocabularyItem
     );
 
-    // Update the item in the master list for this session
-    setPracticeList((prev) =>
-      prev.map((p, i) =>
-        i === originalIndex ? { ...p, wordData: updatedItem } : p
-      )
-    );
+    // update practiceList in a functional way and update the ref
+    // setPracticeList((prev) => {
+    //   const next = prev.slice();
+    //   // defensive: if listIndex is out of bounds, no-op
+    //   if (listIndex >= 0 && listIndex < next.length) {
+    //     next[listIndex] = { ...next[listIndex], wordData: updatedItem };
+    //   }
+    //   practiceListRef.current = next;
+    //   return next;
+    // });
+    updateData(active.wordData.id, { wordData: updatedItem });
 
     return updatedItem.accuracy;
   };
+  console.log("active list", activeQueue);
 
-  const initialTotal = initialPracticeList.length;
+  const nextCard = (item: PracticeItem) => {
+    const accuracy = item.wordData.accuracy ?? 0;
+    const isNowCorrect = accuracy >= 0.7;
+    console.log("accuracy", accuracy, isNowCorrect);
 
-  const advanceToNextCard = () => {
-    const currentItem = practiceList[practiceIndexes[currentIndex]];
-    const updatedItem = currentItem.wordData;
-
-    let newIndexes = [...practiceIndexes];
-    const newAccuracyValue = updatedItem.accuracy ?? 0;
-    let isCorrect = false;
-
-    if (newAccuracyValue >= 0.7) {
-      newIndexes = practiceIndexes.filter((_, i) => i !== currentIndex);
-      setCorrectlyAnswered((prev) => prev + 1);
-      isCorrect = true;
-    }
-
-    const newCorrectCount = correctlyAnswered + (isCorrect ? 1 : 0);
-    if (newCorrectCount === initialTotal) {
-      setSessionFinished(true);
-      return;
-    }
-
-    if (newIndexes.length === 0) {
-      setSessionFinished(true);
-      return;
-    }
-
-    let nextIndex = currentIndex;
-    if (newAccuracyValue >= 0.7) {
-      if (currentIndex >= newIndexes.length) {
-        nextIndex = 0;
-      }
+    if (isNowCorrect) {
+      markCompleted(item.wordData.id);
     } else {
-      nextIndex = (currentIndex + 1) % newIndexes.length;
+      rotateToEnd(item.wordData.id);
     }
+    // Pick next item (animate even if only one remains)
+    const next = activeQueue.find(
+      (t) => !t.completed && t.wordData.id !== active.wordData.id
+    );
+    setActiveId(next ? next.wordData.id : Date.now().toString()); // triggers AnimatePresence change
 
-    startTransition(() => {
-      if (currentIndex === nextIndex) setAgain(new Date().toISOString());
-
-      setPracticeIndexes(newIndexes);
-      setCurrentIndex(nextIndex);
-    });
+    if (active === null) {
+      setSessionFinished(true);
+    }
   };
 
-  if (loading || (practiceList.length === 0 && !sessionFinished)) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <p>Preparing your session...</p>
-      </div>
-    );
-  }
+  const advanceToNextCard = useCallback(() => {
+    // prevent re-entrancy
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    // read the latest values via refs (avoid stale closure issues)
+    try {
+      const indexes = practiceIndexesRef.current;
+      const idx = currentIndexRef.current;
+      const correctCount = correctlyAnsweredRef.current;
+      const initialTotal = initialTotalRef.current;
+      const list = practiceListRef.current;
 
-  if (sessionFinished || practiceIndexes.length === 0) {
+      // defensive checks
+      if (
+        !Array.isArray(indexes) ||
+        indexes.length === 0 ||
+        idx < 0 ||
+        idx >= indexes.length
+      ) {
+        setSessionFinished(true);
+        return;
+      }
+
+      const listIndex = indexes[idx];
+      const item = list[listIndex];
+      if (!item) {
+        setSessionFinished(true);
+        return;
+      }
+
+      const accuracy = item.wordData.accuracy ?? 0;
+      const isNowCorrect = accuracy >= 0.7;
+
+      // compute newIndexes deterministically
+      const newIndexes = isNowCorrect
+        ? indexes.filter((_, i) => i !== idx)
+        : indexes.slice();
+      const futureCorrectCount = correctCount + (isNowCorrect ? 1 : 0);
+
+      // If finished
+      if (futureCorrectCount >= initialTotal || newIndexes.length === 0) {
+        // commit the update and finish
+        startTransition(() => {
+          setPracticeIndexes(() => newIndexes);
+          if (isNowCorrect) setCorrectlyAnswered((prev) => prev + 1);
+          setSessionFinished(true);
+        });
+        return;
+      }
+
+      // compute nextIndex relative to newIndexes
+      let nextIndex = 0;
+      if (newIndexes.length === 0) {
+        nextIndex = 0;
+      } else if (isNowCorrect) {
+        nextIndex = idx >= newIndexes.length ? 0 : idx;
+      } else {
+        nextIndex = (idx + 1) % newIndexes.length;
+      }
+
+      // commit state updates atomically (use functional sets)
+      startTransition(() => {
+        setPracticeIndexes(() => newIndexes);
+        setCurrentIndex(() => nextIndex);
+        if (isNowCorrect) setCorrectlyAnswered((prev) => prev + 1);
+      });
+    } finally {
+      // allow next call on next tick — this avoids accidental re-entrant calls during the same task
+      // use setTimeout 0 to let React process state updates before allowing another advance
+      window.setTimeout(() => {
+        advancingRef.current = false;
+      }, 0);
+    }
+  }, [startTransition]);
+
+  if (sessionFinished || activeQueue.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
         <h2 className="text-2xl font-bold font-headline mb-2">
@@ -232,9 +294,10 @@ function PracticeSession() {
     );
   }
 
-  const currentItem: PracticeItem | undefined = practiceList[practiceIndexes[currentIndex]];
+  const currentItem: PracticeItem | undefined =
+    practiceList[practiceIndexes[currentIndex]];
 
-  if (!currentItem) {
+  if (!active) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
         <p>Loading next card...</p>
@@ -243,7 +306,9 @@ function PracticeSession() {
   }
 
   const progressPercentage =
-    initialTotal > 0 ? (correctlyAnswered / initialTotal) * 100 : 0;
+    initialTotalRef.current > 0
+      ? (correctlyAnswered / initialTotalRef.current) * 100
+      : 0;
 
   return (
     <>
@@ -273,7 +338,7 @@ function PracticeSession() {
         </AlertDialog>
         <Progress value={progressPercentage} className="flex-1" />
         <div className="w-16 text-right font-semibold">
-          {correctlyAnswered} / {initialTotal}
+          {correctlyAnswered} / {initialTotalRef.current}
         </div>
       </header>
       <main
@@ -282,31 +347,31 @@ function PracticeSession() {
         }`}
       >
         <AnimatePresence mode="wait">
-          <motion.div
-            key={`${currentItem.wordData.id}-${again}`}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
-            className="w-full flex justify-center"
-          >
-            {currentItem.type === "guess" && (
+          {active && active.type === "guess" && (
+            <motion.div
+              key={activeId}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ type: "spring", stiffness: 100, damping: 18 }}
+              className="bg-gradient-to-br from-indigo-900/70 to-rose-950/60 rounded-3xl p-6 shadow-2xl border border-white/6 w-full max-w-xl relative"
+            >
               <Flashcard
-                practiceItem={currentItem}
+                key={active.wordData.id}
+                practiceItem={active}
                 handleFeedback={handleFeedback}
-                nextCard={advanceToNextCard}
-                again={again}
+                nextCard={nextCard}
               />
-            )}
-            {currentItem.type === "write" && (
-              <WritingCard
-                practiceItem={currentItem}
-                handleFeedback={handleFeedback}
-                nextCard={advanceToNextCard}
-                again={again}
-              />
-            )}
-          </motion.div>
+            </motion.div>
+          )}
+          {active && active.type === "write" && (
+            <WritingCard
+              key={active.wordData.id}
+              practiceItem={active}
+              handleFeedback={handleFeedback}
+              nextCard={advanceToNextCard}
+            />
+          )}
         </AnimatePresence>
       </main>
     </>

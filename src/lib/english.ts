@@ -29,12 +29,12 @@ const SMALL_RELEARN_MINUTES = 10; // when q < 3, next review this many minutes l
 const LEECH_THRESHOLD = 8;
 const MIN_DECAY_RATE = 0.01; // avoid lambda=0
 
-export const updateWordStats = async (
+export const updateWordStats = (
   item: VocabularyItem,
   quality: number,
   currentPracticeItem: PracticeItem,
   updateVocabularyItem: ReturnType<typeof useUpdateVocabularyItem>
-): Promise<VocabularyItem> => {
+): VocabularyItem => {
   function daysBetween(a: Date, b: Date) {
     return Math.abs((a.getTime() - b.getTime()) / (24 * 60 * 60 * 1000));
   }
@@ -186,7 +186,7 @@ export const updateWordStats = async (
   }
 
   // Persist to backend
-  await updateVocabularyItem(item.id, updates);
+  updateVocabularyItem(item.id, updates);
 
   // Return locally merged item for immediate UI reaction
   return { ...item, ...updates } as VocabularyItem;

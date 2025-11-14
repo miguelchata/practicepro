@@ -126,9 +126,21 @@ export type VocabularyItem = {
   lastQuality: number;
   lastReviewedAt: string | null;
   status: "learning" | "mastered";
-  nextReviewAt: string | null;
+  nextReviewAt: string;
   createdAt: string;
   updatedAt: string;
   ipa?: string;
   recentAttempts?: { quality: number; at: string }[];
+};
+
+export type ExerciseType = "guess" | "write" | "both";
+
+export type PracticeItem = {
+  wordData: VocabularyItem;
+  type: ExerciseType;
+  sessionAttempts?: number;
+  sessionConsecutiveFails?: number;
+  recentQualities?: number[];
+  lastShownAt?: number;
+  completed: boolean;
 };

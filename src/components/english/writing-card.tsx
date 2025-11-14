@@ -9,6 +9,7 @@ import { Progress } from "../ui/progress";
 import type { PracticeItem } from "@/lib/types";
 import { DetailCard } from "./detail-card";
 import { ExampleCard } from "./example-card";
+import { WordCard } from "./word-card";
 
 type WritingCardProps = {
   practiceItem: PracticeItem;
@@ -92,20 +93,7 @@ export function WritingCard({
                 onToggle={handleToggleExamples}
                 showFullWord={showWord}
             />
-          <div className="min-h-[4rem] flex flex-col justify-center">
-            {showWord && (
-              <div className="text-center pt-4 space-y-1">
-                <CardTitle className={`font-headline text-4xl`}>
-                  {wordData.word}
-                </CardTitle>
-                {wordData.ipa && (
-                  <p className="text-muted-foreground font-mono text-lg">
-                    {wordData.ipa}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+            <WordCard wordData={wordData} show={showWord} />
         </div>
 
         <div className="pt-6 min-h-[8rem] flex flex-col justify-center">
@@ -137,10 +125,12 @@ export function WritingCard({
               </div>
           ) : feedbackState === 'showingAccuracy' ? (
              <div className="w-full px-4 space-y-2">
-              <div className="text-sm font-medium text-center">
-                 Vocabulary progress: {progressPercent}%
-              </div>
-              <Progress value={progressPercent} />
+                <div className="flex items-center gap-4 justify-center">
+                    <span className="text-sm font-medium text-center">
+                    Vocabulary progress: {Math.round(progressPercent)}%
+                    </span>
+                </div>
+                <Progress value={progressPercent} />
             </div>
           ) : (
             <div className="space-y-4 text-center">

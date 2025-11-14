@@ -43,7 +43,7 @@ export function ExampleCard({ wordData, show, onToggle, showFullWord }: ExampleC
                     opts={{
                     align: "start",
                     }}
-                    className="w-full px-4"
+                    className="w-full"
                 >
                     <CarouselContent>
                     {wordData.examples.map((example, index) => (
@@ -62,8 +62,8 @@ export function ExampleCard({ wordData, show, onToggle, showFullWord }: ExampleC
                         </CarouselItem>
                     ))}
                     </CarouselContent>
-                    <CarouselPrevious />
-                    <CarouselNext />
+                    <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Carousel>
             </div>
         </div>

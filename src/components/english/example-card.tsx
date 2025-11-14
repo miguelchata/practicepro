@@ -7,8 +7,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
@@ -88,22 +86,18 @@ export function ExampleCard({ wordData, show, onToggle, showFullWord }: ExampleC
                         </CarouselItem>
                     ))}
                     </CarouselContent>
-                    <div className="flex items-center justify-center gap-4 mt-4">
-                        <CarouselPrevious variant="ghost" />
-                        <div className="flex items-center justify-center gap-2">
-                            {Array.from({ length: count }).map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => scrollTo(index)}
-                                    className={cn(
-                                        "h-2 w-2 rounded-full transition-colors",
-                                        index === current - 1 ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                                    )}
-                                    aria-label={`Go to slide ${index + 1}`}
-                                />
-                            ))}
-                        </div>
-                        <CarouselNext variant="ghost" />
+                    <div className="flex items-center justify-center gap-2 mt-4">
+                        {Array.from({ length: count }).map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => scrollTo(index)}
+                                className={cn(
+                                    "h-2.5 w-2.5 rounded-full transition-colors",
+                                    index === current - 1 ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                                )}
+                                aria-label={`Go to slide ${index + 1}`}
+                            />
+                        ))}
                     </div>
                 </Carousel>
             </div>

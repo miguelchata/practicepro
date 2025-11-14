@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,10 +64,6 @@ export function WritingCard({
     setShowExamples(prev => !prev);
   };
   
-  const progressPercent = useMemo(() => {
-    return newAccuracy !== null ? newAccuracy * 100 : 0;
-  }, [newAccuracy]);
-
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (feedbackState === 'showingAccuracy') {
@@ -81,7 +77,7 @@ export function WritingCard({
   const inputDisabled = feedbackState !== 'idle';
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full">
       <CardHeader>
         <DetailCard wordData={wordData} promptText="Writing Practice" />
       </CardHeader>
@@ -127,10 +123,10 @@ export function WritingCard({
              <div className="w-full px-4 space-y-2">
                 <div className="flex items-center gap-4 justify-center">
                     <span className="text-sm font-medium text-center">
-                    Vocabulary progress: {Math.round(progressPercent)}%
+                    Vocabulary progress: {Math.round(newAccuracy !== null ? newAccuracy * 100 : 0)}%
                     </span>
                 </div>
-                <Progress value={progressPercent} />
+                <Progress value={newAccuracy !== null ? newAccuracy * 100 : 0} />
             </div>
           ) : (
             <div className="space-y-4 text-center">

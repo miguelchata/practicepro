@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -8,10 +9,12 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
 import { BlurredWord } from "@/components/english/blurred-word";
 import type { VocabularyItem } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type ExampleCardProps = {
     wordData: VocabularyItem;
@@ -21,13 +24,35 @@ type ExampleCardProps = {
 };
 
 export function ExampleCard({ wordData, show, onToggle, showFullWord }: ExampleCardProps) {
+    const [api, setApi] = useState<CarouselApi>();
+    const [current, setCurrent] = useState(0);
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (!api) {
+            return;
+        }
+
+        setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap() + 1);
+
+        api.on("select", () => {
+            setCurrent(api.selectedScrollSnap() + 1);
+        });
+    }, [api]);
+
+    const scrollTo = useCallback((index: number) => {
+        api?.scrollTo(index);
+    }, [api]);
+
+
     if (!wordData.examples || wordData.examples.length === 0) {
-        return <div className="min-h-[6rem]"></div>;
+        return <div className="min-h-[8rem]"></div>;
     }
 
     if (!show) {
         return (
-            <div className="min-h-[6rem] flex flex-col justify-center text-center">
+            <div className="min-h-[8rem] flex flex-col justify-center text-center">
                 <Button variant="outline" onClick={onToggle}>
                     Show Examples
                 </Button>
@@ -36,12 +61,13 @@ export function ExampleCard({ wordData, show, onToggle, showFullWord }: ExampleC
     }
     
     return (
-        <div className="min-h-[6rem] flex flex-col justify-center">
+        <div className="min-h-[8rem] flex flex-col justify-center">
             <Separator />
-            <div className="relative pt-6">
+            <div className="pt-6">
                 <Carousel
+                    setApi={setApi}
                     opts={{
-                    align: "start",
+                        align: "start",
                     }}
                     className="w-full"
                 >
@@ -62,8 +88,23 @@ export function ExampleCard({ wordData, show, onToggle, showFullWord }: ExampleC
                         </CarouselItem>
                     ))}
                     </CarouselContent>
-                    <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center justify-center gap-4 mt-4">
+                        <CarouselPrevious variant="ghost" />
+                        <div className="flex items-center justify-center gap-2">
+                            {Array.from({ length: count }).map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => scrollTo(index)}
+                                    className={cn(
+                                        "h-2 w-2 rounded-full transition-colors",
+                                        index === current - 1 ? "bg-primary" : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                                    )}
+                                    aria-label={`Go to slide ${index + 1}`}
+                                />
+                            ))}
+                        </div>
+                        <CarouselNext variant="ghost" />
+                    </div>
                 </Carousel>
             </div>
         </div>

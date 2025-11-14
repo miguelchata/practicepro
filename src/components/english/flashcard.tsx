@@ -4,18 +4,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { Separator } from "@/components/ui/separator";
-import { BlurredWord } from "@/components/english/blurred-word";
 import { Progress } from "../ui/progress";
 import type { PracticeItem } from "@/lib/types";
 import { DetailCard } from "./detail-card";
+import { ExampleCard } from "./example-card";
 
 type FlashcardProps = {
   practiceItem: PracticeItem;
@@ -48,10 +40,11 @@ export function Flashcard({
 
   const handleShowAnswer = useCallback(() => {
     setShowWord(true);
+    setShowExamples(true); // Also show examples when answer is revealed
   }, []);
 
-  const handleShowExamples = useCallback(() => {
-    setShowExamples(true);
+  const handleToggleExamples = useCallback(() => {
+    setShowExamples(prev => !prev);
   }, []);
 
   const onFeedback = async (quality: number) => {
@@ -84,54 +77,12 @@ export function Flashcard({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="relative flex flex-col justify-center">
-          <div className="min-h-[6rem] flex flex-col justify-center">
-            {wordData.examples &&
-              wordData.examples.length > 0 &&
-              !showExamples &&
-              !showWord && (
-                <div className="text-center">
-                  <Button variant="outline" onClick={handleShowExamples}>
-                    Show Examples
-                  </Button>
-                </div>
-              )}
-
-            {wordData.examples &&
-              wordData.examples.length > 0 &&
-              (showExamples || showWord) && (
-                <>
-                  <Separator />
-                  <div className="relative pt-6">
-                    <Carousel
-                      opts={{
-                        align: "start",
-                      }}
-                      className="w-full px-4"
-                    >
-                      <CarouselContent>
-                        {wordData.examples.map((example, index) => (
-                          <CarouselItem key={index}>
-                            <div className="p-1">
-                              <p className="text-center text-lg italic text-muted-foreground">
-                                &quot;
-                                <BlurredWord
-                                  sentence={example}
-                                  wordToBlur={wordData.word}
-                                  showFullWord={showWord}
-                                />
-                                &quot;
-                              </p>
-                            </div>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </Carousel>
-                  </div>
-                </>
-              )}
-          </div>
+            <ExampleCard 
+                wordData={wordData}
+                show={showExamples}
+                onToggle={handleToggleExamples}
+                showFullWord={showWord}
+            />
 
           <div className="min-h-[4rem] flex flex-col justify-center">
             {showWord && (

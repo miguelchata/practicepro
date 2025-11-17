@@ -53,7 +53,7 @@ const jsonSchema = z.union([
     z.array(vocabObjectSchema)
 ]);
 
-type NewVocabularyData = Omit<VocabularyItem, 'id' | 'userId' | 'accuracy' | 'alpha' | 'repetitions' | 'lastQuality' | 'lastReviewedAt' | 'status' | 'nextReviewAt' | 'createdAt' | 'updatedAt'>;
+type NewVocabularyData = Omit<VocabularyItem, 'id' | 'userId' | 'accuracy' | 'alpha' | 'repetitions' | 'lastQuality' | 'lastReviewedAt' | 'nextReviewAt' | 'createdAt' | 'updatedAt' | 'decayRate' | 'threshold' | 'consecutiveSuccesses' | 'leechCount'>;
 
 
 export default function AddWordPage() {

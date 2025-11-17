@@ -41,7 +41,7 @@ function PracticeSession() {
   const [isPending, startTransition] = useTransition();
 
   const initialPracticeList = useMemo(() => {
-    if (loading) return [];
+    if (loading || vocabularyList.length === 0) return [];
     return generatePracticeList({ vocabularyList, searchParams });
   }, [vocabularyList, searchParams, loading]);
 
@@ -77,6 +77,13 @@ function PracticeSession() {
         goToNext();
     });
   };
+
+  useEffect(() => {
+    if (!loading && initialPracticeList.length === 0 && vocabularyList.length > 0) {
+      setSessionFinished(true);
+    }
+  }, [loading, initialPracticeList, vocabularyList, setSessionFinished]);
+
 
   if (loading && initialPracticeList.length === 0) {
     return (

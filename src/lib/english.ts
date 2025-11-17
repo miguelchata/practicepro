@@ -149,30 +149,6 @@ export const updateWordStats = (
     nextReviewAt: nextReviewAtIso,
   };
 
-  // Mastery promotion/demotion logic
-  if (
-    newConsecutiveSuccesses >= MIN_REPETITIONS_FOR_MASTER &&
-    S_new >= MASTERED_ACCURACY_THRESHOLD
-  ) {
-    updates.status = "mastered";
-    updates.nextReviewAt = new Date(
-      now.getTime() + MASTERED_INTERVAL_DAYS * 24 * 60 * 60 * 1000
-    ).toISOString();
-  } else if (
-    item.status === "mastered" &&
-    (S_new < UNMASTERED_DROP_THRESHOLD ||
-      (hasTwoPoorRecentReviews &&
-        daysSinceLastReview <= RECENT_POOR_WINDOW_DAYS))
-  ) {
-    updates.status = "learning";
-    updates.nextReviewAt = new Date(
-      now.getTime() + LEARNING_INTERVAL_DEFAULT * 24 * 60 * 60 * 1000
-    ).toISOString();
-  } else {
-    updates.status = "learning";
-    // nextReviewAt already computed from EWMA schedule above
-  }
-
   // Optional: adapt decayRate slowly (heuristic)
   const ADAPT_DECAY_ENABLED = true;
   if (ADAPT_DECAY_ENABLED) {

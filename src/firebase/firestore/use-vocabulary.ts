@@ -5,7 +5,7 @@ import { useFirestore, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { VocabularyItem } from '@/lib/types';
 
-type NewVocabularyData = Omit<VocabularyItem, 'id' | 'userId' | 'accuracy' | 'alpha' | 'repetitions' | 'lastQuality' | 'lastReviewedAt' | 'status' | 'nextReviewAt' | 'createdAt' | 'updatedAt'>;
+type NewVocabularyData = Omit<VocabularyItem, 'id' | 'userId' | 'accuracy' | 'alpha' | 'repetitions' | 'lastQuality' | 'lastReviewedAt' | 'nextReviewAt' | 'createdAt' | 'updatedAt' | 'decayRate' | 'threshold' | 'consecutiveSuccesses' | 'leechCount'>;
 
 export function useAddVocabularyItem() {
   const firestore = useFirestore();
@@ -40,7 +40,6 @@ export function useAddVocabularyItem() {
             repetitions: 0,
             lastQuality: 0,
             lastReviewedAt: null,
-            status: 'learning',
             nextReviewAt: now,
             createdAt: now,
             updatedAt: now,
@@ -61,7 +60,6 @@ export function useAddVocabularyItem() {
                 repetitions: 0,
                 lastQuality: 0,
                 lastReviewedAt: null,
-                status: 'learning',
                 nextReviewAt: now,
                 createdAt: now,
                 updatedAt: now,

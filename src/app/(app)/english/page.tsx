@@ -37,16 +37,17 @@ export default function EnglishPage() {
   
   const reviewLink = `/english/practice?amount=${practiceAmount}&type=${exerciseType}`;
 
-  const { learnedCount, totalCount, progressPercentage } = useMemo(() => {
+  const { averageAccuracy, totalCount, progressPercentage } = useMemo(() => {
     const total = vocabularyList.length;
     if (total === 0) {
-      return { learnedCount: 0, totalCount: 0, progressPercentage: 0 };
+      return { averageAccuracy: 0, totalCount: 0, progressPercentage: 0 };
     }
-    const learned = vocabularyList.filter(item => item.status === 'mastered').length;
+    const totalAccuracy = vocabularyList.reduce((acc, item) => acc + item.accuracy, 0);
+    const avg = totalAccuracy / total;
     return {
-      learnedCount: learned,
+      averageAccuracy: avg,
       totalCount: total,
-      progressPercentage: (learned / total) * 100,
+      progressPercentage: avg * 100,
     };
   }, [vocabularyList]);
 
@@ -69,7 +70,9 @@ export default function EnglishPage() {
             </div>
              <div className="pt-4 space-y-2">
                 <Progress value={progressPercentage} />
-                <p className="text-sm text-muted-foreground">{learnedCount} of {totalCount} words learned</p>
+                <p className="text-sm text-muted-foreground">
+                  {totalCount} {totalCount === 1 ? 'word' : 'words'} with {Math.round(progressPercentage)}% average accuracy
+                </p>
             </div>
           </CardHeader>
           <CardContent>
@@ -88,7 +91,7 @@ export default function EnglishPage() {
                                     <div className="flex justify-between items-center">
                                         <p className="font-semibold">{item.word.charAt(0).toUpperCase() + item.word.slice(1)}</p>
                                         <span className="text-sm font-medium text-muted-foreground">
-                                            {item.status === 'mastered' ? '100%' : `${Math.round(item.accuracy * 100)}%`}
+                                            {`${Math.round(item.accuracy * 100)}%`}
                                         </span>
                                     </div>
                                     <p className="text-sm text-muted-foreground">{item.definition}</p>

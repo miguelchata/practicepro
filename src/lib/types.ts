@@ -125,7 +125,6 @@ export type VocabularyItem = {
   repetitions: number;
   lastQuality: number;
   lastReviewedAt: string | null;
-  status: "learning" | "mastered";
   nextReviewAt: string;
   createdAt: string;
   updatedAt: string;

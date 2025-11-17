@@ -19,7 +19,6 @@ export function generatePracticeList({
   const dueForReview: VocabularyItem[] = [];
   const newWords: VocabularyItem[] = [];
   const learningNotDue: VocabularyItem[] = [];
-  const masteredNotDue: VocabularyItem[] = [];
 
   for (const item of vocabularyList) {
     const nextReviewTime = item.nextReviewAt
@@ -27,8 +26,7 @@ export function generatePracticeList({
       : Infinity;
     if (item.repetitions === 0) newWords.push(item);
     else if (nextReviewTime <= now) dueForReview.push(item);
-    else if (item.status === "learning") learningNotDue.push(item);
-    else masteredNotDue.push(item);
+    else learningNotDue.push(item);
   }
 
   // Prioritize due for review
@@ -52,12 +50,6 @@ export function generatePracticeList({
     practicePool.push(...learningNotDue.slice(0, amount - practicePool.length));
   }
   
-  // If still not enough, fill with mastered words
-  if (practicePool.length < amount) {
-    masteredNotDue.sort((a, b) => (a.accuracy ?? 0) - (b.accuracy ?? 0));
-    practicePool.push(...masteredNotDue.slice(0, amount - practicePool.length));
-  }
-
   const selectedWords = practicePool
     .slice(0, amount)
     .sort(() => Math.random() - 0.5);

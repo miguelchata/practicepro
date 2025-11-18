@@ -68,7 +68,7 @@ function PracticeSession() {
       updateVocabularyItem
     );
 
-    updateData(active.wordData.id, { wordData: updatedWordData });
+    // updateData(active.wordData.id, { wordData: updatedWordData });
     return updatedWordData.accuracy;
   };
 
@@ -171,7 +171,7 @@ function PracticeSession() {
               <Flashcard
                 practiceItem={active}
                 handleFeedback={handleFeedback}
-                nextCard={nextCard}
+                nextCard={() => {}}
               />
             </motion.div>
           )}
@@ -187,7 +187,7 @@ function PracticeSession() {
                 <WritingCard
                     practiceItem={active}
                     handleFeedback={handleFeedback}
-                    nextCard={nextCard}
+                    nextCard={() => {}}
                 />
             </motion.div>
           )}

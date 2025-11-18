@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import type { PracticeItem } from "@/lib/types";
 import { DetailCard } from "./detail-card";
 import { ExampleCard } from "./example-card";
@@ -13,10 +12,8 @@ import { ControlCard } from "./control-card";
 type FlashcardProps = {
   practiceItem: PracticeItem;
   handleFeedback: (quality: number) => Promise<number | null>;
-  nextCard: (item: PracticeItem) => void;
+  nextCard: () => void;
 };
-
-type FeedbackState = 'idle' | 'showingAccuracy';
 
 export function Flashcard({
   practiceItem,
@@ -26,46 +23,46 @@ export function Flashcard({
   const { wordData } = practiceItem;
   const [showExamples, setShowExamples] = useState(false);
   const [showWord, setShowWord] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
-  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [status, setStatus] = useState<{ accuracy: number | null, process: 'initial' | 'answer' | 'feedback' }>({accuracy: null, process: 'initial'})
 
   // Reset local state when the card changes
   useEffect(() => {
     setShowExamples(false);
     setShowWord(false);
-    setFeedbackState('idle');
-    setNewAccuracy(null);
     setProcessing(false);
+    setStatus({accuracy: null, process: 'initial'})
   }, [wordData.id]);
 
-  const handleShowAnswer = useCallback(() => {
+  const handleShowAnswer =() => {
     setShowWord(true);
     setShowExamples(true); // Also show examples when answer is revealed
-  }, []);
+    setStatus(s => ({...s, process: 'answer'}))
+  }
 
-  const handleToggleExamples = useCallback(() => {
+  const handleToggleExamples = () => {
     setShowExamples(prev => !prev);
-  }, []);
+  }
 
   const onFeedback = async (quality: number) => {
-    if (!showWord || feedbackState !== 'idle' || processing) return;
+    // if (processing) return;
 
     setProcessing(true);
     const accuracy = await handleFeedback(quality);
-    setNewAccuracy(accuracy);
-    setFeedbackState('showingAccuracy');
+    // setNewAccuracy(accuracy);
+    // setFeedbackState('showingAccuracy');
+    console.log(accuracy, " Status accuracy...")
+    setStatus(s => ({...s, accuracy, process: 'feedback'}))
   };
 
-  useEffect(() => {
-    if (feedbackState === 'showingAccuracy') {
-      const timer = setTimeout(() => {
-        nextCard(practiceItem);
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
-  }, [feedbackState, nextCard, practiceItem]);
-
+  // useEffect(() => {
+  //   if (status.process === 'feedback') {
+  //     const timer = setTimeout(() => {
+  //       nextCard();
+  //     }, 1200);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [status]);
 
   return (
     <Card className="w-full">
@@ -78,24 +75,19 @@ export function Flashcard({
                 wordData={wordData}
                 show={showExamples}
                 onToggle={handleToggleExamples}
-                showFullWord={showWord}
+                showFullWord={showWord || status.process === 'answer'}
             />
 
-            <WordCard wordData={wordData} show={showWord} />
+            <WordCard wordData={wordData} show={showWord || status.process === 'answer'} />
         </div>
 
         <div className="pt-6 min-h-[8rem] flex flex-col justify-center">
-          {!showWord ? (
-            <div className="text-center">
-              <Button onClick={handleShowAnswer}>Show Answer</Button>
-            </div>
-          ) : (
-            <ControlCard 
-              accuracy={newAccuracy}
-              onFeedback={onFeedback}
-              isProcessing={processing}
-            />
-          )}
+          <ControlCard
+            status={status}
+            onFeedback={onFeedback}
+            isProcessing={processing}
+            handleShowAnswer={handleShowAnswer}
+          />
         </div>
       </CardContent>
     </Card>

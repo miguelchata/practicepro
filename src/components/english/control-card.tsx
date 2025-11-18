@@ -3,16 +3,33 @@
 
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { AccuracyCard } from './accuracy-card';
 
 type ControlCardProps = {
-  accuracy: number | null;
   onFeedback: (quality: number) => void;
   isProcessing: boolean;
+  status: {
+    process: 'initial' | 'answer' | 'feedback'
+    accuracy: number | null
+  };
+  handleShowAnswer: () => void;
 };
 
-export function ControlCard({ accuracy, onFeedback, isProcessing }: ControlCardProps) {
-  if (accuracy !== null) {
-    const progressPercent = accuracy * 100;
+export function ControlCard({ onFeedback, isProcessing, status, handleShowAnswer }: ControlCardProps) {
+
+  if (status.process === 'initial') {
+    return (
+      <div className="text-center">
+        <Button onClick={handleShowAnswer}>Show Answer</Button>
+      </div>
+    )
+  }
+
+  if (status.process === 'feedback') {
+    return (
+      <AccuracyCard accuracy={status.accuracy} />
+    )
+    const progressPercent = status.accuracy ?? 0 * 100;
     return (
       <div className="w-full px-4 space-y-2">
         <div className="flex items-center gap-4 justify-center">

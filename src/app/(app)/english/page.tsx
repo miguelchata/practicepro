@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useMemo, useState } from 'react';
 import { useVocabulary } from '@/firebase/firestore/use-collection';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Star, Check, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EnglishPage() {
@@ -37,17 +37,30 @@ export default function EnglishPage() {
   
   const reviewLink = `/english/practice?amount=${practiceAmount}&type=${exerciseType}`;
 
-  const { averageAccuracy, totalCount, progressPercentage } = useMemo(() => {
+  const { masteredCount, learningCount, newCount, totalCount } = useMemo(() => {
     const total = vocabularyList.length;
     if (total === 0) {
-      return { averageAccuracy: 0, totalCount: 0, progressPercentage: 0 };
+      return { masteredCount: 0, learningCount: 0, newCount: 0, totalCount: 0 };
     }
-    const totalAccuracy = vocabularyList.reduce((acc, item) => acc + item.accuracy, 0);
-    const avg = totalAccuracy / total;
+    let mastered = 0;
+    let learning = 0;
+    let newWords = 0;
+
+    vocabularyList.forEach(item => {
+        if (item.repetitions === 0) {
+            newWords++;
+        } else if (item.accuracy === 1) {
+            mastered++;
+        } else {
+            learning++;
+        }
+    });
+
     return {
-      averageAccuracy: avg,
+      masteredCount: mastered,
+      learningCount: learning,
+      newCount: newWords,
       totalCount: total,
-      progressPercentage: avg * 100,
     };
   }, [vocabularyList]);
 
@@ -68,11 +81,34 @@ export default function EnglishPage() {
                 </Link>
               </Button>
             </div>
-             <div className="pt-4 space-y-2">
-                <Progress value={progressPercentage} />
-                <p className="text-sm text-muted-foreground">
-                  {totalCount} {totalCount === 1 ? 'word' : 'words'} with {Math.round(progressPercentage)}% average accuracy
-                </p>
+             <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Card className="bg-green-500/10 border-green-500/20">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-green-700">Mastered</CardTitle>
+                        <Star className="h-4 w-4 text-green-700" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-800">{masteredCount}</div>
+                    </CardContent>
+                </Card>
+                 <Card className="bg-yellow-500/10 border-yellow-500/20">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-yellow-700">Learning</CardTitle>
+                        <Check className="h-4 w-4 text-yellow-700" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-yellow-800">{learningCount}</div>
+                    </CardContent>
+                </Card>
+                 <Card className="bg-sky-500/10 border-sky-500/20">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-sky-700">New</CardTitle>
+                        <Sparkles className="h-4 w-4 text-sky-700" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-sky-800">{newCount}</div>
+                    </CardContent>
+                </Card>
             </div>
           </CardHeader>
           <CardContent>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import type { PracticeItem } from "@/lib/types";
 
 export function usePractice(initialPracticeList: PracticeItem[]) {
@@ -46,39 +46,43 @@ export function usePractice(initialPracticeList: PracticeItem[]) {
     });
   };
 
-  const goToNext = () => {
-    if (!active) {
-      setSessionFinished(true);
-      return;
-    }
+  const goToNext = useCallback(() => {
+    setPracticeItems(currentItems => {
+        const currentActive = currentItems.find(item => item.wordData.id === activeId);
 
-    const accuracy = active.wordData.accuracy ?? 0;
-    const isNowCorrect = accuracy >= 0.7;
-
-    if (isNowCorrect) {
-      markCompleted(active.wordData.id);
-    } else {
-      rotateToEnd(active.wordData.id);
-    }
-    
-    // This needs to be calculated based on the state *after* the current one is marked/rotated
-    const nextQueue = practiceItems.filter(p => !p.completed && p.wordData.id !== (isNowCorrect ? active.wordData.id : ''));
-    const nextItem = nextQueue.find(p => p.wordData.id !== active.wordData.id) || (isNowCorrect ? nextQueue[0] : null);
-
-    if (nextQueue.length === 0 || (isNowCorrect && nextQueue.length === 1 && nextQueue[0].wordData.id === active.wordData.id)) {
-        setSessionFinished(true);
-    } else if (nextItem) {
-        setActiveId(nextItem.wordData.id);
-    } else {
-        // Fallback case: if something goes wrong, or last item is rotated
-        const finalQueue = practiceItems.filter(p => !p.completed);
-        if (finalQueue.length > 0) {
-            setActiveId(finalQueue[0].wordData.id)
-        } else {
+        if (!currentActive) {
             setSessionFinished(true);
+            return currentItems;
         }
-    }
-  };
+
+        const accuracy = currentActive.wordData.accuracy ?? 0;
+        const isNowCorrect = accuracy >= 0.7;
+
+        let nextItems;
+        if (isNowCorrect) {
+            // Mark as completed
+            nextItems = currentItems.map(p => (p.wordData.id === activeId ? { ...p, completed: true } : p));
+        } else {
+            // Rotate to end
+            const itemToRotate = currentItems.find(p => p.wordData.id === activeId);
+            if (!itemToRotate) return currentItems; // Should not happen
+            const rest = currentItems.filter(p => p.wordData.id !== activeId);
+            nextItems = [...rest, itemToRotate];
+        }
+
+        const nextQueue = nextItems.filter(p => !p.completed);
+
+        if (nextQueue.length === 0) {
+            setSessionFinished(true);
+            setActiveId(null);
+        } else {
+            // The next active item is always the first in the queue
+            setActiveId(nextQueue[0].wordData.id);
+        }
+
+        return nextItems;
+    });
+  }, [activeId]);
 
 
   return {

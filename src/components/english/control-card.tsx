@@ -9,26 +9,30 @@ type ControlCardProps = {
   onFeedback: (quality: number) => void;
   isProcessing: boolean;
   status: {
-    process: 'initial' | 'answer' | 'feedback'
-    accuracy: number | null
+    process: "initial" | "answer" | "feedback";
+    accuracy: number | null;
   };
   handleShowAnswer: () => void;
+  nextCard: () => void;
 };
 
-export function ControlCard({ onFeedback, isProcessing, status, handleShowAnswer }: ControlCardProps) {
-
-  if (status.process === 'initial') {
+export function ControlCard({
+  onFeedback,
+  isProcessing,
+  status,
+  nextCard,
+  handleShowAnswer,
+}: ControlCardProps) {
+  if (status.process === "initial") {
     return (
       <div className="text-center">
         <Button onClick={handleShowAnswer}>Show Answer</Button>
       </div>
-    )
+    );
   }
 
-  if (status.process === 'feedback') {
-    return (
-      <AccuracyCard accuracy={status.accuracy} />
-    )
+  if (status.process === "feedback") {
+    return <AccuracyCard accuracy={status.accuracy} nextCard={nextCard} />;
     const progressPercent = status.accuracy ?? 0 * 100;
     return (
       <div className="w-full px-4 space-y-2">
@@ -49,7 +53,7 @@ export function ControlCard({ onFeedback, isProcessing, status, handleShowAnswer
         <Button
           variant="destructive"
           className="h-auto"
-          onClick={() => onFeedback(1)}
+          onClick={() => onFeedback(3)}
           disabled={isProcessing}
         >
           <div className="flex flex-col items-center p-2">
@@ -60,7 +64,7 @@ export function ControlCard({ onFeedback, isProcessing, status, handleShowAnswer
         <Button
           variant="outline"
           className="h-auto"
-          onClick={() => onFeedback(3)}
+          onClick={() => onFeedback(4)}
           disabled={isProcessing}
         >
           <div className="flex flex-col items-center p-2">

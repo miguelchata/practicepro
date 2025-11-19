@@ -7,6 +7,7 @@ import {
   useMemo,
   useEffect,
   useTransition,
+  StrictMode,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -58,41 +59,46 @@ function PracticeSession() {
     setSessionFinished,
   } = usePractice(initialPracticeList);
 
+  console.log("Practice Session", activeId, completedCount);
+
   const handleFeedback = async (quality: number) => {
     if (!active) return null;
 
     const updatedWordData = updateWordStats(
       active.wordData,
       quality,
-      active,
       updateVocabularyItem
     );
 
     // updateData(active.wordData.id, { wordData: updatedWordData });
-    return updatedWordData.accuracy;
+    return updatedWordData;
+    // return 0.58392;
   };
 
-  const nextCard = (item: PracticeItem) => {
-    startTransition(() => {
-        goToNext();
-    });
-  };
+  // const nextCard = (item: PracticeItem) => {
+  //   startTransition(() => {
+  //     goToNext();
+  //   });
+  // };
 
   useEffect(() => {
-    if (!loading && initialPracticeList.length === 0 && vocabularyList.length > 0) {
+    if (
+      !loading &&
+      initialPracticeList.length === 0 &&
+      vocabularyList.length > 0
+    ) {
       setSessionFinished(true);
     }
   }, [loading, initialPracticeList, vocabularyList, setSessionFinished]);
 
-
   if (loading && initialPracticeList.length === 0) {
     return (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-            <h2 className="text-2xl font-bold font-headline mb-2">
-            Preparing your session...
-            </h2>
-            <p className="text-muted-foreground">Loading vocabulary...</p>
-        </div>
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+        <h2 className="text-2xl font-bold font-headline mb-2">
+          Preparing your session...
+        </h2>
+        <p className="text-muted-foreground">Loading vocabulary...</p>
+      </div>
     );
   }
 
@@ -120,7 +126,8 @@ function PracticeSession() {
     );
   }
 
-  const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const progressPercentage =
+    totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
     <>
@@ -171,12 +178,12 @@ function PracticeSession() {
               <Flashcard
                 practiceItem={active}
                 handleFeedback={handleFeedback}
-                nextCard={() => {}}
+                nextCard={goToNext}
               />
             </motion.div>
           )}
           {active.type === "write" && (
-             <motion.div
+            <motion.div
               key={activeId}
               initial={{ opacity: 0, x: 100 }}
               animate={{ opacity: 1, x: 0 }}
@@ -184,11 +191,11 @@ function PracticeSession() {
               transition={{ type: "spring", stiffness: 100, damping: 18 }}
               className="w-full max-w-xl"
             >
-                <WritingCard
-                    practiceItem={active}
-                    handleFeedback={handleFeedback}
-                    nextCard={() => {}}
-                />
+              <WritingCard
+                practiceItem={active}
+                handleFeedback={handleFeedback}
+                nextCard={() => {}}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -197,13 +204,14 @@ function PracticeSession() {
   );
 }
 
-
 export default function PracticePage() {
-    return (
-        <div className="flex min-h-screen w-full flex-col">
-            <Suspense fallback={<div>Loading session...</div>}>
-                <PracticeSession />
-            </Suspense>
-        </div>
-    )
+  return (
+    <StrictMode>
+      <div className="flex min-h-screen w-full flex-col">
+        <Suspense fallback={<div>Loading session...</div>}>
+          <PracticeSession />
+        </Suspense>
+      </div>
+    </StrictMode>
+  );
 }

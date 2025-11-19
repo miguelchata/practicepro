@@ -20,6 +20,8 @@ const MASTERED_ACCURACY_THRESHOLD = 0.8;
 const UNMASTERED_DROP_THRESHOLD = 0.6;
 const MIN_REPETITIONS_FOR_MASTER = 5;
 const RECENT_POOR_WINDOW_DAYS = 14;
+const SESSION_FAIL_WINDOW_MS = 3 * 1000 * 60;
+const REPEATED_FAIL_ALPHA = 0.05;
 
 /* EWMA/decay defaults and guards */
 const DEFAULT_ALPHA = 0.25;
@@ -32,7 +34,6 @@ const MIN_DECAY_RATE = 0.01; // avoid lambda=0
 export const updateWordStats = (
   item: VocabularyItem,
   quality: number,
-  currentPracticeItem: PracticeItem,
   updateVocabularyItem: ReturnType<typeof useUpdateVocabularyItem>
 ): VocabularyItem => {
   function daysBetween(a: Date, b: Date) {
@@ -43,7 +44,7 @@ export const updateWordStats = (
   const nowIsoStr = now.toISOString();
 
   // --- 0) Defaults from item (use your fields)
-  const alpha = typeof item.alpha === "number" ? item.alpha : DEFAULT_ALPHA;
+  const baseAlpha = typeof item.alpha === "number" ? item.alpha : DEFAULT_ALPHA;
   const decayRate = Math.max(
     MIN_DECAY_RATE,
     typeof item.decayRate === "number" ? item.decayRate : DEFAULT_DECAY_RATE
@@ -60,24 +61,32 @@ export const updateWordStats = (
   const S_last = typeof item.accuracy === "number" ? item.accuracy : 0.5;
   const S_pred = S_last * Math.exp(-decayRate * daysSinceLastReview);
 
+  let alpha = baseAlpha;
+  if (quality === 3) alpha = 0.9;
+  else if (quality === 4) alpha = 0.4;
+  else if (quality === 5) alpha = 0.5;
+
+  console.log("alpha", alpha, quality);
+  // const alpha = isRepeatedFail ? REPEATED_FAIL_ALPHA : baseAlpha;
+
   // --- 2) EWMA update (quality normalized to r in [0,1])
   const r = Math.max(0, Math.min(1, quality / 5));
   const S_new = Math.max(0, Math.min(1, alpha * r + (1 - alpha) * S_pred));
 
   // --- 3) recent-poor aggregation (kept from your original logic)
-  const persisted = item.recentAttempts ?? [];
-  const inMemoryNums = currentPracticeItem.recentQualities ?? [];
-  const inMemoryMapped = inMemoryNums.map((q) => ({
-    quality: q,
-    at: nowIsoStr,
-  }));
-  const unified = [...persisted.slice(-5), ...inMemoryMapped].slice(-5);
-  const poorRecent = unified.filter(
-    (a) =>
-      a.quality <= POOR_QUALITY_THRESHOLD &&
-      daysBetween(new Date(a.at), now) <= RECENT_POOR_WINDOW_DAYS
-  );
-  const hasTwoPoorRecentReviews = poorRecent.length >= 2;
+  // const persisted = item.recentAttempts ?? [];
+  // const inMemoryNums = currentPracticeItem.recentQualities ?? [];
+  // const inMemoryMapped = inMemoryNums.map((q) => ({
+  //   quality: q,
+  //   at: nowIsoStr,
+  // }));
+  // const unified = [...persisted.slice(-5), ...inMemoryMapped].slice(-5);
+  // const poorRecent = unified.filter(
+  //   (a) =>
+  //     a.quality <= POOR_QUALITY_THRESHOLD &&
+  //     daysBetween(new Date(a.at), now) <= RECENT_POOR_WINDOW_DAYS
+  // );
+  // const hasTwoPoorRecentReviews = poorRecent.length >= 2;
 
   // --- 4) Update counters (repetitions now counts successful reviews)
   const prevReps = typeof item.repetitions === "number" ? item.repetitions : 0;
@@ -142,7 +151,7 @@ export const updateWordStats = (
     threshold: threshold,
     lastReviewedAt: nowIsoStr,
     updatedAt: nowIsoStr,
-    recentAttempts: unified,
+    // recentAttempts: unified,
     leechCount: newLeechCount,
     consecutiveSuccesses: newConsecutiveSuccesses,
     repetitions: newRepetitions,
@@ -162,7 +171,7 @@ export const updateWordStats = (
   }
 
   // Persist to backend
-  updateVocabularyItem(item.id, updates);
+  // updateVocabularyItem(item.id, updates);
 
   // Return locally merged item for immediate UI reaction
   return { ...item, ...updates } as VocabularyItem;

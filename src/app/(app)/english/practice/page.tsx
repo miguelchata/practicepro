@@ -5,6 +5,7 @@ import {
   Suspense,
   useEffect,
   StrictMode,
+  useMemo,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,10 @@ function PracticeSession() {
   const { data: vocabularyList, loading } = useVocabulary();
   const updateVocabularyItem = useUpdateVocabularyItem();
 
-  const initialPracticeList = generatePracticeList({ vocabularyList, searchParams });
+  const initialPracticeList = useMemo(() => {
+    return generatePracticeList({ vocabularyList, searchParams });
+  }, [vocabularyList, searchParams]);
+
 
   const {
     active,
@@ -48,7 +52,6 @@ function PracticeSession() {
     setSessionFinished,
   } = usePractice(initialPracticeList);
 
-  console.log("Practice Session", activeId, completedCount);
 
   const handleFeedback = async (quality: number) => {
     if (!active) return null;
@@ -59,16 +62,11 @@ function PracticeSession() {
       updateVocabularyItem
     );
 
-    // updateData(active.wordData.id, { wordData: updatedWordData });
+    updateVocabularyItem(active.wordData.id, updatedWordData)
+
     return updatedWordData;
-    // return 0.58392;
   };
 
-  // const nextCard = (item: PracticeItem) => {
-  //   startTransition(() => {
-  //     goToNext();
-  //   });
-  // };
 
   useEffect(() => {
     if (

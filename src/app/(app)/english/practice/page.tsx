@@ -6,6 +6,7 @@ import {
   useEffect,
   StrictMode,
   useMemo,
+  useState,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -31,15 +32,19 @@ import { usePractice } from "@/hooks/use-practice";
 import { generatePracticeList } from "@/utils/generatePracticeList";
 import { motion, AnimatePresence } from "framer-motion";
 
+type UiState = 'LOADING' | 'PRACTICING' | 'EMPTY' | 'COMPLETED';
+
 function PracticeSession() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: vocabularyList, loading } = useVocabulary();
+  const { data: vocabularyList, loading: vocabLoading } = useVocabulary();
   const updateVocabularyItem = useUpdateVocabularyItem();
+  const [uiState, setUiState] = useState<UiState>('LOADING');
 
   const initialPracticeList = useMemo(() => {
+    if (vocabLoading) return [];
     return generatePracticeList({ vocabularyList, searchParams });
-  }, [vocabularyList, searchParams]);
+  }, [vocabularyList, searchParams, vocabLoading]);
 
 
   const {
@@ -49,7 +54,6 @@ function PracticeSession() {
     totalCount,
     goToNext,
     sessionFinished,
-    setSessionFinished,
   } = usePractice(initialPracticeList);
 
 
@@ -67,18 +71,24 @@ function PracticeSession() {
     return updatedWordData;
   };
 
+  useEffect(() => {
+    if (vocabLoading) {
+        setUiState('LOADING');
+    } else if (initialPracticeList.length === 0) {
+        setUiState('EMPTY');
+    } else {
+        setUiState('PRACTICING');
+    }
+  }, [vocabLoading, initialPracticeList]);
 
   useEffect(() => {
-    if (
-      !loading &&
-      initialPracticeList.length === 0 &&
-      vocabularyList.length > 0
-    ) {
-      setSessionFinished(true);
+    if (sessionFinished && uiState === 'PRACTICING') {
+      setUiState('COMPLETED');
     }
-  }, [loading, initialPracticeList, vocabularyList, setSessionFinished]);
+  }, [sessionFinished, uiState]);
 
-  if (loading && initialPracticeList.length === 0) {
+
+  if (uiState === 'LOADING') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
         <h2 className="text-2xl font-bold font-headline mb-2">
@@ -89,7 +99,23 @@ function PracticeSession() {
     );
   }
 
-  if (sessionFinished) {
+  if (uiState === 'EMPTY') {
+     return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+        <h2 className="text-2xl font-bold font-headline mb-2">
+          No Words to Practice
+        </h2>
+        <p className="text-muted-foreground mb-4">
+          There are no words matching your criteria. Try adding new words or wait for your next review cycle.
+        </p>
+        <Button onClick={() => router.push("/english")}>
+          Back to Vocabulary
+        </Button>
+      </div>
+    );
+  }
+
+  if (uiState === 'COMPLETED') {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
         <h2 className="text-2xl font-bold font-headline mb-2">
@@ -105,88 +131,92 @@ function PracticeSession() {
     );
   }
 
-  if (!active) {
+  if (uiState === 'PRACTICING' && !active) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
         <p>Loading next card...</p>
       </div>
     );
   }
+  
+  if (uiState === 'PRACTICING' && active) {
+    const progressPercentage =
+      totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
-  const progressPercentage =
-    totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+    return (
+      <>
+        <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <X className="h-5 w-5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Are you sure you want to quit?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your progress in this session will not be saved.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => router.push("/english")}>
+                  Quit Session
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Progress value={progressPercentage} className="flex-1" />
+          <div className="w-16 text-right font-semibold">
+            {completedCount} / {totalCount}
+          </div>
+        </header>
+        <main
+          className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden transition-opacity duration-300"
+        >
+          <AnimatePresence mode="wait">
+            {active.type === "guess" && (
+              <motion.div
+                key={activeId}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ type: "spring", stiffness: 100, damping: 18 }}
+                className="w-full max-w-xl"
+              >
+                <Flashcard
+                  practiceItem={active}
+                  handleFeedback={handleFeedback}
+                  nextCard={goToNext}
+                />
+              </motion.div>
+            )}
+            {active.type === "write" && (
+              <motion.div
+                key={activeId}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ type: "spring", stiffness: 100, damping: 18 }}
+                className="w-full max-w-xl"
+              >
+                <WritingCard
+                  practiceItem={active}
+                  handleFeedback={handleFeedback}
+                  nextCard={goToNext}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+      </>
+    );
+  }
 
-  return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <X className="h-5 w-5" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                Are you sure you want to quit?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Your progress in this session will not be saved.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => router.push("/english")}>
-                Quit Session
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <Progress value={progressPercentage} className="flex-1" />
-        <div className="w-16 text-right font-semibold">
-          {completedCount} / {totalCount}
-        </div>
-      </header>
-      <main
-        className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden transition-opacity duration-300"
-      >
-        <AnimatePresence mode="wait">
-          {active.type === "guess" && (
-            <motion.div
-              key={activeId}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ type: "spring", stiffness: 100, damping: 18 }}
-              className="w-full max-w-xl"
-            >
-              <Flashcard
-                practiceItem={active}
-                handleFeedback={handleFeedback}
-                nextCard={goToNext}
-              />
-            </motion.div>
-          )}
-          {active.type === "write" && (
-            <motion.div
-              key={activeId}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ type: "spring", stiffness: 100, damping: 18 }}
-              className="w-full max-w-xl"
-            >
-              <WritingCard
-                practiceItem={active}
-                handleFeedback={handleFeedback}
-                nextCard={goToNext}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
-    </>
-  );
+  return null; // Should not be reached
 }
 
 export default function PracticePage() {

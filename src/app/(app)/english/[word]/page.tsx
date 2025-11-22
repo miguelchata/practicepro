@@ -8,13 +8,16 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription
+  CardDescription,
+  CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useVocabulary } from '@/firebase/firestore/use-collection'
 import { useMemo } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Calendar } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function WordDetailPage() {
   const params = useParams()
@@ -24,6 +27,31 @@ export default function WordDetailPage() {
   const wordData = useMemo(() => {
     return vocabularyList.find(item => item.word.toLowerCase() === wordParam.toLowerCase());
   }, [vocabularyList, wordParam]);
+
+  const formatNextReviewDate = (nextReviewAt: string) => {
+    const now = new Date();
+    // Set time to 0 to compare dates only
+    now.setHours(0, 0, 0, 0);
+    const reviewDate = new Date(nextReviewAt);
+    reviewDate.setHours(0, 0, 0, 0);
+
+    const diffTime = reviewDate.getTime() - now.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      const daysOverdue = Math.abs(diffDays);
+      return {
+        text: `${daysOverdue} ${daysOverdue === 1 ? 'day' : 'days'} overdue. Practice required.`,
+        isOverdue: true
+      };
+    }
+    if (diffDays === 0) {
+      return { text: 'Practice today!', isOverdue: true };
+    }
+    return { text: `Practice again in ${diffDays} ${diffDays === 1 ? 'day' : 'days'}.`, isOverdue: false };
+  };
+
+  const reviewInfo = wordData ? formatNextReviewDate(wordData.nextReviewAt) : null;
 
   if (loading) {
     return (
@@ -39,6 +67,9 @@ export default function WordDetailPage() {
                 <Skeleton className="h-20 w-full" />
                 <Skeleton className="h-20 w-full" />
               </CardContent>
+              <CardFooter>
+                <Skeleton className="h-6 w-1/2" />
+              </CardFooter>
             </Card>
         </main>
       </div>
@@ -90,6 +121,17 @@ export default function WordDetailPage() {
               </>
             )}
           </CardContent>
+          {reviewInfo && (
+            <CardFooter>
+                <div className={cn(
+                    "flex items-center gap-2 text-sm",
+                    reviewInfo.isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'
+                )}>
+                    <Calendar className="h-4 w-4" />
+                    <span>{reviewInfo.text}</span>
+                </div>
+            </CardFooter>
+          )}
         </Card>
       </main>
     </div>

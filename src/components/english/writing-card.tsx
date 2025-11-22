@@ -6,18 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "../ui/progress";
-import type { PracticeItem } from "@/lib/types";
 import { DetailCard } from "./detail-card";
 import { ExampleCard } from "./example-card";
 import { WordCard } from "./word-card";
+import { ActionCard } from "./action-card"
+import type { PracticeItem } from "@/lib/types";
+import type { VocabularyItem } from "@/lib/types";
 
 type WritingCardProps = {
   practiceItem: PracticeItem;
-  handleFeedback: (quality: number) => Promise<number | null>;
+  handleFeedback: (quality: number) => Promise<VocabularyItem | null>;
   nextCard: (item: PracticeItem) => void;
 };
-
-type FeedbackState = 'idle' | 'showingResult' | 'showingAccuracy' | 'showingFinal';
 
 export function WritingCard({
   practiceItem,
@@ -25,56 +25,96 @@ export function WritingCard({
   nextCard,
 }: WritingCardProps) {
   const { wordData } = practiceItem;
-  const [userInput, setUserInput] = useState("");
-  const [isCorrect, setIsCorrect] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
-  const [feedbackState, setFeedbackState] = useState<FeedbackState>("idle");
-  const [newAccuracy, setNewAccuracy] = useState<number | null>(null);
-  const processingRef = useRef(false);
+  const [showWord, setShowWord] = useState(false);
+  const [status, setStatus] = useState<{
+      accuracy: number | null;
+      process: "initial" | "answer" | "feedback" | "continue"
+      item: VocabularyItem | null;
+      typed: string
+    }>({ accuracy: null, process: "initial", item: null,  typed: "" });
 
-  useEffect(() => {
-    setUserInput("");
-    setIsCorrect(false);
-    setShowExamples(false);
-    setFeedbackState("idle");
-    setNewAccuracy(null);
-    processingRef.current = false;
-  }, [wordData.id]);
+  // useEffect(() => {
+  //   setUserInput("");
+  //   setIsCorrect(false);
+  //   setShowExamples(false);
+  //   setFeedbackState("idle");
+  //   setNewAccuracy(null);
+  //   processingRef.current = false;
+  // }, [wordData.id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (feedbackState !== "idle" || processingRef.current) return;
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (feedbackState !== "idle" || processingRef.current) return;
     
-    processingRef.current = true;
-    const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
-    setIsCorrect(correct);
-    setShowExamples(true); 
-    setFeedbackState("showingResult");
+  //   processingRef.current = true;
+  //   const correct = userInput.trim().toLowerCase() === wordData.word.toLowerCase();
+  //   setIsCorrect(correct);
+  //   setShowExamples(true); 
+  //   setFeedbackState("showingResult");
     
-    const quality = correct ? 5 : 1;
-    const accuracy = await handleFeedback(quality);
-    setNewAccuracy(accuracy);
+  //   const quality = correct ? 5 : 1;
+  //   const accuracy = await handleFeedback(quality);
+  //   // setNewAccuracy(accuracy);
 
-    setTimeout(() => {
-        setFeedbackState('showingAccuracy');
-    }, 1200);
-  };
+  //   setTimeout(() => {
+  //       setFeedbackState('showingAccuracy');
+  //   }, 1200);
+  // };
 
   const handleToggleExamples = () => {
     setShowExamples(prev => !prev);
   };
   
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (feedbackState === 'showingAccuracy') {
-      timer = setTimeout(() => setFeedbackState('showingFinal'), 1200);
-    }
-    return () => clearTimeout(timer);
-  }, [feedbackState]);
+  // useEffect(() => {
+  //   let timer: NodeJS.Timeout;
+  //   if (feedbackState === 'showingAccuracy') {
+  //     timer = setTimeout(() => setFeedbackState('showingFinal'), 1200);
+  //   }
+  //   return () => clearTimeout(timer);
+  // }, [feedbackState]);
 
+  const handleShowAnswer = () => {
+    setShowWord(true);
+    setShowExamples(true); // Also show examples when answer is revealed
+    setStatus((s) => ({ ...s, process: "answer" }));
+  };
 
-  const showWord = feedbackState !== 'idle';
-  const inputDisabled = feedbackState !== 'idle';
+  const handleCheckAnswer = async (wordTyped: string) => {
+    const correct = wordTyped === wordData.word.toLowerCase();
+    const itemUpdated = await handleFeedback(correct ? 5 : 3);
+    
+    console.log(correct, " correct...", wordTyped);
+    setTimeout(() => {
+      if (itemUpdated) {
+        setStatus((s) => ({
+          ...s,
+          item: itemUpdated,
+          typed: wordTyped,
+          accuracy: itemUpdated.accuracy,
+          process: "feedback",
+        }));
+      }
+    } , 1200);
+  }
+
+  const toContinue = () => {
+    setStatus((s) => ({
+      ...s,
+      process: "continue",
+    }));
+  }
+  
+  const handleNextCard = () => {
+    if (status.item) {
+      const itemToUpdate = { ...practiceItem, wordData: status.item };
+      nextCard(itemToUpdate);
+    } 
+    console.log("write in next card", status.item)
+  };
+  const showExampleIf = status.process === "feedback" || status.process === "continue" || showExamples;
+  const showWordIf = status.process === "feedback" || status.process === "continue" || showWord;;
+  
 
   return (
     <Card className="w-full">
@@ -85,15 +125,22 @@ export function WritingCard({
         <div className="relative flex flex-col justify-center">
             <ExampleCard 
                 wordData={wordData}
-                show={showExamples}
+                show={showExampleIf}
                 onToggle={handleToggleExamples}
-                showFullWord={showWord}
+                showFullWord={showExampleIf}
             />
-            <WordCard wordData={wordData} show={showWord} />
+            <WordCard wordData={wordData} show={showWordIf} />
         </div>
 
         <div className="pt-6 min-h-[8rem] flex flex-col justify-center">
-          {feedbackState === "idle" ? (
+          <ActionCard
+            status={status}
+            handleCheckAnswer={handleCheckAnswer}
+            toContinue={toContinue}
+            practiceItem={practiceItem}
+            handleNextCard={handleNextCard}
+          />
+          {/*feedbackState === "idle" ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 value={userInput}
@@ -144,7 +191,7 @@ export function WritingCard({
                 Continue
               </Button>
             </div>
-          )}
+          )*/}
         </div>
       </CardContent>
     </Card>

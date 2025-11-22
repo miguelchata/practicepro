@@ -32,12 +32,12 @@ export function Flashcard({
   }>({ accuracy: null, process: "initial", item: null });
 
   // Reset local state when the card changes
-  useEffect(() => {
-    setShowExamples(false);
-    setShowWord(false);
-    setProcessing(false);
-    setStatus({ accuracy: null, item: null, process: "initial" });
-  }, [wordData.id]);
+  // useEffect(() => {
+  //   setShowExamples(false);
+  //   setShowWord(false);
+  //   setProcessing(false);
+  //   setStatus({ accuracy: null, item: null, process: "initial" });
+  // }, [wordData.id]);
 
   const handleShowAnswer = () => {
     setShowWord(true);

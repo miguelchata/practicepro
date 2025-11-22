@@ -194,7 +194,7 @@ function PracticeSession() {
               <WritingCard
                 practiceItem={active}
                 handleFeedback={handleFeedback}
-                nextCard={() => {}}
+                nextCard={goToNext}
               />
             </motion.div>
           )}

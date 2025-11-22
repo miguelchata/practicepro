@@ -15,12 +15,16 @@ export const AccuracyCard = ({ accuracy, nextCard }: AccuracyCardProps) => {
       setAnimate(accuracy);
     }, 200);
 
-    timer = setTimeout(() => {
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    let timer = setTimeout(() => {
       nextCard();
     }, 800);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [nextCard])
 
   console.log(animate, " animate...");
   if (!animate) {

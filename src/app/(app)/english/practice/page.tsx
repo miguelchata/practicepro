@@ -3,10 +3,7 @@
 
 import {
   Suspense,
-  useState,
-  useMemo,
   useEffect,
-  useTransition,
   StrictMode,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -29,7 +26,6 @@ import {
 import { useVocabulary } from "@/firebase/firestore/use-collection";
 import { useUpdateVocabularyItem } from "@/firebase/firestore/use-vocabulary";
 import { updateWordStats } from "@/lib/english";
-import type { PracticeItem } from "@/lib/types";
 import { usePractice } from "@/hooks/use-practice";
 import { generatePracticeList } from "@/utils/generatePracticeList";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,21 +35,14 @@ function PracticeSession() {
   const router = useRouter();
   const { data: vocabularyList, loading } = useVocabulary();
   const updateVocabularyItem = useUpdateVocabularyItem();
-  const [isPending, startTransition] = useTransition();
 
-  const initialPracticeList = useMemo(() => {
-    if (loading || vocabularyList.length === 0) return [];
-    return generatePracticeList({ vocabularyList, searchParams });
-  }, [vocabularyList, searchParams, loading]);
+  const initialPracticeList = generatePracticeList({ vocabularyList, searchParams });
 
   const {
     active,
     activeId,
     completedCount,
     totalCount,
-    markCompleted,
-    rotateToEnd,
-    updateData,
     goToNext,
     sessionFinished,
     setSessionFinished,
@@ -161,9 +150,7 @@ function PracticeSession() {
         </div>
       </header>
       <main
-        className={`flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden transition-opacity duration-300 ${
-          isPending ? "opacity-50" : "opacity-100"
-        }`}
+        className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden transition-opacity duration-300"
       >
         <AnimatePresence mode="wait">
           {active.type === "guess" && (

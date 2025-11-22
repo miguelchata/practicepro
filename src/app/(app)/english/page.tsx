@@ -115,13 +115,16 @@ export default function EnglishPage() {
                         <Link href={`/english/${item.word.toLowerCase()}`} key={item.id} className="block hover:bg-muted/50 rounded-lg p-4 -m-4">
                             <div>
                                 <div className="grid gap-2">
-                                    <div className="flex justify-between items-center">
-                                        <p className="font-semibold">{item.word.charAt(0).toUpperCase() + item.word.slice(1)}</p>
-                                        <span className="text-sm font-medium text-muted-foreground">
-                                            {`${Math.round(item.accuracy * 100)}%`}
-                                        </span>
+                                    <div className="flex justify-between items-center gap-4">
+                                        <p className="font-semibold truncate">{item.word.charAt(0).toUpperCase() + item.word.slice(1)}</p>
+                                        <div className="flex items-center gap-2 w-28">
+                                          <Progress value={item.accuracy * 100} className="h-2" />
+                                          <span className="text-xs font-mono text-muted-foreground w-9 text-right">
+                                              {`${Math.round(item.accuracy * 100)}%`}
+                                          </span>
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">{item.definition}</p>
+                                    <p className="text-sm text-muted-foreground truncate">{item.definition}</p>
                                 </div>
                                 {index < vocabularyList.length - 1 && <Separator className="mt-4" />}
                             </div>

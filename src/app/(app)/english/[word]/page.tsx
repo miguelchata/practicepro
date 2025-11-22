@@ -67,7 +67,7 @@ export default function WordDetailPage() {
           <CardHeader>
             <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
             <div className="flex items-baseline justify-between">
-                <CardDescription>Vocabulary Item</CardDescription>
+                <CardDescription>{wordData.type ? wordData.type.charAt(0).toUpperCase() + wordData.type.slice(1) : 'Vocabulary Item'}</CardDescription>
                  {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
             </div>
           </CardHeader>

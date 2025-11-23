@@ -16,7 +16,7 @@ import type { VocabularyItem } from "@/lib/types";
 type WritingCardProps = {
   practiceItem: PracticeItem;
   handleFeedback: (quality: number) => Promise<VocabularyItem | null>;
-  nextCard: (item: PracticeItem) => void;
+  nextCard: (item: VocabularyItem) => void;
 };
 
 export function WritingCard({
@@ -107,8 +107,8 @@ export function WritingCard({
   
   const handleNextCard = () => {
     if (status.item) {
-      const itemToUpdate = { ...practiceItem, wordData: status.item };
-      nextCard(itemToUpdate);
+      // const itemToUpdate = { ...practiceItem, wordData: status.item };
+      nextCard(status.item);
     } 
     console.log("write in next card", status.item)
   };

@@ -62,11 +62,10 @@ function PracticeSession() {
 
     const updatedWordData = updateWordStats(
       active.wordData,
-      quality,
-      updateVocabularyItem
+      quality
     );
 
-    updateVocabularyItem(active.wordData.id, updatedWordData)
+    // updateVocabularyItem(active.wordData.id, updatedWordData)
 
     return updatedWordData;
   };
@@ -86,6 +85,8 @@ function PracticeSession() {
       setUiState('COMPLETED');
     }
   }, [sessionFinished, uiState]);
+
+  console.log("Practice page...")
 
 
   if (uiState === 'LOADING') {
@@ -221,12 +222,10 @@ function PracticeSession() {
 
 export default function PracticePage() {
   return (
-    <StrictMode>
-      <div className="flex min-h-screen w-full flex-col">
-        <Suspense fallback={<div>Loading session...</div>}>
-          <PracticeSession />
-        </Suspense>
-      </div>
-    </StrictMode>
+    <div className="flex min-h-screen w-full flex-col">
+      <Suspense fallback={<div>Loading session...</div>}>
+        <PracticeSession />
+      </Suspense>
+    </div>
   );
 }

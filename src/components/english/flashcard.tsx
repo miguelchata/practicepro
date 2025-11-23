@@ -13,7 +13,7 @@ import { ControlCard } from "./control-card";
 type FlashcardProps = {
   practiceItem: PracticeItem;
   handleFeedback: (quality: number) => Promise<VocabularyItem | null>;
-  nextCard: (item: PracticeItem) => void;
+  nextCard: (item: VocabularyItem) => void;
 };
 
 export function Flashcard({
@@ -69,8 +69,8 @@ export function Flashcard({
   const handleNextCard = () => {
     if (status.process === "feedback") {
       if (status.item) {
-        const itemToUpdate = { ...practiceItem, wordData: status.item };
-        nextCard(itemToUpdate);
+        // const itemToUpdate = { ...practiceItem, wordData: status.item };
+        nextCard(status.item);
       }
     }
   };

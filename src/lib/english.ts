@@ -34,7 +34,6 @@ const MIN_DECAY_RATE = 0.01; // avoid lambda=0
 export const updateWordStats = (
   item: VocabularyItem,
   quality: number,
-  updateVocabularyItem: ReturnType<typeof useUpdateVocabularyItem>
 ): VocabularyItem => {
   function daysBetween(a: Date, b: Date) {
     return Math.abs((a.getTime() - b.getTime()) / (24 * 60 * 60 * 1000));

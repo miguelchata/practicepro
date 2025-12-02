@@ -32,7 +32,7 @@ import { generatePracticeList } from "@/utils/generatePracticeList";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PracticeItem, VocabularyItem } from "@/lib/types";
 
-type UiState = 'LOADING' | 'PRACTICING' | 'EMPTY' | 'COMPLETED';
+type UiState = 'LOADING' | 'PRACTICING' | 'EMPTY';
 
 type PracticeSessionProps = {
   initialPracticeList: PracticeItem[];
@@ -76,12 +76,21 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
     }
   }, [initialPracticeList]);
 
-  useEffect(() => {
-    if (sessionFinished && uiState === 'PRACTICING') {
-      setUiState('COMPLETED');
-    }
-  }, [sessionFinished, uiState]);
-
+  if (sessionFinished) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+        <h2 className="text-2xl font-bold font-headline mb-2">
+          Session Complete!
+        </h2>
+        <p className="text-muted-foreground mb-4">
+          You completed your review session. Keep up the great work!
+        </p>
+        <Button onClick={() => router.push("/english")}>
+          Back to Vocabulary
+        </Button>
+      </div>
+    );
+  }
 
   if (uiState === 'LOADING') {
     return (
@@ -102,22 +111,6 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
         </h2>
         <p className="text-muted-foreground mb-4">
           There are no words matching your criteria. Try adding new words or wait for your next review cycle.
-        </p>
-        <Button onClick={() => router.push("/english")}>
-          Back to Vocabulary
-        </Button>
-      </div>
-    );
-  }
-
-  if (uiState === 'COMPLETED') {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-        <h2 className="text-2xl font-bold font-headline mb-2">
-          Session Complete!
-        </h2>
-        <p className="text-muted-foreground mb-4">
-          You completed your review session. Keep up the great work!
         </p>
         <Button onClick={() => router.push("/english")}>
           Back to Vocabulary

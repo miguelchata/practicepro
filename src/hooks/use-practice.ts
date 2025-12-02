@@ -64,11 +64,26 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
             : p
         );
       } else {
-        // Find the item, update it, and move it to the end
-        const itemToRotate = state.practiceItems.find(p => p.wordData.id === currentWordId);
-        const rest = state.practiceItems.filter(p => p.wordData.id !== currentWordId);
-        if (!itemToRotate) return state; // Should not happen
-        nextItems = [...rest, { ...itemToRotate, wordData: updatedItem }];
+        // Incorrect: Re-insert the item a few spots down the line.
+        const queue = state.practiceItems.filter(p => !p.completed);
+        const currentIndex = queue.findIndex(p => p.wordData.id === currentWordId);
+        
+        if (currentIndex === -1) return state; // Should not happen
+
+        const itemToReinsert = { ...queue[currentIndex], wordData: updatedItem };
+        const remainingQueue = queue.filter(p => p.wordData.id !== currentWordId);
+        
+        // Insert it 2 positions away, or at the end if the queue is short.
+        const reinsertIndex = Math.min(currentIndex + 2, remainingQueue.length);
+        
+        const newQueue = [
+            ...remainingQueue.slice(0, reinsertIndex),
+            itemToReinsert,
+            ...remainingQueue.slice(reinsertIndex)
+        ];
+
+        const completedItems = state.practiceItems.filter(p => p.completed);
+        nextItems = [...newQueue, ...completedItems];
       }
 
       const nextQueue = nextItems.filter((p) => !p.completed);

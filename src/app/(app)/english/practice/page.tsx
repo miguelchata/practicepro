@@ -4,7 +4,6 @@
 import {
   Suspense,
   useEffect,
-  StrictMode,
   useMemo,
   useState,
 } from "react";
@@ -31,21 +30,18 @@ import { updateWordStats } from "@/lib/english";
 import { usePractice } from "@/hooks/use-practice";
 import { generatePracticeList } from "@/utils/generatePracticeList";
 import { motion, AnimatePresence } from "framer-motion";
+import type { PracticeItem, VocabularyItem } from "@/lib/types";
 
 type UiState = 'LOADING' | 'PRACTICING' | 'EMPTY' | 'COMPLETED';
 
-function PracticeSession() {
-  const searchParams = useSearchParams();
+type PracticeSessionProps = {
+  initialPracticeList: PracticeItem[];
+};
+
+function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
   const router = useRouter();
-  const { data: vocabularyList, loading: vocabLoading } = useVocabulary();
   const updateVocabularyItem = useUpdateVocabularyItem();
   const [uiState, setUiState] = useState<UiState>('LOADING');
-
-  const initialPracticeList = useMemo(() => {
-    if (vocabLoading) return [];
-    return generatePracticeList({ vocabularyList, searchParams });
-  }, [vocabularyList, searchParams, vocabLoading]);
-
 
   const {
     active,
@@ -56,7 +52,6 @@ function PracticeSession() {
     sessionFinished,
   } = usePractice(initialPracticeList);
 
-
   const handleFeedback = async (quality: number) => {
     if (!active) return null;
 
@@ -64,29 +59,28 @@ function PracticeSession() {
       active.wordData,
       quality
     );
-
-    // updateVocabularyItem(active.wordData.id, updatedWordData)
+    
+    // Asynchronously update in the background
+    updateVocabularyItem(updatedWordData.id, updatedWordData)
 
     return updatedWordData;
   };
 
   useEffect(() => {
-    if (vocabLoading) {
+    if (initialPracticeList === null) { // Still waiting for parent to load
         setUiState('LOADING');
     } else if (initialPracticeList.length === 0) {
         setUiState('EMPTY');
     } else {
         setUiState('PRACTICING');
     }
-  }, [vocabLoading, initialPracticeList]);
+  }, [initialPracticeList]);
 
   useEffect(() => {
     if (sessionFinished && uiState === 'PRACTICING') {
       setUiState('COMPLETED');
     }
   }, [sessionFinished, uiState]);
-
-  console.log("Practice page...")
 
 
   if (uiState === 'LOADING') {
@@ -191,7 +185,7 @@ function PracticeSession() {
                 <Flashcard
                   practiceItem={active}
                   handleFeedback={handleFeedback}
-                  nextCard={goToNext}
+                  nextCard={(updatedItem: VocabularyItem) => goToNext(updatedItem)}
                 />
               </motion.div>
             )}
@@ -207,7 +201,7 @@ function PracticeSession() {
                 <WritingCard
                   practiceItem={active}
                   handleFeedback={handleFeedback}
-                  nextCard={goToNext}
+                  nextCard={(updatedItem: VocabularyItem) => goToNext(updatedItem)}
                 />
               </motion.div>
             )}
@@ -220,11 +214,39 @@ function PracticeSession() {
   return null; // Should not be reached
 }
 
+function PracticePageContent() {
+    const searchParams = useSearchParams();
+    const { data: vocabularyList, loading: vocabLoading } = useVocabulary();
+
+    const initialPracticeList = useMemo(() => {
+        if (vocabLoading) return null; // Return null while loading
+        return generatePracticeList({ vocabularyList, searchParams });
+    }, [vocabularyList, searchParams, vocabLoading]);
+
+    if (vocabLoading || initialPracticeList === null) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+                <h2 className="text-2xl font-bold font-headline mb-2">
+                    Preparing your session...
+                </h2>
+                <p className="text-muted-foreground">Loading vocabulary...</p>
+            </div>
+        );
+    }
+    
+    return <PracticeSession initialPracticeList={initialPracticeList} />;
+}
+
+
 export default function PracticePage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Suspense fallback={<div>Loading session...</div>}>
-        <PracticeSession />
+      <Suspense fallback={
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+            <h2 className="text-2xl font-bold font-headline mb-2">Loading Session...</h2>
+        </div>
+      }>
+        <PracticePageContent />
       </Suspense>
     </div>
   );

@@ -32,12 +32,12 @@ export function Flashcard({
   }>({ accuracy: null, process: "initial", item: null });
 
   // Reset local state when the card changes
-  // useEffect(() => {
-  //   setShowExamples(false);
-  //   setShowWord(false);
-  //   setProcessing(false);
-  //   setStatus({ accuracy: null, item: null, process: "initial" });
-  // }, [wordData.id]);
+  useEffect(() => {
+    setShowExamples(false);
+    setShowWord(false);
+    setProcessing(false);
+    setStatus({ accuracy: null, item: null, process: "initial" });
+  }, [wordData.id]);
 
   const handleShowAnswer = () => {
     setShowWord(true);
@@ -50,13 +50,11 @@ export function Flashcard({
   };
 
   const onFeedback = async (quality: number) => {
-    // if (processing) return;
+    if (processing) return;
 
     setProcessing(true);
     const itemUpdated = await handleFeedback(quality);
-    // setNewAccuracy(accuracy);
-    // setFeedbackState('showingAccuracy');
-    // console.log(accuracy, " Status accuracy...");
+
     if (itemUpdated)
       setStatus((s) => ({
         ...s,
@@ -69,20 +67,11 @@ export function Flashcard({
   const handleNextCard = () => {
     if (status.process === "feedback") {
       if (status.item) {
-        // const itemToUpdate = { ...practiceItem, wordData: status.item };
         nextCard(status.item);
       }
     }
   };
 
-  // useEffect(() => {
-  //   if (status.process === 'feedback') {
-  //     const timer = setTimeout(() => {
-  //       nextCard();
-  //     }, 1200);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [status]);
 
   return (
     <Card className="w-full">

@@ -127,6 +127,7 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
   }
 
   if (uiState === 'PRACTICING' && !active) {
+    // This can happen briefly between state transitions
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
         <p>Loading next card...</p>

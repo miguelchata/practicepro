@@ -1,151 +1,129 @@
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useImmer } from "use-immer"
+import { useEffect, useMemo, useReducer } from "react";
 import type { PracticeItem, VocabularyItem } from "@/lib/types";
 
-export function usePractice(initialPracticeList: PracticeItem[]) {
-  // const [practiceItems, setPracticeItems] = useState<PracticeItem[]>(initialPracticeList);
-  const [practiceItems, setPracticeItems] = useImmer<PracticeItem[]>(initialPracticeList);
-  // const [activeId, setActiveId]
-  const [activeId, setActiveId] = useState<string | null>(new Date().getTime().toString());
-  // const [sessionFinished, setSessionFinished] = useState(false);
+// 1. Define State and Actions
+interface PracticeState {
+  practiceItems: PracticeItem[];
+  activeId: string | null;
+  sessionFinished: boolean;
+}
 
-  // useEffect(() => {
-  //   if (initialPracticeList.length > 0) {
-  //     setPracticeItems(initialPracticeList);
-  //     // setActiveId(initialPracticeList[0]?.wordData.id || null);
-  //     setSessionFinished(false);
-  //   } else if (initialPracticeList.length === 0) {
-  //     setSessionFinished(true);
-  //   }
-  // }, [initialPracticeList]);
+type PracticeAction =
+  | { type: 'INITIALIZE_SESSION'; payload: PracticeItem[] }
+  | { type: 'ADVANCE_SESSION'; payload: { updatedItem: VocabularyItem } };
 
-  const activeQueue = useMemo(
-    () => practiceItems.filter((p) => !p.completed),
-    [practiceItems]
-  );
-  const completedCount = useMemo(
-    () => practiceItems.filter((p) => p.completed).length,
-    [practiceItems]
-  );
-  const totalCount = useMemo(() => practiceItems.length, [practiceItems]);
-  const sessionFinished = useMemo(
-    () => activeQueue.length === 0,
-    [activeQueue]
-  );
+// 2. Initial State
+const initialState: PracticeState = {
+  practiceItems: [],
+  activeId: null,
+  sessionFinished: true,
+};
 
-
-  const active = useMemo(() => {
-    return (
-      activeQueue.find((item) => item.wordData.id === activeId) ||
-      activeQueue[0] ||
-      null
-    );
-  }, [activeId, activeQueue]);
-
-  const updateData = (id: string, data: Partial<PracticeItem>) => {
-    setPracticeItems((prev) =>
-      prev.map((p) => (p.wordData.id === id ? { ...p, ...data } : p))
-    );
-  };
-
-  const markCompleted = (id: string) => {
-    setPracticeItems((prev) =>
-      prev.map((p) => (p.wordData.id === id ? { ...p, completed: true } : p))
-    );
-  };
-
-  const rotateToEnd = (id: string) => {
-    setPracticeItems((prev) => {
-      const item = prev.find((p) => p.wordData.id === id);
-      if (!item) return prev;
-      const rest = prev.filter((p) => p.wordData.id !== id);
-      return [...rest, item];
-    });
-  };
-
-  const goToNext = (updatedItem: VocabularyItem) => {
-    setPracticeItems((currentItems) => {
-      const currentActive = currentItems.find(
-        (item) => item.wordData.id === active.wordData.id
-      );
-
-      // if (currentActive) {
-      //   currentActive.wordData = {...currentActive.wordData, ...updatedItem}
-      //   const isCorrect = currentActive.wordData.accuracy >= 0.7;
-
-      //   if (isCorrect) {
-      //     currentActive.completed = true  
-      //   } else {
-      //     const index = currentItems.findIndex(
-      //       (item) => item.wordData.id === currentActive.wordData.id
-      //     );
-      //     if (index !== -1) {
-      //       const [itemToRotate] = currentItems.splice(index, 1);
-      //       currentItems.push(itemToRotate)
-      //     }
-      //   }
-
-      //   const nextQueue = currentItems.filter((p) => !p.completed);
-      //   if (nextQueue.length === 0) {
-      //     setActiveId(null); // No more active items
-      //   } else {
-      //     setActiveId(new Date().getTime().toString()); // Set new active item
-      //   }
-      // }
-
-      if (!currentActive) {
-        // setSessionFinished(true);
-        return currentItems;
+// 3. Reducer Function
+function practiceReducer(state: PracticeState, action: PracticeAction): PracticeState {
+  switch (action.type) {
+    case 'INITIALIZE_SESSION': {
+      const initialList = action.payload;
+      if (!initialList || initialList.length === 0) {
+        return { ...initialState, sessionFinished: true };
       }
-      const updatedActive = { ...currentActive, ...updatedItem };
-      const isNowCorrect = updatedActive.wordData.accuracy >= 0.7;
+      return {
+        practiceItems: initialList,
+        activeId: new Date().getTime().toString(), // Unique ID for the first card animation
+        sessionFinished: false,
+      };
+    }
 
-      let nextItems;
-      if (isNowCorrect) {
+    case 'ADVANCE_SESSION': {
+      const { updatedItem } = action.payload;
+      
+      const activeItem = state.practiceItems.find(p => !p.completed);
+
+      if (!activeItem) {
+          return { ...state, sessionFinished: true };
+      }
+
+      // Ensure we are updating the correct item's data
+      const currentWordId = activeItem.wordData.id;
+      if (currentWordId !== updatedItem.id) {
+          console.warn("Mismatched item update in practice reducer. This might indicate a bug.");
+          // To be safe, don't change state if IDs don't match
+          return state;
+      }
+
+      const isCorrect = updatedItem.accuracy >= 0.7;
+
+      let nextItems: PracticeItem[];
+
+      if (isCorrect) {
         // Mark as completed
-        nextItems = currentItems.map((p) =>
-          p.wordData.id === updatedActive.wordData.id
-            ? { ...p, ...updatedActive, completed: true }
+        nextItems = state.practiceItems.map((p) =>
+          p.wordData.id === currentWordId
+            ? { ...p, wordData: updatedItem, completed: true }
             : p
         );
       } else {
-        // Rotate to end
-        const itemToRotate = currentItems.find(
-          (p) => p.wordData.id === updatedActive.wordData.id
-        );
-        if (!itemToRotate) return currentItems; // Should not happen
-        const rest = currentItems.filter(
-          (p) => p.wordData.id !== updatedActive.wordData.id
-        );
-        nextItems = [...rest, { ...itemToRotate, ...updatedActive }];
+        // Find the item, update it, and move it to the end
+        const itemToRotate = state.practiceItems.find(p => p.wordData.id === currentWordId);
+        const rest = state.practiceItems.filter(p => p.wordData.id !== currentWordId);
+        if (!itemToRotate) return state; // Should not happen
+        nextItems = [...rest, { ...itemToRotate, wordData: updatedItem }];
       }
 
       const nextQueue = nextItems.filter((p) => !p.completed);
 
       if (nextQueue.length === 0) {
-        // setSessionFinished(true);
-        setActiveId(null);
+        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true };
       } else {
-        // The next active item is always the first in the queue
-        // setActiveId(nextQueue[0].wordData.id);
-        setActiveId(new Date().getTime().toString());
+        return {
+          ...state,
+          practiceItems: nextItems,
+          activeId: new Date().getTime().toString(), // New unique ID for next card animation
+          sessionFinished: false,
+        };
       }
+    }
 
-      return nextItems;
-    });
+    default:
+      return state;
   }
+}
+
+// 4. The Hook
+export function usePractice(initialPracticeList: PracticeItem[] | null) {
+  const [state, dispatch] = useReducer(practiceReducer, initialState);
+
+  useEffect(() => {
+    if (initialPracticeList) {
+      dispatch({ type: 'INITIALIZE_SESSION', payload: initialPracticeList });
+    }
+  }, [initialPracticeList]);
+
+  const active = useMemo(() => {
+    if (state.sessionFinished || !state.practiceItems) return null;
+    // The active item is always the first one in the queue that is not completed
+    return state.practiceItems.find(p => !p.completed) || null;
+  }, [state.practiceItems, state.sessionFinished]);
+  
+  const completedCount = useMemo(() => {
+    return state.practiceItems.filter((p) => p.completed).length;
+  }, [state.practiceItems]);
+  
+  const totalCount = useMemo(() => {
+    return state.practiceItems.length;
+  }, [state.practiceItems]);
+
+  const goToNext = (updatedItem: VocabularyItem) => {
+    dispatch({ type: 'ADVANCE_SESSION', payload: { updatedItem } });
+  };
 
   return {
     active,
-    activeId,
+    activeId: state.activeId,
     completedCount,
     totalCount,
-    updateData,
-    markCompleted,
-    rotateToEnd,
+    sessionFinished: state.sessionFinished,
     goToNext,
-    sessionFinished,
-    // setSessionFinished,
   };
 }

@@ -9,6 +9,8 @@ import { DetailCard } from "./detail-card";
 import { ExampleCard } from "./example-card";
 import { WordCard } from "./word-card";
 import { ControlCard } from "./control-card";
+import { Button } from "@/components/ui/button";
+import { AccuracyCard } from "./accuracy-card";
 
 type FlashcardProps = {
   practiceItem: PracticeItem;
@@ -27,7 +29,7 @@ export function Flashcard({
   const [processing, setProcessing] = useState(false);
   const [status, setStatus] = useState<{
     accuracy: number | null;
-    process: "initial" | "answer" | "feedback";
+    process: "initial" | "answer" | "feedback" | "continue";
     item: VocabularyItem | null;
   }>({ accuracy: null, process: "initial", item: null });
 
@@ -56,11 +58,16 @@ export function Flashcard({
       }));
   };
 
+  const toContinue = () => {
+    setStatus((s) => ({
+        ...s,
+        process: "continue",
+    }));
+  }
+
   const handleNextCard = () => {
-    if (status.process === "feedback") {
-      if (status.item) {
-        nextCard(status.item);
-      }
+    if (status.item) {
+      nextCard(status.item);
     }
   };
 
@@ -86,13 +93,27 @@ export function Flashcard({
         </div>
 
         <div className="pt-6 min-h-[8rem] flex flex-col justify-center">
-          <ControlCard
-            status={status}
-            onFeedback={onFeedback}
-            isProcessing={processing}
-            handleShowAnswer={handleShowAnswer}
-            nextCard={handleNextCard}
-          />
+           {status.process === 'continue' ? (
+                <div className="space-y-4 text-center">
+                    <Button
+                        type="button"
+                        className="w-full"
+                        onClick={handleNextCard}
+                    >
+                        Continue
+                    </Button>
+                </div>
+            ) : status.process === 'feedback' ? (
+                <AccuracyCard accuracy={status.accuracy} nextCard={toContinue} />
+            ) : (
+                <ControlCard
+                    status={status}
+                    onFeedback={onFeedback}
+                    isProcessing={processing}
+                    handleShowAnswer={handleShowAnswer}
+                    nextCard={handleNextCard}
+                />
+            )}
         </div>
       </CardContent>
     </Card>

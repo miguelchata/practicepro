@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DetailCard } from "./detail-card";
 import { ExampleCard } from "./example-card";
@@ -23,21 +23,12 @@ export function WritingCard({
 }: WritingCardProps) {
   const { wordData } = practiceItem;
   const [showExamples, setShowExamples] = useState(false);
-  const [showWord, setShowWord] = useState(false);
   const [status, setStatus] = useState<{
       accuracy: number | null;
       process: "initial" | "answer" | "feedback" | "continue"
       item: VocabularyItem | null;
       typed: string
     }>({ accuracy: null, process: "initial", item: null,  typed: "" });
-
-
-  useEffect(() => {
-    setShowExamples(false);
-    setShowWord(false);
-    setStatus({ accuracy: null, item: null, process: "initial", typed: "" });
-  }, [wordData.id]);
-
 
   const handleToggleExamples = () => {
     setShowExamples(prev => !prev);

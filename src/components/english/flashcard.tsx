@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PracticeItem } from "@/lib/types";
 import type { VocabularyItem } from "@/lib/types";
@@ -30,14 +30,6 @@ export function Flashcard({
     process: "initial" | "answer" | "feedback";
     item: VocabularyItem | null;
   }>({ accuracy: null, process: "initial", item: null });
-
-  // Reset local state when the card changes
-  useEffect(() => {
-    setShowExamples(false);
-    setShowWord(false);
-    setProcessing(false);
-    setStatus({ accuracy: null, item: null, process: "initial" });
-  }, [wordData.id]);
 
   const handleShowAnswer = () => {
     setShowWord(true);

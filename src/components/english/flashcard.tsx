@@ -10,7 +10,6 @@ import { ExampleCard } from "./example-card";
 import { WordCard } from "./word-card";
 import { ControlCard } from "./control-card";
 import { Button } from "@/components/ui/button";
-import { AccuracyCard } from "./accuracy-card";
 
 type FlashcardProps = {
   practiceItem: PracticeItem;
@@ -59,6 +58,7 @@ export function Flashcard({
   };
 
   const toContinue = () => {
+    // This function will be called by AccuracyCard to signal it's time for the continue button
     setStatus((s) => ({
         ...s,
         process: "continue",
@@ -103,15 +103,13 @@ export function Flashcard({
                         Continue
                     </Button>
                 </div>
-            ) : status.process === 'feedback' ? (
-                <AccuracyCard accuracy={status.accuracy} nextCard={toContinue} />
             ) : (
                 <ControlCard
                     status={status}
                     onFeedback={onFeedback}
                     isProcessing={processing}
                     handleShowAnswer={handleShowAnswer}
-                    nextCard={handleNextCard}
+                    nextCard={toContinue} // Pass the function to transition to 'continue' state
                 />
             )}
         </div>

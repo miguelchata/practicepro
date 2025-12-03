@@ -2,7 +2,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { AccuracyCard } from './accuracy-card';
 
 type ControlCardProps = {
@@ -23,25 +22,15 @@ export function ControlCard({
   nextCard,
   handleShowAnswer,
 }: ControlCardProps) {
-  if (status.process === "initial") {
+
+  if (status.process === 'feedback') {
+    return <AccuracyCard accuracy={status.accuracy} nextCard={nextCard} />;
+  }
+
+  if (status.process === 'initial') {
     return (
       <div className="text-center">
         <Button onClick={handleShowAnswer}>Show Answer</Button>
-      </div>
-    );
-  }
-
-  if (status.process === "feedback") {
-    return <AccuracyCard accuracy={status.accuracy} nextCard={nextCard} />;
-    const progressPercent = status.accuracy ?? 0 * 100;
-    return (
-      <div className="w-full px-4 space-y-2">
-        <div className="flex items-center gap-4 justify-center">
-          <span className="text-sm font-medium text-center">
-            Vocabulary progress: {Math.round(progressPercent)}%
-          </span>
-        </div>
-        <Progress value={progressPercent} />
       </div>
     );
   }
@@ -53,7 +42,7 @@ export function ControlCard({
         <Button
           variant="destructive"
           className="h-auto"
-          onClick={() => onFeedback(3)}
+          onClick={() => onFeedback(1)}
           disabled={isProcessing}
         >
           <div className="flex flex-col items-center p-2">
@@ -64,7 +53,7 @@ export function ControlCard({
         <Button
           variant="outline"
           className="h-auto"
-          onClick={() => onFeedback(4)}
+          onClick={() => onFeedback(3)}
           disabled={isProcessing}
         >
           <div className="flex flex-col items-center p-2">

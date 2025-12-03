@@ -35,6 +35,7 @@ type PracticeSessionProps = {
 };
 
 function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
+  console.log('PracticeSession initialPracticeList:', initialPracticeList);
   const router = useRouter();
   const updateVocabularyItem = useUpdateVocabularyItem();
 

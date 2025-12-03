@@ -126,7 +126,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   }, [state.practiceItems]);
   
   const totalCount = useMemo(() => {
-    return state.practiceItems.length;
+    return state.practiceItems?.length || 0;
   }, [state.practiceItems]);
 
   const goToNext = (updatedItem: VocabularyItem) => {

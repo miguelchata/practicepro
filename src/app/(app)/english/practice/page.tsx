@@ -56,8 +56,7 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
       quality
     );
     
-    // Asynchronously update in the background
-    updateVocabularyItem(updatedWordData.id, updatedWordData)
+    // The database update is now deferred to the "Continue" button action in each card component.
 
     return updatedWordData;
   };

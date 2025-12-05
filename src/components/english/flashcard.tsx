@@ -10,6 +10,7 @@ import { ExampleCard } from "./example-card";
 import { WordCard } from "./word-card";
 import { ControlCard } from "./control-card";
 import { Button } from "@/components/ui/button";
+import { useUpdateVocabularyItem } from "@/firebase/firestore/use-vocabulary";
 
 type FlashcardProps = {
   practiceItem: PracticeItem;
@@ -23,6 +24,7 @@ export function Flashcard({
   nextCard,
 }: FlashcardProps) {
   const { wordData } = practiceItem;
+  const updateVocabularyItem = useUpdateVocabularyItem();
   const [showExamples, setShowExamples] = useState(false);
   const [showWord, setShowWord] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -67,6 +69,7 @@ export function Flashcard({
 
   const handleNextCard = () => {
     if (status.item) {
+      updateVocabularyItem(status.item.id, status.item);
       nextCard(status.item);
     }
   };

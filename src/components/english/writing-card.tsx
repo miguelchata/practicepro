@@ -9,6 +9,7 @@ import { WordCard } from "./word-card";
 import { ActionCard } from "./action-card"
 import type { PracticeItem } from "@/lib/types";
 import type { VocabularyItem } from "@/lib/types";
+import { useUpdateVocabularyItem } from "@/firebase/firestore/use-vocabulary";
 
 type WritingCardProps = {
   practiceItem: PracticeItem;
@@ -22,6 +23,7 @@ export function WritingCard({
   nextCard,
 }: WritingCardProps) {
   const { wordData } = practiceItem;
+  const updateVocabularyItem = useUpdateVocabularyItem();
   const [showExamples, setShowExamples] = useState(false);
   const [status, setStatus] = useState<{
       accuracy: number | null;
@@ -65,6 +67,7 @@ export function WritingCard({
   
   const handleNextCard = () => {
     if (status.item) {
+      updateVocabularyItem(status.item.id, status.item);
       nextCard(status.item);
     } 
   };

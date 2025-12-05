@@ -65,9 +65,9 @@ export function WritingCard({
     }));
   }
   
-  const handleNextCard = () => {
+  const handleNextCard = async () => {
     if (status.item) {
-      updateVocabularyItem(status.item.id, status.item);
+      await updateVocabularyItem(status.item.id, status.item);
       nextCard(status.item);
     } 
   };

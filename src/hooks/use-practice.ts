@@ -13,7 +13,8 @@ interface PracticeState {
 
 type PracticeAction =
   | { type: 'INITIALIZE_SESSION'; payload: PracticeItem[] }
-  | { type: 'ADVANCE_SESSION'; payload: { updatedItem: VocabularyItem } };
+  | { type: 'ADVANCE_SESSION'; payload: { updatedItem: VocabularyItem } }
+  | { type: 'SESSION_FINISHED'; payload: { updatedItem: VocabularyItem } };
 
 // 2. Initial State
 const initialState: PracticeState = {
@@ -39,6 +40,21 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         completedCount: 0,
         totalCount: initialList.length,
       };
+    }
+
+    case 'SESSION_FINISHED': {
+        const { updatedItem } = action.payload;
+        const activeItemIndex = state.practiceItems.findIndex(p => !p.completed);
+
+        if (activeItemIndex === -1) {
+            return { ...state, sessionFinished: true };
+        }
+        const activeItem = state.practiceItems[activeItemIndex];
+
+        let nextItems = [...state.practiceItems];
+        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
+
+        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true, completedCount: state.completedCount + 1 };
     }
 
     case 'ADVANCE_SESSION': {
@@ -110,7 +126,12 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   }, [state.practiceItems]);
 
   const goToNext = (updatedItem: VocabularyItem) => {
-    dispatch({ type: 'ADVANCE_SESSION', payload: { updatedItem } });
+    const remainingQueue = state.practiceItems.filter(p => !p.completed);
+    if (remainingQueue.length <= 1 && updatedItem.accuracy > 0.7) {
+        dispatch({ type: 'SESSION_FINISHED', payload: { updatedItem } });
+    } else {
+        dispatch({ type: 'ADVANCE_SESSION', payload: { updatedItem } });
+    }
   };
 
   return {

@@ -52,9 +52,19 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         const activeItem = state.practiceItems[activeItemIndex];
 
         let nextItems = [...state.practiceItems];
-        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
+        let newCompletedCount = state.completedCount;
 
-        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true, completedCount: state.completedCount + 1 };
+        if (updatedItem.accuracy > 0.7) {
+            nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
+            newCompletedCount += 1;
+        } else {
+             // If the last item is failed, it's still part of the final "practiced" list, just not "solved"
+            const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: true }; // Mark as completed to end session
+            nextItems.splice(activeItemIndex, 1);
+            nextItems.push(itemToRequeue);
+        }
+
+        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true, completedCount: newCompletedCount };
     }
 
     case 'ADVANCE_SESSION': {
@@ -122,12 +132,13 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   }, [state.practiceItems, state.sessionFinished]);
   
   const practicedItems = useMemo(() => {
+    // Return all items that were interacted with, now marked as completed
     return state.practiceItems.filter(p => p.completed);
   }, [state.practiceItems]);
 
   const goToNext = (updatedItem: VocabularyItem) => {
     const remainingQueue = state.practiceItems.filter(p => !p.completed);
-    if (remainingQueue.length <= 1 && updatedItem.accuracy > 0.7) {
+    if (remainingQueue.length <= 1) {
         dispatch({ type: 'SESSION_FINISHED', payload: { updatedItem } });
     } else {
         dispatch({ type: 'ADVANCE_SESSION', payload: { updatedItem } });

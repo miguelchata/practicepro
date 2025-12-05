@@ -7,6 +7,8 @@ interface PracticeState {
   practiceItems: PracticeItem[];
   activeId: string | null;
   sessionFinished: boolean;
+  completedCount: number;
+  totalCount: number;
 }
 
 type PracticeAction =
@@ -18,6 +20,8 @@ const initialState: PracticeState = {
   practiceItems: [],
   activeId: null,
   sessionFinished: true,
+  completedCount: 0,
+  totalCount: 0,
 };
 
 // 3. Reducer Function
@@ -32,6 +36,8 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         practiceItems: initialList.map(item => ({...item, completed: false})), // Ensure completed is false
         activeId: new Date().getTime().toString(), // Unique ID for the first card animation
         sessionFinished: false,
+        completedCount: 0,
+        totalCount: initialList.length,
       };
     }
 
@@ -52,8 +58,6 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
           return state;
       }
 
-      const isCorrect = updatedItem.accuracy >= 0.7;
-
       let nextItems: PracticeItem[];
 
       // Mark as completed
@@ -62,45 +66,19 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
           ? { ...p, wordData: updatedItem, completed: true }
           : p
       );
-      
-      // We don't re-insert incorrect items anymore for simplicity of session summary
-      // const queue = state.practiceItems.filter(p => !p.completed);
-      // const currentIndex = queue.findIndex(p => p.wordData.id === currentWordId);
-      
-      // if (currentIndex === -1) return state; // Should not happen
-
-      // if (isCorrect) {
-      //   nextItems = state.practiceItems.map((p) =>
-      //     p.wordData.id === currentWordId
-      //       ? { ...p, wordData: updatedItem, completed: true }
-      //       : p
-      //   );
-      // } else {
-      //   const itemToReinsert = { ...queue[currentIndex], wordData: updatedItem };
-      //   const remainingQueue = queue.filter(p => p.wordData.id !== currentWordId);
-        
-      //   const reinsertIndex = Math.min(currentIndex + 2, remainingQueue.length);
-        
-      //   const newQueue = [
-      //       ...remainingQueue.slice(0, reinsertIndex),
-      //       itemToReinsert,
-      //       ...remainingQueue.slice(reinsertIndex)
-      //   ];
-
-      //   const completedItems = state.practiceItems.filter(p => p.completed);
-      //   nextItems = [...newQueue, ...completedItems];
-      // }
 
       const nextQueue = nextItems.filter((p) => !p.completed);
+      const newCompletedCount = state.completedCount + 1;
 
       if (nextQueue.length === 0) {
-        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true };
+        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true, completedCount: newCompletedCount };
       } else {
         return {
           ...state,
           practiceItems: nextItems,
           activeId: new Date().getTime().toString(), // New unique ID for next card animation
           sessionFinished: false,
+          completedCount: newCompletedCount,
         };
       }
     }
@@ -126,14 +104,6 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     return state.practiceItems.find(p => !p.completed) || null;
   }, [state.practiceItems, state.sessionFinished]);
   
-  const completedCount = useMemo(() => {
-    return state.practiceItems.filter((p) => p.completed).length;
-  }, [state.practiceItems]);
-  
-  const totalCount = useMemo(() => {
-    return state.practiceItems?.length || 0;
-  }, [state.practiceItems]);
-
   const practicedItems = useMemo(() => {
     return state.practiceItems.filter(p => p.completed);
   }, [state.practiceItems]);
@@ -145,8 +115,8 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   return {
     active,
     activeId: state.activeId,
-    completedCount,
-    totalCount,
+    completedCount: state.completedCount,
+    totalCount: state.totalCount,
     sessionFinished: state.sessionFinished,
     practicedItems,
     goToNext,

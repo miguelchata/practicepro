@@ -22,6 +22,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useVocabulary } from "@/firebase/firestore/use-collection";
 import { useUpdateVocabularyItem } from "@/firebase/firestore/use-vocabulary";
 import { updateWordStats } from "@/lib/english";
@@ -29,6 +36,7 @@ import { usePractice } from "@/hooks/use-practice";
 import { generatePracticeList } from "@/utils/generatePracticeList";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PracticeItem, VocabularyItem } from "@/lib/types";
+import { VocabularyList } from "@/components/english/vocabulary-list";
 
 type PracticeSessionProps = {
   initialPracticeList: PracticeItem[];
@@ -37,7 +45,6 @@ type PracticeSessionProps = {
 function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
   console.log('PracticeSession initialPracticeList:', initialPracticeList);
   const router = useRouter();
-  const updateVocabularyItem = useUpdateVocabularyItem();
 
   const {
     active,
@@ -46,6 +53,7 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
     totalCount,
     goToNext,
     sessionFinished,
+    practicedItems
   } = usePractice(initialPracticeList);
 
   const handleFeedback = async (quality: number) => {
@@ -64,15 +72,24 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
   if (sessionFinished) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-        <h2 className="text-2xl font-bold font-headline mb-2">
-          Session Complete!
-        </h2>
-        <p className="text-muted-foreground mb-4">
-          You completed your review session. Keep up the great work!
-        </p>
-        <Button onClick={() => router.push("/english")}>
-          Back to Vocabulary
-        </Button>
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold font-headline mb-2">
+              Session Complete!
+            </CardTitle>
+            <CardDescription>
+              You completed your review session. Here's a summary of the words you practiced.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VocabularyList items={practicedItems.map(p => p.wordData)} />
+          </CardContent>
+          <CardContent>
+            <Button onClick={() => router.push("/english")}>
+              Back to Vocabulary
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

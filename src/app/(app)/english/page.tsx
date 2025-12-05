@@ -18,8 +18,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -28,7 +26,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useMemo, useState } from 'react';
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { PlusCircle, Star, Check, Sparkles } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { VocabularyList } from '@/components/english/vocabulary-list';
 
 export default function EnglishPage() {
   const { data: vocabularyList, loading } = useVocabulary();
@@ -103,37 +101,10 @@ export default function EnglishPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {loading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-            ) : vocabularyList.length > 0 ? (
-              <>
-                <h3 className="text-lg font-semibold mb-4">Practice List</h3>
-                <div className="space-y-4">
-                    {vocabularyList.map((item, index) => (
-                        <Link href={`/english/${item.word.toLowerCase()}`} key={item.id} className="block hover:bg-muted/50 rounded-lg p-4 -m-4">
-                            <div>
-                                <div className="grid gap-2">
-                                    <div className="flex justify-between items-center gap-4">
-                                        <p className="font-semibold truncate">{item.word.charAt(0).toUpperCase() + item.word.slice(1)}</p>
-                                        <div className="flex items-center gap-2 w-28">
-                                          <Progress value={item.accuracy * 100} className="h-2" />
-                                          <span className="text-xs font-mono text-muted-foreground w-9 text-right">
-                                              {`${Math.round(item.accuracy * 100)}%`}
-                                          </span>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground truncate">{item.definition}</p>
-                                </div>
-                                {index < vocabularyList.length - 1 && <Separator className="mt-4" />}
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-10">
+            {vocabularyList.length > 0 && <h3 className="mb-4 text-lg font-semibold">Practice List</h3>}
+            <VocabularyList items={vocabularyList} loading={loading} />
+            {!loading && vocabularyList.length === 0 && (
+              <div className="py-10 text-center">
                 <p className="text-muted-foreground">No words in your vocabulary yet.</p>
                  <Button asChild className="mt-4">
                   <Link href="/english/add">Add your first word</Link>

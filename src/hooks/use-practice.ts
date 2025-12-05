@@ -29,7 +29,7 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         return { ...initialState, sessionFinished: true };
       }
       return {
-        practiceItems: initialList,
+        practiceItems: initialList.map(item => ({...item, completed: false})), // Ensure completed is false
         activeId: new Date().getTime().toString(), // Unique ID for the first card animation
         sessionFinished: false,
       };
@@ -56,35 +56,40 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
 
       let nextItems: PracticeItem[];
 
-      if (isCorrect) {
-        // Mark as completed
-        nextItems = state.practiceItems.map((p) =>
-          p.wordData.id === currentWordId
-            ? { ...p, wordData: updatedItem, completed: true }
-            : p
-        );
-      } else {
-        // Incorrect: Re-insert the item a few spots down the line.
-        const queue = state.practiceItems.filter(p => !p.completed);
-        const currentIndex = queue.findIndex(p => p.wordData.id === currentWordId);
-        
-        if (currentIndex === -1) return state; // Should not happen
+      // Mark as completed
+      nextItems = state.practiceItems.map((p) =>
+        p.wordData.id === currentWordId
+          ? { ...p, wordData: updatedItem, completed: true }
+          : p
+      );
+      
+      // We don't re-insert incorrect items anymore for simplicity of session summary
+      // const queue = state.practiceItems.filter(p => !p.completed);
+      // const currentIndex = queue.findIndex(p => p.wordData.id === currentWordId);
+      
+      // if (currentIndex === -1) return state; // Should not happen
 
-        const itemToReinsert = { ...queue[currentIndex], wordData: updatedItem };
-        const remainingQueue = queue.filter(p => p.wordData.id !== currentWordId);
+      // if (isCorrect) {
+      //   nextItems = state.practiceItems.map((p) =>
+      //     p.wordData.id === currentWordId
+      //       ? { ...p, wordData: updatedItem, completed: true }
+      //       : p
+      //   );
+      // } else {
+      //   const itemToReinsert = { ...queue[currentIndex], wordData: updatedItem };
+      //   const remainingQueue = queue.filter(p => p.wordData.id !== currentWordId);
         
-        // Insert it 2 positions away, or at the end if the queue is short.
-        const reinsertIndex = Math.min(currentIndex + 2, remainingQueue.length);
+      //   const reinsertIndex = Math.min(currentIndex + 2, remainingQueue.length);
         
-        const newQueue = [
-            ...remainingQueue.slice(0, reinsertIndex),
-            itemToReinsert,
-            ...remainingQueue.slice(reinsertIndex)
-        ];
+      //   const newQueue = [
+      //       ...remainingQueue.slice(0, reinsertIndex),
+      //       itemToReinsert,
+      //       ...remainingQueue.slice(reinsertIndex)
+      //   ];
 
-        const completedItems = state.practiceItems.filter(p => p.completed);
-        nextItems = [...newQueue, ...completedItems];
-      }
+      //   const completedItems = state.practiceItems.filter(p => p.completed);
+      //   nextItems = [...newQueue, ...completedItems];
+      // }
 
       const nextQueue = nextItems.filter((p) => !p.completed);
 
@@ -129,6 +134,10 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     return state.practiceItems?.length || 0;
   }, [state.practiceItems]);
 
+  const practicedItems = useMemo(() => {
+    return state.practiceItems.filter(p => p.completed);
+  }, [state.practiceItems]);
+
   const goToNext = (updatedItem: VocabularyItem) => {
     dispatch({ type: 'ADVANCE_SESSION', payload: { updatedItem } });
   };
@@ -139,6 +148,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     completedCount,
     totalCount,
     sessionFinished: state.sessionFinished,
+    practicedItems,
     goToNext,
   };
 }

@@ -44,31 +44,32 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
     case 'ADVANCE_SESSION': {
       const { updatedItem } = action.payload;
       
-      const activeItem = state.practiceItems.find(p => !p.completed);
-
-      if (!activeItem) {
+      const activeItemIndex = state.practiceItems.findIndex(p => !p.completed);
+      if (activeItemIndex === -1) {
           return { ...state, sessionFinished: true };
       }
 
-      // Ensure we are updating the correct item's data
-      const currentWordId = activeItem.wordData.id;
-      if (currentWordId !== updatedItem.id) {
+      const activeItem = state.practiceItems[activeItemIndex];
+       if (activeItem.wordData.id !== updatedItem.id) {
           console.warn("Mismatched item update in practice reducer. This might indicate a bug.");
-          // To be safe, don't change state if IDs don't match
           return state;
       }
+      
+      let nextItems = [...state.practiceItems];
+      let newCompletedCount = state.completedCount;
 
-      let nextItems: PracticeItem[];
-
-      // Mark as completed
-      nextItems = state.practiceItems.map((p) =>
-        p.wordData.id === currentWordId
-          ? { ...p, wordData: updatedItem, completed: true }
-          : p
-      );
-
+      if (updatedItem.accuracy > 0.7) {
+        // Mark as completed for this session
+        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
+        newCompletedCount += 1;
+      } else {
+        // Not mastered yet, move to the back of the queue
+        const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false }; // Ensure completed is false
+        nextItems.splice(activeItemIndex, 1); // Remove from current position
+        nextItems.push(itemToRequeue); // Add to the end
+      }
+      
       const nextQueue = nextItems.filter((p) => !p.completed);
-      const newCompletedCount = state.completedCount + 1;
 
       if (nextQueue.length === 0) {
         return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true, completedCount: newCompletedCount };

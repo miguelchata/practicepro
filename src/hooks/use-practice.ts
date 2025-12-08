@@ -14,7 +14,7 @@ interface PracticeState {
 type PracticeAction =
   | { type: 'INITIALIZE_SESSION'; payload: PracticeItem[] }
   | { type: 'ADVANCE_SESSION'; payload: { updatedItem: VocabularyItem } }
-  | { type: 'SESSION_FINISHED'; payload: { updatedItem: VocabularyItem } };
+  | { type: 'SESSION_FINISHED' };
 
 // 2. Initial State
 const initialState: PracticeState = {
@@ -42,73 +42,43 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
       };
     }
 
-    case 'SESSION_FINISHED': {
+    case 'ADVANCE_SESSION': {
         const { updatedItem } = action.payload;
+        
         const activeItemIndex = state.practiceItems.findIndex(p => !p.completed);
-
         if (activeItemIndex === -1) {
             return { ...state, sessionFinished: true };
         }
+  
         const activeItem = state.practiceItems[activeItemIndex];
-
+         if (activeItem.wordData.id !== updatedItem.id) {
+            console.warn("Mismatched item update in practice reducer. This might indicate a bug.");
+            return state;
+        }
+        
         let nextItems = [...state.practiceItems];
         let newCompletedCount = state.completedCount;
-
+  
         if (updatedItem.accuracy > 0.7) {
-            nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
-            newCompletedCount += 1;
+          // Mark as completed for this session
+          nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
+          newCompletedCount += 1;
         } else {
-             // If the last item is failed, it's still part of the final "practiced" list, just not "solved"
-            const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: true }; // Mark as completed to end session
-            nextItems.splice(activeItemIndex, 1);
-            nextItems.push(itemToRequeue);
+          // Not mastered yet, move to the back of the queue
+          const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false };
+          nextItems.splice(activeItemIndex, 1); // Remove from current position
+          nextItems.push(itemToRequeue); // Add to the end
         }
 
-        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true, completedCount: newCompletedCount };
-    }
-
-    case 'ADVANCE_SESSION': {
-      const { updatedItem } = action.payload;
-      
-      const activeItemIndex = state.practiceItems.findIndex(p => !p.completed);
-      if (activeItemIndex === -1) {
-          return { ...state, sessionFinished: true };
-      }
-
-      const activeItem = state.practiceItems[activeItemIndex];
-       if (activeItem.wordData.id !== updatedItem.id) {
-          console.warn("Mismatched item update in practice reducer. This might indicate a bug.");
-          return state;
-      }
-      
-      let nextItems = [...state.practiceItems];
-      let newCompletedCount = state.completedCount;
-
-      if (updatedItem.accuracy > 0.7) {
-        // Mark as completed for this session
-        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
-        newCompletedCount += 1;
-      } else {
-        // Not mastered yet, move to the back of the queue
-        const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false }; // Ensure completed is false
-        nextItems.splice(activeItemIndex, 1); // Remove from current position
-        nextItems.push(itemToRequeue); // Add to the end
-      }
-      
-      const nextQueue = nextItems.filter((p) => !p.completed);
-
-      if (nextQueue.length === 0) {
-        return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true, completedCount: newCompletedCount };
-      } else {
         return {
-          ...state,
-          practiceItems: nextItems,
-          activeId: new Date().getTime().toString(), // New unique ID for next card animation
-          sessionFinished: false,
-          completedCount: newCompletedCount,
+            ...state,
+            practiceItems: nextItems,
+            completedCount: newCompletedCount,
         };
-      }
     }
+
+    case 'SESSION_FINISHED':
+        return { ...state, sessionFinished: true };
 
     default:
       return state;
@@ -137,11 +107,17 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   }, [state.practiceItems]);
 
   const goToNext = (updatedItem: VocabularyItem) => {
-    const remainingQueue = state.practiceItems.filter(p => !p.completed);
-    if (remainingQueue.length <= 1) {
-        dispatch({ type: 'SESSION_FINISHED', payload: { updatedItem } });
+    dispatch({ type: 'ADVANCE_SESSION', payload: { updatedItem } });
+
+    // Check if the next active item is null AFTER dispatching
+    const nextQueue = state.practiceItems.filter(p => !p.completed);
+    const isLastItem = nextQueue.length === 1 && nextQueue[0].wordData.id === updatedItem.id;
+    
+    if (isLastItem && updatedItem.accuracy > 0.7) {
+        dispatch({ type: 'SESSION_FINISHED' });
     } else {
-        dispatch({ type: 'ADVANCE_SESSION', payload: { updatedItem } });
+        // This generates a new ID to trigger animation for the next card
+        dispatch({ type: 'INITIALIZE_SESSION', payload: state.practiceItems });
     }
   };
 

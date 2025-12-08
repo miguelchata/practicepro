@@ -8,7 +8,7 @@ type ControlCardProps = {
   onFeedback: (quality: number) => void;
   isProcessing: boolean;
   status: {
-    process: "initial" | "answer" | "feedback";
+    process: "initial" | "answer" | "feedback" | "continue";
     accuracy: number | null;
   };
   handleShowAnswer: () => void;

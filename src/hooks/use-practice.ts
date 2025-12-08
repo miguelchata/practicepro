@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useReducer } from "react";
 import type { PracticeItem, VocabularyItem } from "@/lib/types";
 
@@ -60,12 +61,14 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
       let newCompletedCount = state.completedCount;
 
       if (updatedItem.accuracy > 0.7) {
+        // Mark as completed for this session
         nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
         newCompletedCount += 1;
       } else {
-        const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false };
-        nextItems.splice(activeItemIndex, 1);
-        nextItems.push(itemToRequeue);
+        // Not mastered yet, move to the back of the queue
+        const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false }; // Ensure completed is false
+        nextItems.splice(activeItemIndex, 1); // Remove from current position
+        nextItems.push(itemToRequeue); // Add to the end
       }
       
       return {

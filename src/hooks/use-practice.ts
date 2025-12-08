@@ -76,17 +76,36 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
     }
     
     case 'SESSION_FINISHED': {
-        const remainingQueue = state.practiceItems.filter((p) => !p.completed);
-
-        if (remainingQueue.length === 0) {
+        const activeItemIndex = state.practiceItems.findIndex((p) => !p.completed);
+        
+        // If there's no active item, it means the last item was just completed.
+        if (activeItemIndex === -1) {
             return { ...state, activeId: null, sessionFinished: true };
-        } else {
-            return {
+        }
+
+        const activeItem = state.practiceItems[activeItemIndex];
+        let nextItems = [...state.practiceItems];
+
+        // If the active item was NOT marked as completed, move it to the back of the queue.
+        if (!activeItem.completed) {
+            const itemToRequeue = { ...activeItem };
+            nextItems.splice(activeItemIndex, 1); // Remove from current position
+            nextItems.push(itemToRequeue); // Add to the end
+        }
+
+        // Check if there are any non-completed items left *after* potential re-queuing
+        const remainingQueue = nextItems.filter((p) => !p.completed);
+        
+        if (remainingQueue.length === 0) {
+            return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true };
+        }
+
+        return {
             ...state,
+            practiceItems: nextItems,
             activeId: new Date().getTime().toString(), // New unique ID for next card animation
             sessionFinished: false,
-            };
-        }
+        };
     }
       
     default:

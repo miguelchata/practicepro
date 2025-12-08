@@ -47,8 +47,7 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
       
       const activeItemIndex = state.practiceItems.findIndex(p => !p.completed);
       if (activeItemIndex === -1) {
-          // This should ideally not happen if session is managed correctly
-          return { ...state, sessionFinished: true };
+          return state; // No active item to update
       }
 
       const activeItem = state.practiceItems[activeItemIndex];

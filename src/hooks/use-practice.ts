@@ -56,29 +56,25 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
           return state;
       }
       
-      let nextItems = [...state.practiceItems];
+      const nextItems = [...state.practiceItems];
       let newCompletedCount = state.completedCount;
 
       if (updatedItem.accuracy > 0.7) {
-        // Mark as completed for this session
         nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
         newCompletedCount += 1;
       } else {
-        // Not mastered yet, move to the back of the queue
-        const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false }; // Ensure completed is false
-        nextItems.splice(activeItemIndex, 1); // Remove from current position
-        nextItems.push(itemToRequeue); // Add to the end
+        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: false };
       }
       
       return {
         ...state,
         practiceItems: nextItems,
         completedCount: newCompletedCount
-      }
+      };
     }
     
     case 'SESSION_FINISHED':
-      return { ...state, sessionFinished: true, completedCount: state.completedCount + 1 };
+      return { ...state, sessionFinished: true };
       
     default:
       return state;
@@ -106,13 +102,17 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     return state.practiceItems.filter(p => p.completed);
   }, [state.practiceItems]);
 
-  const updateSession = (updatedItem: VocabularyItem) => {
-    if (active) {
-        if(state.completedCount === state.totalCount - 1) {
-            dispatch({ type: 'SESSION_FINISHED' });
-        } else {
-            dispatch({ type: 'UPDATE_SESSION', payload: { updatedItem } });
-        }
+  const goToNext = (updatedItem: VocabularyItem) => {
+    dispatch({ type: 'UPDATE_SESSION', payload: { updatedItem } });
+
+    // After updating, check if we should finish.
+    // This logic is now outside the reducer.
+    const remainingItems = state.practiceItems.filter(p => !p.completed);
+    if (remainingItems.length <= 1 && updatedItem.accuracy > 0.7) { // <=1 because the current item is not yet marked completed in this state snapshot
+        dispatch({ type: 'SESSION_FINISHED' });
+    } else {
+        // Here you might want logic to move to the next card,
+        // for now, we just update the current one.
     }
   };
 
@@ -123,6 +123,6 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     totalCount: state.totalCount,
     sessionFinished: state.sessionFinished,
     practicedItems,
-    updateSession,
+    goToNext,
   };
 }

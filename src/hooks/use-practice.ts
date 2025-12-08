@@ -57,7 +57,7 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
           return state;
       }
       
-      let nextItems = [...state.practiceItems];
+      const nextItems = [...state.practiceItems];
       let newCompletedCount = state.completedCount;
 
       if (updatedItem.accuracy > 0.7) {
@@ -65,10 +65,8 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
         newCompletedCount += 1;
       } else {
-        // Not mastered yet, move to the back of the queue
-        const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false }; // Ensure completed is false
-        nextItems.splice(activeItemIndex, 1); // Remove from current position
-        nextItems.push(itemToRequeue); // Add to the end
+        // Not mastered yet, just update the data in place.
+        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: false };
       }
       
       return {

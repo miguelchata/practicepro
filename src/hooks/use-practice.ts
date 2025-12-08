@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useReducer } from "react";
 import type { PracticeItem, VocabularyItem } from "@/lib/types";
 
@@ -47,6 +46,7 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
       
       const activeItemIndex = state.practiceItems.findIndex(p => !p.completed);
       if (activeItemIndex === -1) {
+          // This should ideally not happen if session is managed correctly
           return { ...state, sessionFinished: true };
       }
 
@@ -56,25 +56,38 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
           return state;
       }
       
-      const nextItems = [...state.practiceItems];
+      let nextItems = [...state.practiceItems];
       let newCompletedCount = state.completedCount;
 
       if (updatedItem.accuracy > 0.7) {
         nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
         newCompletedCount += 1;
       } else {
-        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: false };
+        const itemToRequeue = { ...activeItem, wordData: updatedItem, completed: false };
+        nextItems.splice(activeItemIndex, 1);
+        nextItems.push(itemToRequeue);
       }
       
       return {
         ...state,
         practiceItems: nextItems,
-        completedCount: newCompletedCount
+        completedCount: newCompletedCount,
       };
     }
     
-    case 'SESSION_FINISHED':
-      return { ...state, sessionFinished: true };
+    case 'SESSION_FINISHED': {
+        const remainingQueue = state.practiceItems.filter((p) => !p.completed);
+
+        if (remainingQueue.length === 0) {
+            return { ...state, activeId: null, sessionFinished: true };
+        } else {
+            return {
+            ...state,
+            activeId: new Date().getTime().toString(), // New unique ID for next card animation
+            sessionFinished: false,
+            };
+        }
+    }
       
     default:
       return state;
@@ -98,22 +111,16 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   }, [state.practiceItems, state.sessionFinished]);
   
   const practicedItems = useMemo(() => {
-    // Return all items that were interacted with, now marked as completed
+    // Return all items that were interacted with and are now marked as completed
     return state.practiceItems.filter(p => p.completed);
   }, [state.practiceItems]);
 
-  const goToNext = (updatedItem: VocabularyItem) => {
+  const updateState = (updatedItem: VocabularyItem) => {
     dispatch({ type: 'UPDATE_SESSION', payload: { updatedItem } });
+  };
 
-    // After updating, check if we should finish.
-    // This logic is now outside the reducer.
-    const remainingItems = state.practiceItems.filter(p => !p.completed);
-    if (remainingItems.length <= 1 && updatedItem.accuracy > 0.7) { // <=1 because the current item is not yet marked completed in this state snapshot
-        dispatch({ type: 'SESSION_FINISHED' });
-    } else {
-        // Here you might want logic to move to the next card,
-        // for now, we just update the current one.
-    }
+  const goToNext = () => {
+    dispatch({ type: 'SESSION_FINISHED' });
   };
 
   return {
@@ -123,6 +130,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     totalCount: state.totalCount,
     sessionFinished: state.sessionFinished,
     practicedItems,
+    updateState,
     goToNext,
   };
 }

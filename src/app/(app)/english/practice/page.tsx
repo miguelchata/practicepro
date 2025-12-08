@@ -51,6 +51,7 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
     activeId,
     completedCount,
     totalCount,
+    updateState,
     goToNext,
     sessionFinished,
     practicedItems
@@ -65,7 +66,7 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
     );
     
     // The database update is now deferred to the "Continue" button action in each card component.
-
+    updateState(updatedWordData);
     return updatedWordData;
   };
 
@@ -169,7 +170,7 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
               <Flashcard
                 practiceItem={active}
                 handleFeedback={handleFeedback}
-                nextCard={(updatedItem: VocabularyItem) => goToNext(updatedItem)}
+                nextCard={() => goToNext()}
               />
             </motion.div>
           )}
@@ -185,7 +186,7 @@ function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
               <WritingCard
                 practiceItem={active}
                 handleFeedback={handleFeedback}
-                nextCard={(updatedItem: VocabularyItem) => goToNext(updatedItem)}
+                nextCard={() => goToNext()}
               />
             </motion.div>
           )}

@@ -15,7 +15,7 @@ import { useUpdateVocabularyItem } from "@/firebase/firestore/use-vocabulary";
 type FlashcardProps = {
   practiceItem: PracticeItem;
   handleFeedback: (quality: number) => Promise<VocabularyItem | null>;
-  nextCard: (item: VocabularyItem) => void;
+  nextCard: () => void;
 };
 
 export function Flashcard({
@@ -70,7 +70,7 @@ export function Flashcard({
   const handleNextCard = async () => {
     if (status.item) {
       await updateVocabularyItem(status.item.id, status.item);
-      nextCard(status.item);
+      nextCard();
     }
   };
 

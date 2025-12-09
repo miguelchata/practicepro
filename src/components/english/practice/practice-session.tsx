@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -25,40 +26,33 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { updateWordStats } from '@/lib/english';
-import { usePractice } from '@/hooks/use-practice';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PracticeItem } from '@/lib/types';
 import { VocabularyList } from '@/components/english/vocabulary-list';
+import { PracticeContext } from '@/context/practice-context';
 
-type PracticeSessionProps = {
-  initialPracticeList: PracticeItem[];
-};
-
-export function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
-  console.log('PracticeSession initialPracticeList:', initialPracticeList);
+export function PracticeSession() {
   const router = useRouter();
+  const context = useContext(PracticeContext);
+  
+  if (!context) {
+    throw new Error('PracticeSession must be used within a PracticeProvider');
+  }
 
   const {
+    state,
     active,
+    practicedItems,
+    handleFeedback,
+    goToNext,
+  } = context;
+
+  const {
     activeId,
     completedCount,
     totalCount,
-    updateState,
-    goToNext,
     sessionFinished,
-    practicedItems,
-  } = usePractice(initialPracticeList);
-
-  const handleFeedback = async (quality: number) => {
-    if (!active) return null;
-
-    const updatedWordData = updateWordStats(active.wordData, quality);
-
-    // The database update is now deferred to the "Continue" button action in each card component.
-    updateState(updatedWordData);
-    return updatedWordData;
-  };
+    practiceItems
+  } = state;
 
   if (sessionFinished) {
     return (
@@ -86,7 +80,7 @@ export function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
     );
   }
 
-  if (initialPracticeList.length === 0) {
+  if (practiceItems.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
         <h2 className="text-2xl font-bold font-headline mb-2">
@@ -104,7 +98,6 @@ export function PracticeSession({ initialPracticeList }: PracticeSessionProps) {
   }
 
   if (!active) {
-    // This can happen briefly between state transitions or if the list is empty initially.
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
         <p>Loading next card...</p>

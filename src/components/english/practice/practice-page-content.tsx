@@ -6,13 +6,14 @@ import { useSearchParams } from 'next/navigation';
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { generatePracticeList } from '@/utils/generatePracticeList';
 import { PracticeSession } from './practice-session';
+import { PracticeProvider } from '@/context/practice-context';
 
 export function PracticePageContent() {
   const searchParams = useSearchParams();
   const { data: vocabularyList, loading: vocabLoading } = useVocabulary();
 
   const initialPracticeList = useMemo(() => {
-    if (vocabLoading) return null; // Return null while loading
+    if (vocabLoading) return null;
     return generatePracticeList({ vocabularyList, searchParams });
   }, [vocabularyList, searchParams, vocabLoading]);
 
@@ -27,5 +28,9 @@ export function PracticePageContent() {
     );
   }
 
-  return <PracticeSession initialPracticeList={initialPracticeList} />;
+  return (
+    <PracticeProvider initialPracticeList={initialPracticeList}>
+        <PracticeSession />
+    </PracticeProvider>
+  );
 }

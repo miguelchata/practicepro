@@ -1,9 +1,13 @@
 
+'use client';
+
 import { useEffect, useMemo, useReducer } from "react";
 import type { PracticeItem, VocabularyItem } from "@/lib/types";
+import { updateWordStats } from "@/lib/english";
+
 
 // 1. Define State and Actions
-interface PracticeState {
+export interface PracticeState {
   practiceItems: PracticeItem[];
   activeId: string | null;
   sessionFinished: boolean;
@@ -11,13 +15,13 @@ interface PracticeState {
   totalCount: number;
 }
 
-type PracticeAction =
+export type PracticeAction =
   | { type: 'INITIALIZE_SESSION'; payload: PracticeItem[] }
   | { type: 'UPDATE_SESSION'; payload: { updatedItem: VocabularyItem } }
-  | { type: 'SESSION_FINISHED' };
+  | { type: 'GO_TO_NEXT' };
 
 // 2. Initial State
-const initialState: PracticeState = {
+export const initialState: PracticeState = {
   practiceItems: [],
   activeId: null,
   sessionFinished: true,
@@ -26,7 +30,7 @@ const initialState: PracticeState = {
 };
 
 // 3. Reducer Function
-function practiceReducer(state: PracticeState, action: PracticeAction): PracticeState {
+export function practiceReducer(state: PracticeState, action: PracticeAction): PracticeState {
   switch (action.type) {
     case 'INITIALIZE_SESSION': {
       const initialList = action.payload;
@@ -34,8 +38,8 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         return { ...initialState, sessionFinished: true };
       }
       return {
-        practiceItems: initialList.map(item => ({...item, completed: false})), // Ensure completed is false
-        activeId: new Date().getTime().toString(), // Unique ID for the first card animation
+        practiceItems: initialList.map(item => ({...item, completed: false})),
+        activeId: new Date().getTime().toString(),
         sessionFinished: false,
         completedCount: 0,
         totalCount: initialList.length,
@@ -59,13 +63,12 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
       const nextItems = [...state.practiceItems];
       let newCompletedCount = state.completedCount;
 
+      // Update in place
+      nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem };
+
       if (updatedItem.accuracy > 0.7) {
-        // Mark as completed for this session
-        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: true };
+        nextItems[activeItemIndex].completed = true;
         newCompletedCount += 1;
-      } else {
-        // Not mastered yet, just update the data in place.
-        nextItems[activeItemIndex] = { ...activeItem, wordData: updatedItem, completed: false };
       }
       
       return {
@@ -75,10 +78,9 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
       };
     }
     
-    case 'SESSION_FINISHED': {
+    case 'GO_TO_NEXT': {
         const activeItemIndex = state.practiceItems.findIndex((p) => !p.completed);
         
-        // If there's no active item, it means the last item was just completed.
         if (activeItemIndex === -1) {
             return { ...state, activeId: null, sessionFinished: true };
         }
@@ -86,14 +88,12 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         const activeItem = state.practiceItems[activeItemIndex];
         let nextItems = [...state.practiceItems];
 
-        // If the active item was NOT marked as completed, move it to the back of the queue.
         if (!activeItem.completed) {
             const itemToRequeue = { ...activeItem };
-            nextItems.splice(activeItemIndex, 1); // Remove from current position
-            nextItems.push(itemToRequeue); // Add to the end
+            nextItems.splice(activeItemIndex, 1);
+            nextItems.push(itemToRequeue);
         }
 
-        // Check if there are any non-completed items left *after* potential re-queuing
         const remainingQueue = nextItems.filter((p) => !p.completed);
         
         if (remainingQueue.length === 0) {
@@ -103,7 +103,7 @@ function practiceReducer(state: PracticeState, action: PracticeAction): Practice
         return {
             ...state,
             practiceItems: nextItems,
-            activeId: new Date().getTime().toString(), // New unique ID for next card animation
+            activeId: new Date().getTime().toString(),
             sessionFinished: false,
         };
     }
@@ -125,31 +125,31 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
 
   const active = useMemo(() => {
     if (state.sessionFinished || !state.practiceItems) return null;
-    // The active item is always the first one in the queue that is not completed
     return state.practiceItems.find(p => !p.completed) || null;
   }, [state.practiceItems, state.sessionFinished]);
   
   const practicedItems = useMemo(() => {
-    // Return all items that were interacted with and are now marked as completed
     return state.practiceItems.filter(p => p.completed);
   }, [state.practiceItems]);
 
-  const updateState = (updatedItem: VocabularyItem) => {
-    dispatch({ type: 'UPDATE_SESSION', payload: { updatedItem } });
+  const handleFeedback = async (quality: number): Promise<VocabularyItem | null> => {
+    if (!active) return null;
+
+    const updatedWordData = updateWordStats(active.wordData, quality);
+    dispatch({ type: 'UPDATE_SESSION', payload: { updatedItem: updatedWordData } });
+    return updatedWordData;
   };
 
   const goToNext = () => {
-    dispatch({ type: 'SESSION_FINISHED' });
+    dispatch({ type: 'GO_TO_NEXT' });
   };
 
   return {
+    state,
+    dispatch,
     active,
-    activeId: state.activeId,
-    completedCount: state.completedCount,
-    totalCount: state.totalCount,
-    sessionFinished: state.sessionFinished,
     practicedItems,
-    updateState,
+    handleFeedback,
     goToNext,
   };
 }

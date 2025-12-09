@@ -9,18 +9,22 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import type { VocabularyItem } from '@/lib/types';
+import { initializeFirebase } from '@/firebase';
 
 /**
  * Fetches all vocabulary items for a given user from Firestore.
- * @param firestore - The Firestore instance.
  * @param userId - The ID of the user whose vocabulary to fetch.
  * @returns A promise that resolves to an array of vocabulary items.
  */
 export async function getVocabularyForUser(
-  firestore: Firestore,
   userId: string
 ): Promise<VocabularyItem[]> {
   try {
+    const { firestore } = initializeFirebase();
+    if (!firestore) {
+      throw new Error('Firestore is not initialized.');
+    }
+
     const q = query(
       collection(firestore, 'vocabulary'),
       where('userId', '==', userId)

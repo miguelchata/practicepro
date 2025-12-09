@@ -5,7 +5,7 @@ import { createContext, type ReactNode, useMemo, useEffect, useState } from 'rea
 import { usePractice, type PracticeState, type PracticeAction } from '@/hooks/use-practice';
 import type { PracticeItem, VocabularyItem } from '@/lib/types';
 import { useSearchParams } from 'next/navigation';
-import { useFirestore, useUser } from '@/firebase';
+import { useUser } from '@/firebase';
 import { generatePracticeList } from '@/utils/generatePracticeList';
 import { getVocabularyForUser } from '@/services/vocabulary';
 
@@ -26,15 +26,14 @@ type PracticeProviderProps = {
 
 export function PracticeProvider({ children }: PracticeProviderProps) {
     const searchParams = useSearchParams();
-    const firestore = useFirestore();
     const { data: user, loading: userLoading } = useUser();
     const [vocabularyList, setVocabularyList] = useState<VocabularyItem[]>([]);
     const [vocabLoading, setVocabLoading] = useState(true);
 
     useEffect(() => {
-      if (firestore && user) {
+      if (user) {
         setVocabLoading(true);
-        getVocabularyForUser(firestore, user.uid)
+        getVocabularyForUser(user.uid)
           .then(data => {
             setVocabularyList(data);
           })
@@ -49,7 +48,7 @@ export function PracticeProvider({ children }: PracticeProviderProps) {
         // If there's no user and we're not loading the user, stop loading.
         setVocabLoading(false);
       }
-    }, [firestore, user, userLoading]);
+    }, [user, userLoading]);
 
     const initialPracticeList = useMemo(() => {
         if (vocabLoading) return null; // Return null while loading

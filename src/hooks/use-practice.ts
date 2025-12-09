@@ -79,33 +79,32 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
     }
     
     case 'GO_TO_NEXT': {
-        const activeItemIndex = state.practiceItems.findIndex((p) => !p.completed);
+      const activeItemIndex = state.practiceItems.findIndex((p) => !p.completed);
         
-        if (activeItemIndex === -1) {
-            return { ...state, activeId: null, sessionFinished: true };
-        }
+      // This case handles advancing the card. If the just-finished card was NOT completed, re-queue it.
+      let nextItems = [...state.practiceItems];
 
-        const activeItem = state.practiceItems[activeItemIndex];
-        let nextItems = [...state.practiceItems];
+      if (activeItemIndex !== -1) {
+          const activeItem = state.practiceItems[activeItemIndex];
+          if (!activeItem.completed) {
+              const itemToRequeue = { ...activeItem };
+              nextItems.splice(activeItemIndex, 1);
+              nextItems.push(itemToRequeue);
+          }
+      }
 
-        if (!activeItem.completed) {
-            const itemToRequeue = { ...activeItem };
-            nextItems.splice(activeItemIndex, 1);
-            nextItems.push(itemToRequeue);
-        }
+      const remainingQueue = nextItems.filter((p) => !p.completed);
+      
+      if (remainingQueue.length === 0) {
+          return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true };
+      }
 
-        const remainingQueue = nextItems.filter((p) => !p.completed);
-        
-        if (remainingQueue.length === 0) {
-            return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true };
-        }
-
-        return {
-            ...state,
-            practiceItems: nextItems,
-            activeId: new Date().getTime().toString(),
-            sessionFinished: false,
-        };
+      return {
+          ...state,
+          practiceItems: nextItems,
+          activeId: new Date().getTime().toString(),
+          sessionFinished: false,
+      };
     }
       
     default:
@@ -129,7 +128,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   }, [state.practiceItems, state.sessionFinished]);
   
   const practicedItems = useMemo(() => {
-    return state.practiceItems.filter(p => p.completed);
+    return state.practiceItems.filter(p => p.completed === false);
   }, [state.practiceItems]);
 
   const handleFeedback = async (quality: number): Promise<VocabularyItem | null> => {

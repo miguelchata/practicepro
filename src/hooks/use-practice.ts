@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useMemo, useReducer, useRef } from "react";
 import type { PracticeItem, VocabularyItem } from "@/lib/types";
 import { updateWordStats } from "@/lib/english";
 
@@ -122,10 +122,12 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
 // 4. The Hook
 export function usePractice(initialPracticeList: PracticeItem[] | null) {
   const [state, dispatch] = useReducer(practiceReducer, initialState);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (initialPracticeList) {
+    if (initializedRef.current === false && initialPracticeList && initialPracticeList.length > 0) {
       console.log("hello initial")
+      initializedRef.current = true;
       dispatch({ type: 'INITIALIZE_SESSION', payload: initialPracticeList });
     }
   }, [initialPracticeList]);

@@ -11,6 +11,7 @@ export interface PracticeState {
   practiceItems: PracticeItem[];
   practicedItems: PracticeItem[];
   activeId: string | null;
+  active: PracticeItem | null;
   sessionFinished: boolean;
   completedCount: number;
   totalCount: number;
@@ -26,6 +27,7 @@ export const initialState: PracticeState = {
   practiceItems: [],
   practicedItems: [],
   activeId: null,
+  active: null,
   sessionFinished: true,
   completedCount: 0,
   totalCount: 0,
@@ -43,6 +45,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
         practiceItems: initialList.map(item => ({...item, completed: false})),
         practicedItems: [],
         activeId: new Date().getTime().toString(),
+        active: initialList[0],
         sessionFinished: false,
         completedCount: 0,
         totalCount: initialList.length,
@@ -75,12 +78,13 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
       }
 
       const itemsPracticed = nextItems.filter(p => p.completed);
+      const listPracticed = [...state.practicedItems, ...itemsPracticed]
       
       
       return {
         ...state,
         practiceItems: nextItems,
-        practicedItems: itemsPracticed,
+        practicedItems: listPracticed,
         completedCount: newCompletedCount,
       };
     }
@@ -108,6 +112,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
 
       return {
           ...state,
+          active: remainingQueue[0],
           practiceItems: remainingQueue,
           activeId: new Date().getTime().toString(),
           sessionFinished: false,
@@ -125,9 +130,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (initializedRef.current === false && initialPracticeList && initialPracticeList.length > 0) {
-      console.log("hello initial")
-      initializedRef.current = true;
+    if (initialPracticeList && initialPracticeList.length > 0) {
       dispatch({ type: 'INITIALIZE_SESSION', payload: initialPracticeList });
     }
   }, [initialPracticeList]);
@@ -153,7 +156,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   return {
     state,
     dispatch,
-    active,
+    active: state.active,
     handleFeedback,
     goToNext,
   };

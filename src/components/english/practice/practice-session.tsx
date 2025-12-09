@@ -41,7 +41,6 @@ export function PracticeSession() {
   const {
     state,
     active,
-    practicedItems,
     handleFeedback,
     goToNext,
   } = context;
@@ -51,6 +50,7 @@ export function PracticeSession() {
     completedCount,
     totalCount,
     sessionFinished,
+    practicedItems,
     practiceItems
   } = state;
 

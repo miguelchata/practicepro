@@ -103,12 +103,12 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
       const remainingQueue = nextItems.filter((p) => !p.completed);
       
       if (remainingQueue.length === 0) {
-          return { ...state, practiceItems: nextItems, activeId: null, sessionFinished: true };
+          return { ...state, practiceItems: [], activeId: null, sessionFinished: true };
       }
 
       return {
           ...state,
-          practiceItems: nextItems,
+          practiceItems: remainingQueue,
           activeId: new Date().getTime().toString(),
           sessionFinished: false,
       };
@@ -125,6 +125,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
 
   useEffect(() => {
     if (initialPracticeList) {
+      console.log("hello initial")
       dispatch({ type: 'INITIALIZE_SESSION', payload: initialPracticeList });
     }
   }, [initialPracticeList]);
@@ -134,9 +135,6 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     return state.practiceItems.find(p => !p.completed) || null;
   }, [state.practiceItems, state.sessionFinished]);
   
-  const practicedItems = useMemo(() => {
-    return state.practiceItems.filter(p => p.completed);
-  }, [state.practiceItems]);
 
   const handleFeedback = async (quality: number): Promise<VocabularyItem | null> => {
     if (!active) return null;
@@ -154,7 +152,6 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
     state,
     dispatch,
     active,
-    practicedItems,
     handleFeedback,
     goToNext,
   };

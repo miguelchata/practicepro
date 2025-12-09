@@ -13,7 +13,7 @@ export function PracticePageContent() {
   const { data: vocabularyList, loading: vocabLoading } = useVocabulary();
 
   const initialPracticeList = useMemo(() => {
-    if (vocabLoading) return null;
+    if (vocabLoading) return null; // Return null while loading
     return generatePracticeList({ vocabularyList, searchParams });
   }, [vocabularyList, searchParams, vocabLoading]);
 
@@ -30,7 +30,7 @@ export function PracticePageContent() {
 
   return (
     <PracticeProvider initialPracticeList={initialPracticeList}>
-        <PracticeSession />
+      <PracticeSession />
     </PracticeProvider>
   );
 }

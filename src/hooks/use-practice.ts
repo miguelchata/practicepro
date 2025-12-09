@@ -9,6 +9,7 @@ import { updateWordStats } from "@/lib/english";
 // 1. Define State and Actions
 export interface PracticeState {
   practiceItems: PracticeItem[];
+  practicedItems: PracticeItem[];
   activeId: string | null;
   sessionFinished: boolean;
   completedCount: number;
@@ -23,6 +24,7 @@ export type PracticeAction =
 // 2. Initial State
 export const initialState: PracticeState = {
   practiceItems: [],
+  practicedItems: [],
   activeId: null,
   sessionFinished: true,
   completedCount: 0,
@@ -39,6 +41,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
       }
       return {
         practiceItems: initialList.map(item => ({...item, completed: false})),
+        practicedItems: [],
         activeId: new Date().getTime().toString(),
         sessionFinished: false,
         completedCount: 0,
@@ -70,10 +73,14 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
         nextItems[activeItemIndex].completed = true;
         newCompletedCount += 1;
       }
+
+      const itemsPracticed = nextItems.filter(p => p.completed);
+      
       
       return {
         ...state,
         practiceItems: nextItems,
+        practicedItems: itemsPracticed,
         completedCount: newCompletedCount,
       };
     }
@@ -128,7 +135,7 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   }, [state.practiceItems, state.sessionFinished]);
   
   const practicedItems = useMemo(() => {
-    return state.practiceItems.filter(p => p.completed === false);
+    return state.practiceItems.filter(p => p.completed);
   }, [state.practiceItems]);
 
   const handleFeedback = async (quality: number): Promise<VocabularyItem | null> => {

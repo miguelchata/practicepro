@@ -1,12 +1,9 @@
+
 'use client';
 
 import { doc, getDoc, type DocumentReference, type Transaction } from "firebase/firestore";
+import type { UserProfile } from './types';
 
-type UserProfile = {
-    id: string;
-    currentStreak: number;
-    lastPracticeDate: string;
-}
 
 /**
  * Updates the user's practice streak based on the last practice date.
@@ -18,6 +15,8 @@ export async function updateUserStreak(transaction: Transaction, userProfileRef:
     
     if (!userProfileDoc.exists()) {
         console.warn("User profile does not exist, cannot update streak.");
+        // If the profile doesn't exist, we can't create it in a transaction
+        // that already has reads. This should be handled at login/signup.
         return;
     }
 
@@ -25,7 +24,7 @@ export async function updateUserStreak(transaction: Transaction, userProfileRef:
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
 
-    const lastPracticeDateStr = userProfile.lastPracticeDate;
+    const lastPracticeDateStr = userProfile.lastPracticeDate || '';
 
     if (lastPracticeDateStr === todayStr) {
         // Already practiced today, do nothing.

@@ -1,15 +1,18 @@
+
 'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  type User,
 } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -37,21 +40,53 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function SignupPage() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const createUserProfileDocument = async (user: User, displayName?: string) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', user.uid);
+    const userProfile = {
+      displayName: displayName || user.displayName || 'Anonymous User',
+      email: user.email,
+      currentStreak: 0,
+      lastPracticeDate: '',
+    };
+    await setDoc(userDocRef, userProfile);
+  };
+  
+  const handleUserLogin = async (user: User, isNewUser = false, displayName?: string) => {
+    if (!firestore) {
+      router.push('/dashboard');
+      return;
+    }
+    const userDocRef = doc(firestore, 'users', user.uid);
+    const docSnap = await getDoc(userDocRef);
+
+    if (isNewUser || !docSnap.exists()) {
+      await createUserProfileDocument(user, displayName);
+    }
+    
+    if (isNewUser) {
+      router.push('/onboarding');
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
 
   const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!auth) return;
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { displayName: name });
-      }
-      router.push('/onboarding');
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      await updateProfile(user, { displayName: name });
+      await handleUserLogin(user, true, name);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -65,8 +100,10 @@ export default function SignupPage() {
     if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      const result = await signInWithPopup(auth, provider);
+      // This is a simplified check. A robust implementation would use getAdditionalUserInfo.
+      const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
+      await handleUserLogin(result.user, isNewUser);
     } catch (error: any) {
       toast({
         variant: 'destructive',

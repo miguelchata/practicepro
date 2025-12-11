@@ -1,14 +1,17 @@
+
 'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  type User,
 } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -37,17 +40,38 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  const handleUserLogin = async (user: User) => {
+    if (!firestore) {
+      router.push('/dashboard');
+      return;
+    }
+    const userDocRef = doc(firestore, 'users', user.uid);
+    const docSnap = await getDoc(userDocRef);
+
+    if (!docSnap.exists()) {
+      const userProfile = {
+        displayName: user.displayName || 'Anonymous User',
+        email: user.email,
+        currentStreak: 0,
+        lastPracticeDate: '',
+      };
+      await setDoc(userDocRef, userProfile);
+    }
+    router.push('/dashboard');
+  };
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!auth) return;
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push('/dashboard');
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await handleUserLogin(userCredential.user);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -61,8 +85,8 @@ export default function LoginPage() {
     if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      const result = await signInWithPopup(auth, provider);
+      await handleUserLogin(result.user);
     } catch (error: any) {
       toast({
         variant: 'destructive',

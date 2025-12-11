@@ -61,16 +61,14 @@ export function Header({ title, backButtonHref }: HeaderProps) {
         {title}
       </h1>
       <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1.5 text-sm font-semibold text-primary">
+            <Flame className="h-4 w-4 text-orange-500" />
+            <span>{userProfile?.currentStreak || 0}</span>
+        </div>
         <Button asChild>
           <Link href="/practice">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 rounded-md bg-primary-foreground/10 px-2 py-0.5 text-sm font-semibold text-primary-foreground">
-                <Flame className="h-4 w-4 text-orange-400" />
-                <span>{userProfile?.currentStreak || 0}</span>
-              </div>
-              <Play className="h-4 w-4" />
-              <span>Practice</span>
-            </div>
+            <Play className="h-4 w-4" />
+            <span>Practice</span>
           </Link>
         </Button>
         <DropdownMenu>

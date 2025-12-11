@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useContext } from 'react';
@@ -59,18 +60,7 @@ export function PracticeSession() {
   } = state;
 
   const handleFinishSession = async () => {
-    if (!firestore || !user) {
-        router.push('/english');
-        return;
-    }
-    try {
-        await runTransaction(firestore, async (transaction) => {
-            const userProfileRef = doc(firestore, 'users', user.uid);
-            await updateUserStreak(transaction, userProfileRef);
-        });
-    } catch (error) {
-        console.error("Error updating streak on session finish:", error);
-    }
+    // This button just navigates back. Streak is handled when an item's stats are updated.
     router.push('/english');
   };
 

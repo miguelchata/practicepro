@@ -13,6 +13,15 @@
           "type": "string",
           "format": "email",
           "description": "The user's email address."
+        },
+        "currentStreak": {
+            "type": "number",
+            "description": "The user's current practice streak in days."
+        },
+        "lastPracticeDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The last date the user completed a practice session."
         }
       },
       "required": ["displayName", "email"]
@@ -283,6 +292,10 @@
     "providers": ["email", "google"]
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/userProfile" },
+      "description": "Stores individual user profile documents."
+    },
     "/projects/{projectId}": {
       "schema": { "$ref": "#/entities/project" },
       "description": "Stores individual project documents."

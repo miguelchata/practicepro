@@ -16,15 +16,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Save } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { doc, runTransaction } from 'firebase/firestore';
 import type { Skill } from '@/lib/types';
+import { updateUserStreak } from '@/lib/streak';
 
 function JournalForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { data: user } = useUser();
 
   const skillName = searchParams.get('skillName') || 'Practice';
   const duration = searchParams.get('duration');
@@ -45,7 +47,7 @@ function JournalForm() {
   };
 
   const handleSaveJournal = async () => {
-    if (!firestore || !skillId || !goalTitle || !subSkillName || !startTime) {
+    if (!firestore || !user || !skillId || !goalTitle || !subSkillName || !startTime) {
         toast({
             variant: 'destructive',
             title: 'Error',
@@ -58,11 +60,15 @@ function JournalForm() {
     try {
         await runTransaction(firestore, async (transaction) => {
             const skillRef = doc(firestore, 'skills', skillId);
+            const userProfileRef = doc(firestore, 'users', user.uid);
             const skillDoc = await transaction.get(skillRef);
 
             if (!skillDoc.exists()) {
                 throw new Error("Skill document not found!");
             }
+            
+            // Update streak
+            await updateUserStreak(transaction, userProfileRef);
             
             const skillData = skillDoc.data() as Skill;
             const durationInSeconds = parseInt(duration || '0', 10);

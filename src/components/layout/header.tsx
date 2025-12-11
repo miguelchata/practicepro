@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { LogOut, User, ArrowLeft } from 'lucide-react';
+import { LogOut, User, ArrowLeft, Flame } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -60,7 +60,9 @@ export function Header({ title, backButtonHref }: HeaderProps) {
       </h1>
       <div className="flex items-center gap-4">
         <Button asChild>
-          <Link href="/practice">Start Practice</Link>
+          <Link href="/practice">
+            <Flame className="mr-2 h-4 w-4" /> Start Practice
+          </Link>
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

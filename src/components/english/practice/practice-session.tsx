@@ -29,9 +29,14 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { VocabularyList } from '@/components/english/vocabulary-list';
 import { PracticeContext } from '@/context/practice-context';
+import { useFirestore, useUser } from '@/firebase';
+import { doc, runTransaction } from 'firebase/firestore';
+import { updateUserStreak } from '@/lib/streak';
 
 export function PracticeSession() {
   const router = useRouter();
+  const firestore = useFirestore();
+  const { data: user } = useUser();
   const context = useContext(PracticeContext);
   
   if (!context) {
@@ -54,6 +59,22 @@ export function PracticeSession() {
     practiceItems
   } = state;
 
+  const handleFinishSession = async () => {
+    if (!firestore || !user) {
+        router.push('/english');
+        return;
+    }
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const userProfileRef = doc(firestore, 'users', user.uid);
+            await updateUserStreak(transaction, userProfileRef);
+        });
+    } catch (error) {
+        console.error("Error updating streak on session finish:", error);
+    }
+    router.push('/english');
+  };
+
   if (sessionFinished) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
@@ -71,7 +92,7 @@ export function PracticeSession() {
             <VocabularyList items={practicedItems.map((p) => p.wordData)} />
           </CardContent>
           <CardContent>
-            <Button onClick={() => router.push('/english')}>
+            <Button onClick={handleFinishSession}>
               Back to Vocabulary
             </Button>
           </CardContent>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from "react";
@@ -70,8 +69,8 @@ export function Flashcard({
   const handleNextCard = async () => {
     if (status.item) {
       await updateVocabularyItem(status.item.id, status.item);
-      nextCard();
     }
+    nextCard();
   };
 
 

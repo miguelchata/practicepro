@@ -68,36 +68,31 @@ export default function EnglishPage() {
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
                 <CardTitle>My Vocabulary</CardTitle>
                 <CardDescription>Your personal word collection.</CardDescription>
+                
+                 <div className="pt-4 flex flex-wrap items-center gap-6">
+                    <div className="flex items-center gap-2 text-green-700 font-semibold p-2 rounded-md bg-green-500/10">
+                        <Star className="h-5 w-5" />
+                        <span className="text-lg">{masteredCount}</span>
+                    </div>
+                     <div className="flex items-center gap-2 text-yellow-700 font-semibold p-2 rounded-md bg-yellow-500/10">
+                        <Check className="h-5 w-5" />
+                        <span className="text-lg">{learningCount}</span>
+                    </div>
+                     <div className="flex items-center gap-2 text-sky-700 font-semibold p-2 rounded-md bg-sky-500/10">
+                        <Sparkles className="h-5 w-5" />
+                        <span className="text-lg">{newCount}</span>
+                    </div>
+                </div>
               </div>
               <Button asChild>
                 <Link href="/english/add">
                   <PlusCircle className="mr-2 h-4 w-4" /> Add Word
                 </Link>
               </Button>
-            </div>
-             <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="bg-green-500/10 border-green-500/20">
-                    <CardContent className="p-4 flex items-center justify-between">
-                        <Star className="h-6 w-6 text-green-700" />
-                        <div className="text-2xl font-bold text-green-800">{masteredCount}</div>
-                    </CardContent>
-                </Card>
-                 <Card className="bg-yellow-500/10 border-yellow-500/20">
-                    <CardContent className="p-4 flex items-center justify-between">
-                        <Check className="h-6 w-6 text-yellow-700" />
-                        <div className="text-2xl font-bold text-yellow-800">{learningCount}</div>
-                    </CardContent>
-                </Card>
-                 <Card className="bg-sky-500/10 border-sky-500/20">
-                    <CardContent className="p-4 flex items-center justify-between">
-                        <Sparkles className="h-6 w-6 text-sky-700" />
-                        <div className="text-2xl font-bold text-sky-800">{newCount}</div>
-                    </CardContent>
-                </Card>
             </div>
           </CardHeader>
           <CardContent>

@@ -11,11 +11,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { LogOut, User, ArrowLeft, Flame } from 'lucide-react';
+import { LogOut, User, ArrowLeft, Flame, Play } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { useUserProfile } from '@/firebase/firestore/use-doc';
 
 type HeaderProps = {
   title: string;
@@ -24,6 +25,7 @@ type HeaderProps = {
 
 export function Header({ title, backButtonHref }: HeaderProps) {
   const { data: user } = useUser();
+  const { data: userProfile } = useUserProfile(user?.uid);
   const auth = useAuth();
   const router = useRouter();
 
@@ -61,7 +63,14 @@ export function Header({ title, backButtonHref }: HeaderProps) {
       <div className="flex items-center gap-4">
         <Button asChild>
           <Link href="/practice">
-            <Flame className="mr-2 h-4 w-4" /> Start Practice
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 rounded-md bg-primary-foreground/10 px-2 py-0.5 text-sm font-semibold text-primary-foreground">
+                <Flame className="h-4 w-4 text-orange-400" />
+                <span>{userProfile?.currentStreak || 0}</span>
+              </div>
+              <Play className="h-4 w-4" />
+              <span>Practice</span>
+            </div>
           </Link>
         </Button>
         <DropdownMenu>

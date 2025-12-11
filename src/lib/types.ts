@@ -143,3 +143,11 @@ export type PracticeItem = {
   lastShownAt?: number;
   completed: boolean;
 };
+
+export type UserProfile = {
+  id: string;
+  displayName: string;
+  email: string;
+  currentStreak: number;
+  lastPracticeDate: string;
+};

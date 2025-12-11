@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { onSnapshot, doc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
-import type { Project, Skill, VocabularyItem } from '@/lib/types';
+import type { Project, Skill, VocabularyItem, UserProfile } from '@/lib/types';
 
 type DocData<T> = {
   loading: boolean;
@@ -35,7 +35,7 @@ export function useDoc<T extends DocumentData>(docRefPath: string | null): DocDa
           const data = { id: doc.id, ...doc.data() } as T;
           setSnapshot({ loading: false, data, error: null });
         } else {
-          setSnapshot({ loading: false, data: null, error: new Error('Document does not exist') });
+          setSnapshot({ loading: false, data: null, error: null });
         }
       },
       (error) => {
@@ -65,4 +65,10 @@ export function useSkill(skillId: string | null): DocData<Skill> {
 export function useVocabularyItem(itemId: string | null): DocData<VocabularyItem> {
     const docPath = itemId ? `vocabulary/${itemId}` : null;
     return useDoc<VocabularyItem>(docPath);
+}
+
+// Hook to get a user profile by ID
+export function useUserProfile(userId?: string | null): DocData<UserProfile> {
+    const docPath = userId ? `users/${userId}` : null;
+    return useDoc<UserProfile>(docPath);
 }

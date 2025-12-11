@@ -86,6 +86,7 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       await updateProfile(user, { displayName: name });
+      // Pass `true` to indicate this is a new user signup
       await handleUserLogin(user, true, name);
     } catch (error: any) {
       toast({
@@ -101,7 +102,8 @@ export default function SignupPage() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      // This is a simplified check. A robust implementation would use getAdditionalUserInfo.
+      // A simple way to check if the user is new with Firebase Auth.
+      // A more robust way might involve checking `getAdditionalUserInfo(result)`.
       const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
       await handleUserLogin(result.user, isNewUser);
     } catch (error: any) {

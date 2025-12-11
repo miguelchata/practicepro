@@ -54,6 +54,7 @@ export default function LoginPage() {
     const docSnap = await getDoc(userDocRef);
 
     if (!docSnap.exists()) {
+      // Create profile for existing users who might not have one
       const userProfile = {
         displayName: user.displayName || 'Anonymous User',
         email: user.email,

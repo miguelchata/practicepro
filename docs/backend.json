@@ -220,6 +220,7 @@
         "description": "A specific goal within a sub-skill.",
         "type": "object",
         "properties": {
+            "id": { "type": "string" },
             "title": { "type": "string" },
             "specific": { "type": "string" },
             "measurable": { "type": "string" },
@@ -237,9 +238,10 @@
             "feedback": { "type": "string" },
             "startTime": { "type": "string", "format": "time" },
             "endTime": { "type": "string", "format": "time" },
-            "isLastInSubSkill": { "type": "boolean", "description": "Indicates if this is the last goal created in its sub-skill branch." }
+            "isLastInSubSkill": { "type": "boolean", "description": "Indicates if this is the last goal created in its sub-skill branch." },
+            "requires": { "type": "array", "items": { "type": "string" } }
         },
-        "required": ["title", "specific", "measurable", "status"]
+        "required": ["id", "title", "specific", "measurable", "status"]
     },
     "generateNextGoal": {
         "title": "Generate Next Goal",

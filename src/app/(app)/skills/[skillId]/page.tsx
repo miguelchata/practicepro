@@ -22,6 +22,7 @@ import {
   Timer,
   Check,
   ChevronRight,
+  Lock,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -135,13 +136,13 @@ export default function SkillDetailPage() {
     );
   }
 
-  const handleGoalAdded = (newGoalsData: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[], originalGoal?: Goal | null) => {
+  const handleGoalAdded = (newGoalsData: (Omit<Goal, 'id' | 'projectId' | 'userStoryId' | 'userStoryTicketId'>)[], originalGoal?: Goal | null) => {
     if (!skill) return;
 
     let newSubSkills = [...skill.subSkills];
 
     newGoalsData.forEach(goalData => {
-        const { skillArea, ...newGoal } = goalData;
+        const { skillArea, ...newGoal } = goalData as any;
         let subSkillIndex = newSubSkills.findIndex(sub => sub.name === skillArea);
         
         if (subSkillIndex === -1) {
@@ -169,6 +170,7 @@ export default function SkillDetailPage() {
         
         const goalToAdd: Goal = {
             ...newGoal,
+            id: new Date().getTime().toString(),
             status: 'Not Started',
             isLastInSubSkill: true,
         };
@@ -231,9 +233,10 @@ export default function SkillDetailPage() {
         {filteredGoals.length > 0 ? (
              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {filteredGoals.map((goal, goalIndex) => (
-                    <Card key={goalIndex} className="flex flex-col">
+                    <Card key={goal.id || goalIndex} className="flex flex-col">
                         <CardContent className="p-4 flex-grow flex flex-col">
                             <GoalDetail 
+                                allGoals={allGoals}
                                 skill={skill} 
                                 goal={goal} 
                                 onGoalDeleted={handleGoalDeleted}
@@ -278,6 +281,7 @@ export default function SkillDetailPage() {
 }
 
 type GoalDetailProps = {
+  allGoals: (Goal & { subSkillName?: string })[];
   skill: Skill;
   goal: Goal & { subSkillName?: string };
   onGoalDeleted: (goalTitle: string, subSkillName: string) => void;
@@ -297,7 +301,7 @@ const getLevelVariant = (level: GoalLevel | undefined) => {
     }
 };
 
-const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps) => {
+const GoalDetail = ({ allGoals, skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps) => {
 
     const practiceUrl = useMemo(() => {
         const params = new URLSearchParams();
@@ -313,6 +317,16 @@ const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps)
     }, [skill.id, skill.name, goal]);
 
     const showNextGoalButton = goal.status === 'Completed' && (goal.isLastInSubSkill === undefined || goal.isLastInSubSkill === true);
+
+    const prerequisitesMet = useMemo(() => {
+        if (!goal.requires || goal.requires.length === 0) {
+            return true;
+        }
+        return goal.requires.every(reqId => {
+            const requiredGoal = allGoals.find(g => g.id === reqId);
+            return requiredGoal?.status === 'Completed';
+        });
+    }, [goal.requires, allGoals]);
 
 
     return (
@@ -401,9 +415,9 @@ const GoalDetail = ({ skill, goal, onGoalDeleted, onNextGoal }: GoalDetailProps)
                  )}
                 </>
             ) : (
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" asChild disabled={!prerequisitesMet}>
                     <Link href={practiceUrl}>
-                        <Timer className="mr-2 h-4 w-4" />
+                        {prerequisitesMet ? <Timer className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
                         Practice
                     </Link>
                 </Button>
@@ -418,7 +432,7 @@ type NextGoalDialogProps = {
     isOpen: boolean;
     onClose: () => void;
     goal: Goal | null;
-    onGoalAdded: (goals: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => void;
+    onGoalAdded: (goals: (Omit<Goal, 'id' | 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => void;
 };
 
 const NextGoalDialog = ({ isOpen, onClose, goal, onGoalAdded }: NextGoalDialogProps) => {

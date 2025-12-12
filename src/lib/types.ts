@@ -18,6 +18,7 @@ export type GoalStatus = 'Not Started' | 'In Progress' | 'Completed';
 export type GoalLevel = 'Junior' | 'Semi Senior' | 'Senior';
 
 export type Goal = {
+  id: string;
   title: string;
   specific: string;
   measurable: string;
@@ -33,6 +34,7 @@ export type Goal = {
   startTime?: string;
   endTime?: string;
   isLastInSubSkill?: boolean;
+  requires?: string[];
 };
 
 export type SubSkill = {

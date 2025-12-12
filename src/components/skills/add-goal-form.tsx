@@ -26,6 +26,7 @@ const goalObjectSchema = z.object({
   outcome: z.string().min(3, 'Outcome is required.'),
   duration: z.coerce.number().positive().optional(),
   level: z.enum(['Junior', 'Semi Senior', 'Senior']).optional(),
+  requires: z.string().optional(),
 });
 
 const jsonSchema = z.union([
@@ -34,18 +35,20 @@ const jsonSchema = z.union([
         goal: z.string().min(3, 'Goal must be at least 3 characters.'),
         outcome: z.string().min(3, 'Outcome is required.'),
         level: z.enum(['Junior', 'Semi Senior', 'Senior']).optional(),
+        requires: z.string().optional(),
     }),
     z.array(z.object({
         skillArea: z.string().min(1, 'Skill area is required.'),
         goal: z.string().min(3, 'Goal must be at least 3 characters.'),
         outcome: z.string().min(3, 'Outcome is required.'),
         level: z.enum(['Junior', 'Semi Senior', 'Senior']).optional(),
+        requires: z.string().optional(),
     }))
 ]);
 
 
 type AddGoalFormProps = {
-  onGoalAdded: (goals: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => void;
+  onGoalAdded: (goals: (Omit<Goal, 'id' | 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => void;
   skillAreas: string[];
 };
 
@@ -60,17 +63,19 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
       goal: '',
       outcome: '',
       level: 'Junior',
+      requires: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof goalObjectSchema>) {
-    const newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string } = {
+    const newGoal: Omit<Goal, 'id' |'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string } = {
         skillArea: values.skillArea,
         title: values.goal,
         specific: values.goal,
         measurable: values.outcome,
         status: 'Not Started',
         level: values.level,
+        requires: values.requires ? values.requires.split(',').map(s => s.trim()).filter(Boolean) : [],
     };
     onGoalAdded([newGoal]);
     form.reset();
@@ -99,6 +104,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
           specific: item.goal,
           measurable: item.outcome,
           status: 'Not Started' as const,
+          requires: item.requires ? item.requires.split(',').map(s => s.trim()).filter(Boolean) : [],
         }));
         
         onGoalAdded(goalsToSave);
@@ -172,6 +178,22 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
                     </FormItem>
                     )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="requires"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Required Goal IDs (Optional)</FormLabel>
+                        <FormControl>
+                        <Input
+                            placeholder="Paste comma-separated goal IDs"
+                            {...field}
+                        />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 <div className="grid grid-cols-1 gap-4">
                     <FormField
                         control={form.control}
@@ -208,7 +230,7 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
                     <Label htmlFor="json-input">Goal JSON (Single or Array)</Label>
                     <Textarea
                         id="json-input"
-                        placeholder={`{\n  "skillArea": "State Management",\n  "goal": "Master Redux",\n  "outcome": "Build a complex app with Redux",\n  "level": "Junior"\n}`}
+                        placeholder={`{\n  "skillArea": "State Management",\n  "goal": "Master Redux",\n  "outcome": "Build a complex app with Redux",\n  "level": "Junior",\n  "requires": "id1,id2"\n}`}
                         value={jsonInput}
                         onChange={(e) => setJsonInput(e.target.value)}
                         rows={10}

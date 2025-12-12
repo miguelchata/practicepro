@@ -70,7 +70,7 @@ function formatDeadline(deadline: string | undefined) {
   date.setHours(0, 0, 0, 0);
   now.setHours(0, 0, 0, 0);
   const diffTime = date.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 24));
 
   if (diffDays < 0) return 'Overdue';
   if (diffDays === 0) return 'Today';
@@ -347,7 +347,7 @@ const GoalDetail = ({ allGoals, skill, goal, onGoalDeleted, onNextGoal }: GoalDe
                         <TooltipTrigger asChild>
                             {/* The disabled button needs a wrapper for TooltipTrigger to work */}
                             <span tabIndex={0}>
-                                <Button variant="outline" size="sm" asChild disabled={true}>
+                                <Button variant="outline" size="sm" asChild disabled={true} className="cursor-not-allowed">
                                     <Link href={practiceUrl}>
                                         <Lock className="mr-2 h-4 w-4" />
                                         Practice
@@ -528,3 +528,5 @@ const NextGoalDialog = ({ isOpen, onClose, goal, onGoalAdded }: NextGoalDialogPr
         </Dialog>
     );
 };
+
+    

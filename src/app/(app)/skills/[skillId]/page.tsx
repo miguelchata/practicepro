@@ -59,6 +59,7 @@ import { Separator } from '@/components/ui/separator';
 import { NextGoalForm } from '@/components/skills/next-goal-form';
 import { generateNextGoal } from '@/ai/flows/generate-next-goal';
 import type { GenerateNextGoalOutput } from '@/ai/flows/generate-next-goal.types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 function formatDeadline(deadline: string | undefined) {
@@ -318,15 +319,61 @@ const GoalDetail = ({ allGoals, skill, goal, onGoalDeleted, onNextGoal }: GoalDe
 
     const showNextGoalButton = goal.status === 'Completed' && (goal.isLastInSubSkill === undefined || goal.isLastInSubSkill === true);
 
-    const prerequisitesMet = useMemo(() => {
-        if (!goal.requires || goal.requires.length === 0) {
-            return true;
+    const { prerequisitesMet, unmetPrerequisites } = useMemo(() => {
+      if (!goal.requires || goal.requires.length === 0) {
+        return { prerequisitesMet: true, unmetPrerequisites: [] };
+      }
+      
+      const unmet = goal.requires.map(reqId => {
+        const requiredGoal = allGoals.find(g => g.id === reqId);
+        if (!requiredGoal || requiredGoal.status !== 'Completed') {
+          return requiredGoal?.title || 'Unknown Goal';
         }
-        return goal.requires.every(reqId => {
-            const requiredGoal = allGoals.find(g => g.id === reqId);
-            return requiredGoal?.status === 'Completed';
-        });
+        return null;
+      }).filter(Boolean) as string[];
+
+      return {
+        prerequisitesMet: unmet.length === 0,
+        unmetPrerequisites: unmet
+      };
     }, [goal.requires, allGoals]);
+
+
+    const renderPracticeButton = () => {
+        if (!prerequisitesMet) {
+            return (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            {/* The disabled button needs a wrapper for TooltipTrigger to work */}
+                            <span tabIndex={0}>
+                                <Button variant="outline" size="sm" asChild disabled={true}>
+                                    <Link href={practiceUrl}>
+                                        <Lock className="mr-2 h-4 w-4" />
+                                        Practice
+                                    </Link>
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p className="font-semibold">Complete these goals first:</p>
+                            <ul className="list-disc pl-4 text-muted-foreground">
+                                {unmetPrerequisites.map(title => <li key={title}>{title}</li>)}
+                            </ul>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )
+        }
+        return (
+             <Button variant="outline" size="sm" asChild>
+                <Link href={practiceUrl}>
+                    <Timer className="mr-2 h-4 w-4" />
+                    Practice
+                </Link>
+            </Button>
+        )
+    };
 
 
     return (
@@ -415,12 +462,7 @@ const GoalDetail = ({ allGoals, skill, goal, onGoalDeleted, onNextGoal }: GoalDe
                  )}
                 </>
             ) : (
-                <Button variant="outline" size="sm" asChild disabled={!prerequisitesMet}>
-                    <Link href={practiceUrl}>
-                        {prerequisitesMet ? <Timer className="mr-2 h-4 w-4" /> : <Lock className="mr-2 h-4 w-4" />}
-                        Practice
-                    </Link>
-                </Button>
+                renderPracticeButton()
             )}
         </div>
     </div>

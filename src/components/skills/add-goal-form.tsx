@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -45,7 +46,7 @@ const jsonSchema = z.union([
 
 
 type AddGoalFormProps = {
-  onGoalAdded: (goals: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string })[]) => void;
+  onGoalAdded: (goals: (Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId' | 'status'> & { skillArea: string })[]) => void;
   skillAreas: string[];
 };
 
@@ -65,13 +66,12 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
   });
 
   function onSubmit(values: z.infer<typeof goalObjectSchema>) {
-    const newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId'> & { skillArea: string } = {
+    const newGoal: Omit<Goal, 'projectId' | 'userStoryId' | 'userStoryTicketId' | 'status'> & { skillArea: string } = {
         id: new Date().getTime().toString(),
         skillArea: values.skillArea,
         title: values.goal,
         specific: values.goal,
         measurable: values.outcome,
-        status: 'Not Started',
         level: values.level,
         requires: values.requires ? values.requires.split(',').map(s => s.trim()).filter(Boolean) : [],
     };
@@ -102,7 +102,6 @@ export function AddGoalForm({ onGoalAdded, skillAreas }: AddGoalFormProps) {
           title: item.goal,
           specific: item.goal,
           measurable: item.outcome,
-          status: 'Not Started' as const,
           level: item.level,
           requires: item.requires || [],
         }));

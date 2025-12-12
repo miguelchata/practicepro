@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -171,7 +172,7 @@ export default function SkillDetailPage() {
         
         const goalToAdd: Goal = {
             ...newGoal,
-            id: new Date().getTime().toString(),
+            id: newGoal.id || new Date().getTime().toString(),
             status: 'Not Started',
             isLastInSubSkill: true,
         };
@@ -320,22 +321,23 @@ const GoalDetail = ({ allGoals, skill, goal, onGoalDeleted, onNextGoal }: GoalDe
     const showNextGoalButton = goal.status === 'Completed' && (goal.isLastInSubSkill === undefined || goal.isLastInSubSkill === true);
 
     const { prerequisitesMet, unmetPrerequisites } = useMemo(() => {
-      if (!goal.requires || goal.requires.length === 0) {
-        return { prerequisitesMet: true, unmetPrerequisites: [] };
-      }
-      
-      const unmet = goal.requires.map(reqId => {
-        const requiredGoal = allGoals.find(g => g.id === reqId);
-        if (!requiredGoal || requiredGoal.status !== 'Completed') {
-          return requiredGoal?.title || 'Unknown Goal';
+        if (!goal.requires || goal.requires.length === 0) {
+            return { prerequisitesMet: true, unmetPrerequisites: [] };
         }
-        return null;
-      }).filter(Boolean) as string[];
+        
+        const unmet = goal.requires.map(reqId => {
+            const requiredGoal = allGoals.find(g => g.id === reqId);
+            if (!requiredGoal || requiredGoal.status !== 'Completed') {
+                 // If the goal isn't found, fall back to showing the ID.
+                return requiredGoal?.title || reqId;
+            }
+            return null;
+        }).filter(Boolean) as string[];
 
-      return {
-        prerequisitesMet: unmet.length === 0,
-        unmetPrerequisites: unmet
-      };
+        return {
+            prerequisitesMet: unmet.length === 0,
+            unmetPrerequisites: unmet
+        };
     }, [goal.requires, allGoals]);
 
 
@@ -345,9 +347,8 @@ const GoalDetail = ({ allGoals, skill, goal, onGoalDeleted, onNextGoal }: GoalDe
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            {/* The disabled button needs a wrapper for TooltipTrigger to work */}
                             <span tabIndex={0}>
-                                <Button variant="outline" size="sm" asChild disabled={true} className="cursor-not-allowed">
+                                <Button variant="outline" size="sm" asChild disabled={true} className="pointer-events-none">
                                     <Link href={practiceUrl}>
                                         <Lock className="mr-2 h-4 w-4" />
                                         Practice
@@ -528,5 +529,3 @@ const NextGoalDialog = ({ isOpen, onClose, goal, onGoalAdded }: NextGoalDialogPr
         </Dialog>
     );
 };
-
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -17,6 +18,7 @@ import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/firebase/firestore/use-doc';
+import { cn } from '@/lib/utils';
 
 type HeaderProps = {
   title: string;
@@ -44,6 +46,17 @@ export function Header({ title, backButtonHref }: HeaderProps) {
     }
     return name.substring(0, 2).toUpperCase();
   };
+  
+  const hasPracticedToday = () => {
+    if (!userProfile?.lastPracticeDate) {
+        return false;
+    }
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    return userProfile.lastPracticeDate === todayStr;
+  }
+
+  const practicedToday = hasPracticedToday();
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
@@ -62,7 +75,7 @@ export function Header({ title, backButtonHref }: HeaderProps) {
       </h1>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1.5 text-sm font-semibold text-primary">
-            <Flame className="h-4 w-4 text-orange-500" />
+            <Flame className={cn("h-4 w-4", practicedToday ? "text-orange-500" : "text-muted-foreground")} />
             <span>{userProfile?.currentStreak || 0}</span>
         </div>
         <Button asChild>

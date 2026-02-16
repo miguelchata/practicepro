@@ -18,19 +18,12 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/icons/logo';
-import Link from 'next/link';
-import { useSkills } from '@/firebase/firestore/use-collection';
-import { iconMap } from '@/lib/icons';
-import { Timer } from 'lucide-react';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { data: skills, loading: skillsLoading } = useSkills();
 
   const handleOnboardingSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // In a real app, you would save user preferences here.
-    // For example, using Firestore to update the user's profile.
     router.push('/dashboard');
   };
 
@@ -51,7 +44,7 @@ export default function OnboardingPage() {
               Welcome to PracticePro!
             </CardTitle>
             <CardDescription>
-              Let's set up your profile. Tell us what you want to master.
+              Let's set up your profile. Tell us about your current level.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -60,32 +53,8 @@ export default function OnboardingPage() {
               className="flex flex-col gap-6"
             >
               <div className="space-y-2">
-                <Label htmlFor="primary-skill">
-                  What is your primary skill?
-                </Label>
-                <Select name="primary-skill" required disabled={skillsLoading}>
-                  <SelectTrigger id="primary-skill">
-                    <SelectValue placeholder={skillsLoading ? "Loading skills..." : "Select a skill"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {skills.map((skill) => {
-                      const Icon = iconMap[skill.icon] || Timer;
-                      return (
-                        <SelectItem key={skill.id} value={skill.id}>
-                            <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
-                            <span>{skill.name}</span>
-                            </div>
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="proficiency">
-                  What is your current proficiency level?
+                  What is your current English proficiency level?
                 </Label>
                 <Select name="proficiency" defaultValue="Beginner" required>
                   <SelectTrigger id="proficiency">

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -12,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { LogOut, User, ArrowLeft, Flame, Play } from 'lucide-react';
+import { LogOut, User, ArrowLeft, Flame } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -78,12 +77,6 @@ export function Header({ title, backButtonHref }: HeaderProps) {
             <Flame className={cn("h-4 w-4", practicedToday ? "text-orange-500" : "text-muted-foreground")} />
             <span>{userProfile?.currentStreak || 0}</span>
         </div>
-        <Button asChild>
-          <Link href="/practice">
-            <Play className="h-4 w-4" />
-            <span>Practice</span>
-          </Link>
-        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">

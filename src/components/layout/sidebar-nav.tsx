@@ -3,12 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Book,
-  FolderKanban,
   LayoutDashboard,
   Settings,
-  Target,
-  Timer,
   Languages,
 } from 'lucide-react';
 import {
@@ -19,10 +15,6 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/skills', label: 'Skills', icon: Target },
-  { href: '/practice', label: 'Practice', icon: Timer },
-  { href: '/journal', label: 'Journal', icon: Book },
-  { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/english', label: 'English', icon: Languages },
 ];
 
@@ -34,15 +26,7 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    // Make 'Projects' active for sub-paths as well.
-    if (href.startsWith('/projects')) {
-      return pathname.startsWith(href);
-    }
-     // Make 'Skills' active for sub-paths as well.
-    if (href.startsWith('/skills')) {
-      return pathname.startsWith(href);
-    }
-    return pathname === href;
+    return pathname === href || pathname.startsWith(href + '/');
   };
 
   return (

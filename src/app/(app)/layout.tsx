@@ -1,3 +1,4 @@
+import type { Header } from '@/components/layout/header';
 import type { ReactNode } from 'react';
 import {
   SidebarProvider,
@@ -24,7 +25,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           >
             <Logo className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold font-headline tracking-tighter">
-              PracticePro
+              Refered English practice
             </span>
           </Link>
         </SidebarHeader>

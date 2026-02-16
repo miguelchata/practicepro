@@ -34,14 +34,14 @@ export default function OnboardingPage() {
             <div className="flex items-center gap-2 text-foreground">
               <Logo className="h-8 w-8 text-primary" />
               <span className="text-xl font-bold font-headline tracking-tighter">
-                PracticePro
+                Refered English practice
               </span>
             </div>
         </div>
         <Card>
           <CardHeader>
             <CardTitle className="font-headline text-3xl">
-              Welcome to PracticePro!
+              Welcome to Refered English practice!
             </CardTitle>
             <CardDescription>
               Let's set up your profile. Tell us about your current level.

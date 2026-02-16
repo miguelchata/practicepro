@@ -4,8 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'PracticePro',
-  description: 'Master your skills with deliberate practice.',
+  title: 'Refered English practice',
+  description: 'Master English with deliberate practice.',
 };
 
 export default function RootLayout({

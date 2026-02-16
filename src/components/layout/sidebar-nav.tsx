@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Settings,
-  Languages,
+  PlayCircle,
+  Database,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -15,7 +16,8 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/english', label: 'English', icon: Languages },
+  { href: '/practice', label: 'Practice', icon: PlayCircle },
+  { href: '/management', label: 'Management', icon: Database },
 ];
 
 const bottomNavItems = [

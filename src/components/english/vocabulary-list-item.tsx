@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -13,7 +12,7 @@ type VocabularyListItemProps = {
 
 export function VocabularyListItem({ item, showSeparator }: VocabularyListItemProps) {
   return (
-    <Link href={`/english/${item.word.toLowerCase()}`} className="block rounded-lg p-4 -m-4 transition-colors hover:bg-muted/50">
+    <Link href={`/management/${item.word.toLowerCase()}`} className="block rounded-lg p-4 -m-4 transition-colors hover:bg-muted/50">
       <div>
         <div className="grid gap-2">
           <div className="flex items-center justify-between gap-4">

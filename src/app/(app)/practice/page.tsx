@@ -1,161 +1,166 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
-import { useSkills } from '@/firebase/firestore/use-collection';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Timer, Target, Puzzle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import type { Goal, Skill, GoalLevel } from '@/lib/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import Link from 'next/link';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-type GoalWithSkillInfo = Goal & {
-  skillId: string;
-  skillName: string;
-  subSkillName: string;
-};
-
-const getLevelVariant = (level: GoalLevel | undefined) => {
-    switch (level) {
-        case 'Junior':
-            return 'default';
-        case 'Semi Senior':
-            return 'secondary';
-        case 'Senior':
-            return 'destructive';
-        default:
-            return 'outline';
-    }
-};
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useMemo, useState } from 'react';
+import { useVocabulary } from '@/firebase/firestore/use-collection';
+import { Star, Check, Sparkles } from 'lucide-react';
 
 export default function PracticePage() {
-  const router = useRouter();
-  const { data: skills, loading: skillsLoading } = useSkills();
-  const [skillFilter, setSkillFilter] = useState('All');
-
-  const allGoals: GoalWithSkillInfo[] = useMemo(() => {
-    if (skillsLoading) {
-      return [];
-    }
-    return skills.flatMap(skill =>
-      skill.subSkills.flatMap(subSkill =>
-        subSkill.goals.map(goal => ({
-          ...goal,
-          skillId: skill.id,
-          skillName: skill.name,
-          subSkillName: subSkill.name,
-        }))
-      )
-    );
-  }, [skills, skillsLoading]);
+  const { data: vocabularyList, loading } = useVocabulary();
+  const [practiceAmount, setPracticeAmount] = useState(10);
+  const [exerciseType, setExerciseType] = useState('both');
   
-  const filteredGoals = useMemo(() => {
-    if (skillFilter === 'All') {
-        return allGoals;
-    }
-    return allGoals.filter(goal => goal.skillName === skillFilter);
-  }, [allGoals, skillFilter]);
+  const reviewLink = `/practice/session?amount=${practiceAmount}&type=${exerciseType}`;
 
-  const practiceUrl = (goal: GoalWithSkillInfo) => {
-    const params = new URLSearchParams();
-    params.set('skillId', goal.skillId);
-    params.set('skillName', goal.skillName);
-    if (goal.subSkillName) {
-        params.set('subSkill', goal.subSkillName);
+  const { masteredCount, learningCount, newCount, totalCount } = useMemo(() => {
+    const total = vocabularyList.length;
+    if (total === 0) {
+      return { masteredCount: 0, learningCount: 0, newCount: 0, totalCount: 0 };
     }
-    if (goal.specific) {
-        params.set('goal', goal.specific);
-    }
-    if (goal.targetDuration) {
-        params.set('type', 'timed');
-        params.set('duration', String(goal.targetDuration * 60));
-    }
-    return `/practice/active?${params.toString()}`;
-  };
+    let mastered = 0;
+    let learning = 0;
+    let newWords = 0;
+
+    vocabularyList.forEach(item => {
+        if (item.repetitions === 0) {
+            newWords++;
+        } else if (item.accuracy === 1) {
+            mastered++;
+        } else {
+            learning++;
+        }
+    });
+
+    return {
+      masteredCount: mastered,
+      learningCount: learning,
+      newCount: newWords,
+      totalCount: total,
+    };
+  }, [vocabularyList]);
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <Header title="Start Practice Session" />
+      <Header title="Practice" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight font-headline">
-              Choose a Goal
-            </h2>
-            <p className="text-muted-foreground">
-              Select one of your goals to start a focused practice session.
-            </p>
-          </div>
-          {!skillsLoading && skills.length > 0 && (
-             <Select value={skillFilter} onValueChange={setSkillFilter}>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by skill" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="All">All Skills</SelectItem>
-                    {skills.map((skill) => (
-                        <SelectItem key={skill.id} value={skill.name}>{skill.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-          )}
-        </div>
-
-        {skillsLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
-            </div>
-        ) : allGoals.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredGoals.map((goal, index) => (
-              <Card key={index} className="flex flex-col">
-                <CardHeader>
-                  <CardTitle className="font-medium text-base">{goal.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                         <Badge variant="secondary" className="gap-1.5"><Target className="h-3 w-3"/>{goal.skillName}</Badge>
-                         <Badge variant="outline" className="gap-1.5"><Puzzle className="h-3 w-3"/>{goal.subSkillName}</Badge>
-                         {goal.level && <Badge variant={getLevelVariant(goal.level)}>{goal.level}</Badge>}
+        <Card className="max-w-4xl mx-auto w-full">
+          <CardHeader>
+            <CardTitle>Vocabulary Review</CardTitle>
+            <CardDescription>Master your personal word collection through focused review sessions.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <div className="flex flex-wrap items-center justify-center gap-8">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 text-green-700 font-semibold p-4 rounded-xl bg-green-500/10 min-w-[120px] justify-center">
+                        <Star className="h-6 w-6" />
+                        <span className="text-2xl">{masteredCount}</span>
                     </div>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full" asChild>
-                    <Link href={practiceUrl(goal)}>
-                      <Timer className="mr-2 h-4 w-4" />
-                      Practice
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="flex flex-col items-center justify-center p-12 text-center">
-            <CardHeader>
-              <CardTitle>No Goals Found</CardTitle>
-              <CardDescription>
-                You haven't set any goals for your skills yet.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild>
-                <Link href="/skills">Go to Skills to Add Goals</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+                    <span className="text-sm text-muted-foreground font-medium">Mastered</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 text-yellow-700 font-semibold p-4 rounded-xl bg-yellow-500/10 min-w-[120px] justify-center">
+                        <Check className="h-6 w-6" />
+                        <span className="text-2xl">{learningCount}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground font-medium">Learning</span>
+                </div>
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 text-sky-700 font-semibold p-4 rounded-xl bg-sky-500/10 min-w-[120px] justify-center">
+                        <Sparkles className="h-6 w-6" />
+                        <span className="text-2xl">{newCount}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground font-medium">New</span>
+                </div>
+            </div>
+
+            <div className="text-center">
+                <p className="text-muted-foreground">
+                    Total words in collection: <span className="text-foreground font-bold">{totalCount}</span>
+                </p>
+            </div>
+          </CardContent>
+           <CardFooter className="flex justify-center pb-12">
+            {vocabularyList.length > 0 ? (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="lg" className="px-12 h-14 text-lg">
+                        Start Review Session
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Configure Session</DialogTitle>
+                      <DialogDescription>
+                        Set up your practice session parameters.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-6 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="amount">Amount of words</Label>
+                        <Input id="amount" type="number" value={practiceAmount} onChange={(e) => setPracticeAmount(Number(e.target.value))} max={totalCount}/>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Exercise Type</Label>
+                        <RadioGroup value={exerciseType} onValueChange={setExerciseType} className="flex gap-4">
+                            <div className="flex-1">
+                                <RadioGroupItem value="both" id="r1" className="peer sr-only" />
+                                <Label htmlFor="r1" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer text-center">
+                                    Both
+                                </Label>
+                            </div>
+                            <div className="flex-1">
+                                <RadioGroupItem value="flashcards" id="r2" className="peer sr-only" />
+                                <Label htmlFor="r2" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer text-center">
+                                    Flashcards
+                                </Label>
+                            </div>
+                            <div className="flex-1">
+                                <RadioGroupItem value="writing" id="r3" className="peer sr-only" />
+                                <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer text-center">
+                                    Writing
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                      </div>
+                    </div>
+                    <Button asChild className="w-full">
+                        <Link href={reviewLink}>
+                            Practice {Math.min(practiceAmount, totalCount)} Words
+                        </Link>
+                    </Button>
+                  </DialogContent>
+                </Dialog>
+            ) : (
+                <div className="text-center space-y-4">
+                    <p className="text-muted-foreground italic">Add some words to your collection first.</p>
+                    <Button asChild variant="outline">
+                        <Link href="/management/add">Go to Management</Link>
+                    </Button>
+                </div>
+            )}
+           </CardFooter>
+        </Card>
       </main>
     </div>
   );

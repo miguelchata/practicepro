@@ -50,28 +50,30 @@ export function ControlCard({
         How well did you remember?
       </p>
       <div className="flex flex-col gap-3">
-        <Button
-          variant="destructive"
-          className="h-20 w-full rounded-xl shadow-sm active:scale-[0.98] transition-all border-none"
-          onClick={() => onFeedback(1)}
-          disabled={isProcessing}
-        >
-          <div className="flex flex-col items-center">
-            <span className="text-xl font-bold font-headline uppercase">NO</span>
-            <span className="text-xs font-normal opacity-80 mt-0.5">I forgot this one</span>
-          </div>
-        </Button>
-        <Button
-          variant="outline"
-          className="h-20 w-full rounded-xl shadow-sm active:scale-[0.98] transition-all border-2 border-muted-foreground/20 hover:bg-accent/5"
-          onClick={() => onFeedback(3)}
-          disabled={isProcessing}
-        >
-          <div className="flex flex-col items-center">
-            <span className="text-xl font-bold font-headline uppercase">Sort of</span>
-            <span className="text-xs font-normal text-muted-foreground mt-0.5">I barely remember it</span>
-          </div>
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="destructive"
+            className="h-20 flex-1 rounded-xl shadow-sm active:scale-[0.98] transition-all border-none"
+            onClick={() => onFeedback(1)}
+            disabled={isProcessing}
+          >
+            <div className="flex flex-col items-center">
+              <span className="text-xl font-bold font-headline uppercase">NO</span>
+              <span className="text-[10px] font-normal opacity-80 mt-0.5 line-clamp-1">I forgot</span>
+            </div>
+          </Button>
+          <Button
+            variant="outline"
+            className="h-20 flex-1 rounded-xl shadow-sm active:scale-[0.98] transition-all border-2 border-muted-foreground/20 hover:bg-accent/5"
+            onClick={() => onFeedback(3)}
+            disabled={isProcessing}
+          >
+            <div className="flex flex-col items-center">
+              <span className="text-lg font-bold font-headline uppercase">Sort of</span>
+              <span className="text-[10px] font-normal text-muted-foreground mt-0.5 line-clamp-1">Barely</span>
+            </div>
+          </Button>
+        </div>
         <Button
           variant="default"
           className="h-20 w-full rounded-xl shadow-md active:scale-[0.98] transition-all border-none"

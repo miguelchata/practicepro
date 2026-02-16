@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { PracticeItem } from "@/lib/types";
 import type { VocabularyItem } from "@/lib/types";
 import { DetailCard } from "./detail-card";
@@ -75,11 +75,11 @@ export function Flashcard({
 
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full border-none shadow-none md:border md:shadow-sm">
+      <CardHeader className="px-4 pt-6">
         <DetailCard wordData={wordData} />
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 px-4 pb-8">
         <div className="relative flex flex-col justify-center">
           <ExampleCard
             wordData={wordData}
@@ -94,12 +94,13 @@ export function Flashcard({
           />
         </div>
 
-        <div className="pt-6 min-h-[8rem] flex flex-col justify-center">
+        <div className="pt-6 min-h-[10rem] flex flex-col justify-center">
            {status.process === 'continue' ? (
-                <div className="space-y-4 text-center">
+                <div className="space-y-4 text-center px-2">
                     <Button
                         type="button"
-                        className="w-full"
+                        size="lg"
+                        className="w-full h-16 text-xl font-headline tracking-tight shadow-md rounded-xl active:scale-[0.98] transition-all"
                         onClick={handleNextCard}
                     >
                         Continue
@@ -111,7 +112,7 @@ export function Flashcard({
                     onFeedback={onFeedback}
                     isProcessing={processing}
                     handleShowAnswer={handleShowAnswer}
-                    nextCard={toContinue} // Pass the function to transition to 'continue' state
+                    nextCard={toContinue}
                 />
             )}
         </div>

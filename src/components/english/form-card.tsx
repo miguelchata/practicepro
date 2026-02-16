@@ -15,36 +15,47 @@ export const FormCard = ({ handleCheckAnswer, inputDisabled, answer }: FormCardP
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const wordTyped= userInput.trim().toLowerCase()
+        const wordTyped = userInput.trim().toLowerCase()
         handleCheckAnswer(wordTyped);
         setShow(true)
     }
 
+    const isCorrect = userInput.trim().toLowerCase() === answer.toLowerCase();
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
             {show && (
                 <div
-                    className={`relative rounded-md p-2 font-semibold text-center ${
-                    userInput === answer
-                        ? "bg-green-500/10 text-green-600"
-                        : "bg-destructive/10 text-destructive"
+                    className={`relative rounded-xl p-4 font-semibold text-center border shadow-sm ${
+                    isCorrect
+                        ? "bg-green-50 border-green-200 text-green-700"
+                        : "bg-destructive/5 border-destructive/20 text-destructive"
                     }`}
-                > <p>{userInput === answer ? "Correct answer: nice one!" : "Incorrect answer: keep trying!"}</p>
+                > 
+                    <p className="text-lg">{isCorrect ? "Perfect match!" : "Not quite right..."}</p>
                 </div>
             )}
-            <Input
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Type the word..."
-                className="h-12 text-center text-lg font-mono tracking-widest"
-                disabled={show}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck="false"
-            />
-            <Button type="submit" className="w-full" disabled={show}>
-                Check Answer
-            </Button>
+            <div className="space-y-4">
+                <Input
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder="Type the word..."
+                    className="h-16 text-center text-2xl font-mono tracking-wider border-2 focus-visible:ring-primary rounded-xl"
+                    disabled={show}
+                    autoFocus
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                />
+                <Button 
+                    type="submit" 
+                    size="lg" 
+                    className="w-full h-16 text-xl font-headline tracking-tight shadow-md rounded-xl active:scale-[0.98] transition-all" 
+                    disabled={show || !userInput.trim()}
+                >
+                    Check Answer
+                </Button>
+            </div>
         </form>
     )
 }

@@ -20,16 +20,19 @@ export const ActionCard = ({ status, handleCheckAnswer, toContinue, handleNextCa
 
     if (status.process === "continue") {
         return (
-            <div className="space-y-4 text-center">
+            <div className="space-y-6 text-center px-2">
               {status.typed && (
-                  <p className="text-sm text-destructive">
-                    You wrote:{" "}
-                    <span className="font-mono font-semibold">{status.typed}</span>
-                  </p>
+                  <div className="bg-muted p-3 rounded-lg border border-border/50">
+                    <p className="text-xs uppercase font-bold text-muted-foreground mb-1">Your response</p>
+                    <p className="text-lg font-mono font-semibold break-all">
+                      {status.typed}
+                    </p>
+                  </div>
               )}
               <Button
                 type="button"
-                className="w-full"
+                size="lg"
+                className="w-full h-16 text-xl font-headline tracking-tight shadow-md rounded-xl active:scale-[0.98] transition-all"
                 onClick={() => handleNextCard()}
               >
                 Continue
@@ -39,14 +42,20 @@ export const ActionCard = ({ status, handleCheckAnswer, toContinue, handleNextCa
     }
 
     if (status.process === "feedback") {
-        return <AccuracyCard accuracy={status.accuracy} nextCard={toContinue}  />
+        return (
+            <div className="w-full py-4">
+                <AccuracyCard accuracy={status.accuracy} nextCard={toContinue} />
+            </div>
+        )
     }
 
     return (
-        <FormCard
-            handleCheckAnswer={handleCheckAnswer}
-            inputDisabled={false}
-            answer={practiceItem.wordData.word}
-        />
+        <div className="px-2">
+            <FormCard
+                handleCheckAnswer={handleCheckAnswer}
+                inputDisabled={false}
+                answer={practiceItem.wordData.word}
+            />
+        </div>
     )
 }

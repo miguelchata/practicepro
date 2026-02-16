@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -24,52 +23,64 @@ export function ControlCard({
 }: ControlCardProps) {
 
   if (status.process === 'feedback') {
-    return <AccuracyCard accuracy={status.accuracy} nextCard={nextCard} />;
+    return (
+      <div className="w-full flex justify-center py-4">
+        <AccuracyCard accuracy={status.accuracy} nextCard={nextCard} />
+      </div>
+    );
   }
 
   if (status.process === 'initial') {
     return (
-      <div className="text-center">
-        <Button onClick={handleShowAnswer}>Show Answer</Button>
+      <div className="w-full px-2">
+        <Button 
+          onClick={handleShowAnswer} 
+          size="lg" 
+          className="w-full h-16 text-xl font-headline tracking-tight shadow-md active:scale-[0.98] transition-all rounded-xl"
+        >
+          Show Answer
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border bg-muted/50 p-4 space-y-4">
-      <p className="text-center font-semibold">How well did you remember it?</p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+    <div className="w-full space-y-4 px-2">
+      <p className="text-center text-xs font-semibold uppercase text-muted-foreground tracking-widest">
+        How well did you remember?
+      </p>
+      <div className="flex flex-col gap-3">
         <Button
           variant="destructive"
-          className="h-auto"
+          className="h-20 w-full rounded-xl shadow-sm active:scale-[0.98] transition-all border-none"
           onClick={() => onFeedback(1)}
           disabled={isProcessing}
         >
-          <div className="flex flex-col items-center p-2">
-            <span className="font-bold">NO</span>
-            <span className="text-xs font-normal">Repeat</span>
+          <div className="flex flex-col items-center">
+            <span className="text-xl font-bold font-headline uppercase">NO</span>
+            <span className="text-xs font-normal opacity-80 mt-0.5">I forgot this one</span>
           </div>
         </Button>
         <Button
           variant="outline"
-          className="h-auto"
+          className="h-20 w-full rounded-xl shadow-sm active:scale-[0.98] transition-all border-2 border-muted-foreground/20 hover:bg-accent/5"
           onClick={() => onFeedback(3)}
           disabled={isProcessing}
         >
-          <div className="flex flex-col items-center p-2">
-            <span className="font-bold">Sort of</span>
-            <span className="text-xs font-normal">Keep studying</span>
+          <div className="flex flex-col items-center">
+            <span className="text-xl font-bold font-headline uppercase">Sort of</span>
+            <span className="text-xs font-normal text-muted-foreground mt-0.5">I barely remember it</span>
           </div>
         </Button>
         <Button
           variant="default"
-          className="h-auto"
+          className="h-20 w-full rounded-xl shadow-md active:scale-[0.98] transition-all border-none"
           onClick={() => onFeedback(5)}
           disabled={isProcessing}
         >
-          <div className="flex flex-col items-center p-2">
-            <span className="font-bold">YES</span>
-            <span className="text-xs font-normal">I've learned</span>
+          <div className="flex flex-col items-center">
+            <span className="text-xl font-bold font-headline uppercase">YES</span>
+            <span className="text-xs font-normal opacity-80 mt-0.5">I've learned it!</span>
           </div>
         </Button>
       </div>

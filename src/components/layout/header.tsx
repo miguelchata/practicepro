@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -18,6 +19,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/firebase/firestore/use-doc';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 type HeaderProps = {
   title: string;
@@ -38,7 +40,7 @@ export function Header({ title, backButtonHref }: HeaderProps) {
   };
 
   const getInitials = (name?: string | null) => {
-    if (!name) return 'PP';
+    if (!name) return 'LX';
     const names = name.split(' ');
     if (names.length > 1) {
       return names[0][0] + names[names.length - 1][0];
@@ -46,16 +48,30 @@ export function Header({ title, backButtonHref }: HeaderProps) {
     return name.substring(0, 2).toUpperCase();
   };
   
-  const hasPracticedToday = () => {
-    if (!userProfile?.lastPracticeDate) {
-        return false;
-    }
+  const streakInfo = useMemo(() => {
+    const streak = userProfile?.currentStreak || 0;
+    const lastDate = userProfile?.lastPracticeDate;
+    
+    if (!lastDate) return { count: 0, isPracticedToday: false };
+
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-    return userProfile.lastPracticeDate === todayStr;
-  }
+    
+    if (lastDate === todayStr) {
+      return { count: streak, isPracticedToday: true };
+    }
 
-  const practicedToday = hasPracticedToday();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (lastDate === yesterdayStr) {
+      return { count: streak, isPracticedToday: false };
+    }
+
+    // Streak is broken
+    return { count: 0, isPracticedToday: false };
+  }, [userProfile]);
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
@@ -74,15 +90,15 @@ export function Header({ title, backButtonHref }: HeaderProps) {
       </h1>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1.5 text-sm font-semibold text-primary">
-            <Flame className={cn("h-4 w-4", practicedToday ? "text-orange-500" : "text-muted-foreground")} />
-            <span>{userProfile?.currentStreak || 0}</span>
+            <Flame className={cn("h-4 w-4 transition-colors", streakInfo.isPracticedToday ? "text-orange-500 fill-orange-500" : "text-muted-foreground")} />
+            <span>{streakInfo.count}</span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
                 <AvatarImage
-                  src="https://picsum.photos/seed/avatar/100/100"
+                  src={`https://picsum.photos/seed/${user?.uid || 'default'}/100/100`}
                   alt="User Avatar"
                   data-ai-hint="user avatar"
                 />

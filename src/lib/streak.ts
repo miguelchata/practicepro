@@ -1,7 +1,7 @@
 
 'use client';
 
-import { doc, getDoc, type DocumentReference, type Transaction } from "firebase/firestore";
+import { type DocumentReference, type Transaction } from "firebase/firestore";
 import type { UserProfile } from './types';
 
 
@@ -13,18 +13,21 @@ import type { UserProfile } from './types';
 export async function updateUserStreak(transaction: Transaction, userProfileRef: DocumentReference) {
     const userProfileDoc = await transaction.get(userProfileRef);
     
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
     if (!userProfileDoc.exists()) {
-        // The profile should have been created at login/signup.
-        // If it still doesn't exist, we can't create it in a read-after-write transaction.
-        // We will log a warning and exit gracefully. The streak can be picked up on the next session.
-        console.warn("User profile does not exist when trying to update streak. This should have been created at login.");
+        // If the profile doesn't exist, we create it now.
+        // We can't know the exact email/name here easily, so we set defaults
+        // that will be merged if they already exist or set if not.
+        transaction.set(userProfileRef, {
+            currentStreak: 1,
+            lastPracticeDate: todayStr,
+        }, { merge: true });
         return;
     }
 
     const userProfile = userProfileDoc.data() as UserProfile;
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-
     const lastPracticeDateStr = userProfile.lastPracticeDate || '';
 
     if (lastPracticeDateStr === todayStr) {

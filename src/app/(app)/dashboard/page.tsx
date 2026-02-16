@@ -1,22 +1,74 @@
+'use client';
+
 import { Header } from '@/components/layout/header';
 import { StatsCards } from '@/components/dashboard/stats-cards';
 import { Achievements } from '@/components/dashboard/achievements';
+import { useVocabulary } from '@/firebase/firestore/use-collection';
+import { useUser } from '@/firebase';
+import { useUserProfile } from '@/firebase/firestore/use-doc';
+import { useMemo } from 'react';
+import { DueReviewCard } from '@/components/dashboard/due-review-card';
+import { VocabularyBreakdown } from '@/components/dashboard/vocabulary-breakdown';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
+  const { data: vocabulary, loading: vocabLoading } = useVocabulary();
+  const { data: user } = useUser();
+  const { data: userProfile, loading: profileLoading } = useUserProfile(user?.uid);
+
+  const stats = useMemo(() => {
+    const now = new Date();
+    const total = vocabulary.length;
+    const mastered = vocabulary.filter(item => item.accuracy >= 0.8).length;
+    const due = vocabulary.filter(item => {
+      if (!item.nextReviewAt) return true;
+      return new Date(item.nextReviewAt) <= now;
+    }).length;
+    const learning = vocabulary.filter(item => item.repetitions > 0 && item.accuracy < 0.8).length;
+    const newWords = vocabulary.filter(item => item.repetitions === 0).length;
+
+    return {
+      total,
+      mastered,
+      due,
+      learning,
+      newWords,
+      streak: userProfile?.currentStreak || 0
+    };
+  }, [vocabulary, userProfile]);
+
+  const isLoading = vocabLoading || profileLoading;
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title="Dashboard" />
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-        <StatsCards />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))
+          ) : (
+            <StatsCards stats={stats} />
+          )}
+        </div>
+
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+          <div className="space-y-4 md:space-y-8">
+            {isLoading ? (
+              <Skeleton className="h-48 w-full" />
+            ) : (
+              <DueReviewCard dueCount={stats.due} totalCount={stats.total} />
+            )}
+            <VocabularyBreakdown 
+              mastered={stats.mastered} 
+              learning={stats.learning} 
+              newWords={stats.newWords} 
+              loading={isLoading}
+            />
+          </div>
           <div>
             <Achievements />
-          </div>
-          <div className="flex flex-col justify-center items-center p-8 bg-muted/30 rounded-lg border border-dashed">
-            <h3 className="text-xl font-headline font-semibold mb-2">Welcome to Lexio</h3>
-            <p className="text-muted-foreground text-center">
-              Your personalized journey to mastery. Use the sidebar to explore your English vocabulary and track your daily streak.
-            </p>
           </div>
         </div>
       </main>

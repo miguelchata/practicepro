@@ -2,7 +2,6 @@
 
 import { Header } from '@/components/layout/header';
 import { StatsCards } from '@/components/dashboard/stats-cards';
-import { Achievements } from '@/components/dashboard/achievements';
 import { useVocabulary } from '@/firebase/firestore/use-collection';
 import { useUser } from '@/firebase';
 import { useUserProfile } from '@/firebase/firestore/use-doc';
@@ -42,7 +41,7 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Header title="Dashboard" />
-      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 max-w-6xl mx-auto w-full">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
@@ -53,22 +52,21 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-          <div className="space-y-4 md:space-y-8">
+        <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-4 md:space-y-8">
             {isLoading ? (
               <Skeleton className="h-48 w-full" />
             ) : (
               <DueReviewCard dueCount={stats.due} totalCount={stats.total} />
             )}
+          </div>
+          <div>
             <VocabularyBreakdown 
               mastered={stats.mastered} 
               learning={stats.learning} 
               newWords={stats.newWords} 
               loading={isLoading}
             />
-          </div>
-          <div>
-            <Achievements />
           </div>
         </div>
       </main>

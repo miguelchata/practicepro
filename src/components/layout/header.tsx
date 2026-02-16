@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -19,7 +18,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/firebase/firestore/use-doc';
 import { cn } from '@/lib/utils';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 type HeaderProps = {
   title: string;
@@ -31,6 +30,11 @@ export function Header({ title, backButtonHref }: HeaderProps) {
   const { data: userProfile } = useUserProfile(user?.uid);
   const auth = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     if (auth) {
@@ -49,6 +53,8 @@ export function Header({ title, backButtonHref }: HeaderProps) {
   };
   
   const streakInfo = useMemo(() => {
+    if (!mounted || !userProfile) return { count: 0, isPracticedToday: false };
+
     const streak = userProfile?.currentStreak || 0;
     const lastDate = userProfile?.lastPracticeDate;
     
@@ -69,9 +75,8 @@ export function Header({ title, backButtonHref }: HeaderProps) {
       return { count: streak, isPracticedToday: false };
     }
 
-    // Streak is broken
     return { count: 0, isPracticedToday: false };
-  }, [userProfile]);
+  }, [userProfile, mounted]);
 
   return (
     <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">

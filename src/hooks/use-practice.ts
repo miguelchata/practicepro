@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useMemo, useReducer, useRef } from "react";
@@ -18,9 +17,9 @@ export interface PracticeState {
 }
 
 export type PracticeAction =
-  | { type: 'INITIALIZE_SESSION'; payload: PracticeItem[] }
+  | { type: 'INITIALIZE_SESSION'; payload: { items: PracticeItem[]; timestamp: string } }
   | { type: 'UPDATE_SESSION'; payload: { updatedItem: VocabularyItem } }
-  | { type: 'GO_TO_NEXT' };
+  | { type: 'GO_TO_NEXT'; payload: { timestamp: string } };
 
 // 2. Initial State
 export const initialState: PracticeState = {
@@ -37,18 +36,18 @@ export const initialState: PracticeState = {
 export function practiceReducer(state: PracticeState, action: PracticeAction): PracticeState {
   switch (action.type) {
     case 'INITIALIZE_SESSION': {
-      const initialList = action.payload;
-      if (!initialList || initialList.length === 0) {
+      const { items, timestamp } = action.payload;
+      if (!items || items.length === 0) {
         return { ...initialState, sessionFinished: true };
       }
       return {
-        practiceItems: initialList.map(item => ({...item, completed: false})),
+        practiceItems: items.map(item => ({...item, completed: false})),
         practicedItems: [],
-        activeId: new Date().getTime().toString(),
-        active: initialList[0],
+        activeId: timestamp,
+        active: items[0],
         sessionFinished: false,
         completedCount: 0,
-        totalCount: initialList.length,
+        totalCount: items.length,
       };
     }
     
@@ -62,7 +61,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
 
       const activeItem = state.practiceItems[activeItemIndex];
        if (activeItem.wordData.id !== updatedItem.id) {
-          console.warn("Mismatched item update in practice reducer. This might indicate a bug.");
+          console.warn("Mismatched item update in practice reducer.");
           return state;
       }
       
@@ -90,9 +89,9 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
     }
     
     case 'GO_TO_NEXT': {
+      const { timestamp } = action.payload;
       const activeItemIndex = state.practiceItems.findIndex((p) => !p.completed);
         
-      // This case handles advancing the card. If the just-finished card was NOT completed, re-queue it.
       let nextItems = [...state.practiceItems];
 
       if (activeItemIndex !== -1) {
@@ -114,7 +113,7 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
           ...state,
           active: remainingQueue[0],
           practiceItems: remainingQueue,
-          activeId: new Date().getTime().toString(),
+          activeId: timestamp,
           sessionFinished: false,
       };
     }
@@ -127,11 +126,16 @@ export function practiceReducer(state: PracticeState, action: PracticeAction): P
 // 4. The Hook
 export function usePractice(initialPracticeList: PracticeItem[] | null) {
   const [state, dispatch] = useReducer(practiceReducer, initialState);
-  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (initialPracticeList && initialPracticeList.length > 0) {
-      dispatch({ type: 'INITIALIZE_SESSION', payload: initialPracticeList });
+      dispatch({ 
+        type: 'INITIALIZE_SESSION', 
+        payload: { 
+          items: initialPracticeList, 
+          timestamp: new Date().getTime().toString() 
+        } 
+      });
     }
   }, [initialPracticeList]);
 
@@ -150,7 +154,10 @@ export function usePractice(initialPracticeList: PracticeItem[] | null) {
   };
 
   const goToNext = () => {
-    dispatch({ type: 'GO_TO_NEXT' });
+    dispatch({ 
+      type: 'GO_TO_NEXT', 
+      payload: { timestamp: new Date().getTime().toString() } 
+    });
   };
 
   return {

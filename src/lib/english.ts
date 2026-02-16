@@ -42,7 +42,7 @@ export const updateWordStats = (
   const now = new Date();
   const nowIsoStr = now.toISOString();
 
-  // --- 0) Defaults from item (use your fields)
+  // --- 0) Defaults from item
   const baseAlpha = typeof item.alpha === "number" ? item.alpha : DEFAULT_ALPHA;
   const decayRate = Math.max(
     MIN_DECAY_RATE,
@@ -65,27 +65,9 @@ export const updateWordStats = (
   else if (quality === 4) alpha = 0.4;
   else if (quality === 5) alpha = 0.5;
 
-  console.log("alpha", alpha, quality);
-  // const alpha = isRepeatedFail ? REPEATED_FAIL_ALPHA : baseAlpha;
-
   // --- 2) EWMA update (quality normalized to r in [0,1])
   const r = Math.max(0, Math.min(1, quality / 5));
   const S_new = Math.max(0, Math.min(1, alpha * r + (1 - alpha) * S_pred));
-
-  // --- 3) recent-poor aggregation (kept from your original logic)
-  // const persisted = item.recentAttempts ?? [];
-  // const inMemoryNums = currentPracticeItem.recentQualities ?? [];
-  // const inMemoryMapped = inMemoryNums.map((q) => ({
-  //   quality: q,
-  //   at: nowIsoStr,
-  // }));
-  // const unified = [...persisted.slice(-5), ...inMemoryMapped].slice(-5);
-  // const poorRecent = unified.filter(
-  //   (a) =>
-  //     a.quality <= POOR_QUALITY_THRESHOLD &&
-  //     daysBetween(new Date(a.at), now) <= RECENT_POOR_WINDOW_DAYS
-  // );
-  // const hasTwoPoorRecentReviews = poorRecent.length >= 2;
 
   // --- 4) Update counters (repetitions now counts successful reviews)
   const prevReps = typeof item.repetitions === "number" ? item.repetitions : 0;
@@ -124,10 +106,10 @@ export const updateWordStats = (
   } else {
     // success: compute days until S_new decays to threshold
     if (S_new <= threshold) {
-      // already below threshold => due now (or schedule next day)
+      // already below threshold => due now
       nextReviewAtIso = now.toISOString();
     } else if (decayRate <= 0) {
-      // fallback if decayRate misconfigured
+      // fallback
       nextReviewAtIso = new Date(
         now.getTime() + LEARNING_INTERVAL_DEFAULT * 24 * 60 * 60 * 1000
       ).toISOString();
@@ -150,7 +132,6 @@ export const updateWordStats = (
     threshold: threshold,
     lastReviewedAt: nowIsoStr,
     updatedAt: nowIsoStr,
-    // recentAttempts: unified,
     leechCount: newLeechCount,
     consecutiveSuccesses: newConsecutiveSuccesses,
     repetitions: newRepetitions,
@@ -169,9 +150,5 @@ export const updateWordStats = (
     updates.decayRate = newDecay;
   }
 
-  // Persist to backend
-  // updateVocabularyItem(item.id, updates);
-
-  // Return locally merged item for immediate UI reaction
   return { ...item, ...updates } as VocabularyItem;
 };

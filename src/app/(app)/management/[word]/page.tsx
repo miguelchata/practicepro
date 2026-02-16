@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useVocabulary } from '@/firebase/firestore/use-collection'
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -22,16 +22,22 @@ export default function WordDetailPage() {
   const params = useParams()
   const wordParam = params.word as string
   const { data: vocabularyList, loading } = useVocabulary();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const wordData = useMemo(() => {
     return vocabularyList.find(item => item.word.toLowerCase() === wordParam.toLowerCase());
   }, [vocabularyList, wordParam]);
 
-  const formatNextReviewDate = (nextReviewAt: string) => {
+  const reviewInfo = useMemo(() => {
+    if (!mounted || !wordData || !wordData.nextReviewAt) return null;
+
     const now = new Date();
-    // Set time to 0 to compare dates only
     now.setHours(0, 0, 0, 0);
-    const reviewDate = new Date(nextReviewAt);
+    const reviewDate = new Date(wordData.nextReviewAt);
     reviewDate.setHours(0, 0, 0, 0);
 
     const diffTime = reviewDate.getTime() - now.getTime();
@@ -48,11 +54,9 @@ export default function WordDetailPage() {
       return { text: 'Practice today!', isOverdue: true };
     }
     return { text: `Practice again in ${diffDays} ${diffDays === 1 ? 'day' : 'days'}.`, isOverdue: false };
-  };
+  }, [wordData, mounted]);
 
-  const reviewInfo = wordData ? formatNextReviewDate(wordData.nextReviewAt) : null;
-
-  if (loading) {
+  if (loading || !mounted) {
     return (
        <div className="flex min-h-screen w-full flex-col">
         <Header title="Loading..." backButtonHref="/management" />

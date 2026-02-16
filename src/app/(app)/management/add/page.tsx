@@ -27,11 +27,13 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Sparkles, Loader2 } from 'lucide-react';
+import { Save, Sparkles, Loader2, CheckCircle2, Plus } from 'lucide-react';
 import { useAddVocabularyItem } from '@/firebase/firestore/use-vocabulary';
+import { useVocabulary } from '@/firebase/firestore/use-collection';
 import type { VocabularyItem } from '@/lib/types';
-import { defineWord } from '@/ai/flows/define-word';
+import { defineWord, type DefineWordOutput } from '@/ai/flows/define-word';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 
 const formSchema = z.object({
@@ -62,6 +64,8 @@ export default function AddWordPage() {
   const router = useRouter();
   const { toast } = useToast();
   const addVocabularyItem = useAddVocabularyItem();
+  const { data: vocabularyList } = useVocabulary();
+  
   const [jsonInput, setJsonInput] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('ai');
@@ -69,6 +73,7 @@ export default function AddWordPage() {
   // AI related state
   const [aiWord, setAiWord] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<DefineWordOutput | null>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -129,29 +134,39 @@ export default function AddWordPage() {
   const handleAiDefine = async () => {
     if (!aiWord.trim()) return;
     setIsAiLoading(true);
+    setAiSuggestions(null);
     try {
       const result = await defineWord({ word: aiWord });
-      form.reset({
-        word: result.word,
-        definition: result.definition,
-        ipa: result.ipa || '',
-        examples: result.examples.join('\n'),
-        type: result.type,
-      });
-      setActiveTab('form');
-      toast({
-        title: "Magic Complete",
-        description: `Successfully defined "${result.word}". You can now review and save it.`,
-      });
+      setAiSuggestions(result);
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'AI Magic Failed',
-        description: 'Could not define the word. Please try again or fill the form manually.',
+        description: 'Could not identify word senses. Please try again or fill the form manually.',
       });
     } finally {
       setIsAiLoading(false);
     }
+  };
+
+  const handleSelectSense = (sense: DefineWordOutput['senses'][0]) => {
+    form.reset({
+      word: aiSuggestions?.word || aiWord,
+      definition: sense.definition,
+      ipa: sense.ipa || '',
+      examples: sense.examples.join('\n'),
+      type: sense.type,
+    });
+    setActiveTab('form');
+    setAiSuggestions(null);
+    setAiWord('');
+  };
+
+  const isSenseExisting = (type: string) => {
+    return vocabularyList.some(item => 
+      item.word.toLowerCase() === (aiSuggestions?.word || aiWord).toLowerCase() && 
+      item.type.toLowerCase() === type.toLowerCase()
+    );
   };
 
 
@@ -175,13 +190,13 @@ export default function AddWordPage() {
                 </TabsList>
                 
                 <TabsContent value="ai" className="pt-6">
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="ai-word">Which word would you like to add?</Label>
                       <div className="flex gap-2">
                         <Input 
                           id="ai-word" 
-                          placeholder="e.g., Ephemeral" 
+                          placeholder="e.g., Record" 
                           value={aiWord}
                           onChange={(e) => setAiWord(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleAiDefine()}
@@ -196,13 +211,56 @@ export default function AddWordPage() {
                           ) : (
                             <Sparkles className="mr-2 h-4 w-4" />
                           )}
-                          Define
+                          Lookup
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Our AI will fill in the definition, IPA, and examples for you.
-                      </p>
                     </div>
+
+                    {aiSuggestions && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                        <Label>Select the meaning you want to practice:</Label>
+                        <div className="grid gap-3">
+                          {aiSuggestions.senses.map((sense, index) => {
+                            const exists = isSenseExisting(sense.type);
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => !exists && handleSelectSense(sense)}
+                                disabled={exists}
+                                className={cn(
+                                  "flex flex-col items-start text-left p-4 rounded-xl border-2 transition-all",
+                                  exists 
+                                    ? "bg-muted border-muted opacity-60 cursor-not-allowed" 
+                                    : "bg-background border-border hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
+                                )}
+                              >
+                                <div className="flex w-full items-center justify-between mb-1">
+                                  <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                                    {sense.type}
+                                  </span>
+                                  {exists ? (
+                                    <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground uppercase">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      In Collection
+                                    </span>
+                                  ) : (
+                                    <Plus className="h-3 w-3 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <p className="text-sm font-medium line-clamp-2">
+                                  {sense.definition}
+                                </p>
+                                {sense.ipa && (
+                                  <p className="text-[10px] font-mono text-muted-foreground mt-1">
+                                    {sense.ipa}
+                                  </p>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 

@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'Refered English practice',
+  title: 'Lexio',
   description: 'Master English with deliberate practice.',
 };
 

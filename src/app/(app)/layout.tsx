@@ -25,7 +25,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           >
             <Logo className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold font-headline tracking-tighter">
-              Refered English practice
+              Lexio
             </span>
           </Link>
         </SidebarHeader>

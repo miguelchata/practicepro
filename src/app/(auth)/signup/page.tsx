@@ -124,7 +124,7 @@ export default function SignupPage() {
           >
             <Logo className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold font-headline tracking-tighter">
-              Refered English practice
+              Lexio
             </span>
           </Link>
         </div>

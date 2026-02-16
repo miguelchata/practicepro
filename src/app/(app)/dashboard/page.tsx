@@ -13,7 +13,7 @@ export default function DashboardPage() {
             <Achievements />
           </div>
           <div className="flex flex-col justify-center items-center p-8 bg-muted/30 rounded-lg border border-dashed">
-            <h3 className="text-xl font-headline font-semibold mb-2">Welcome to Refered English practice</h3>
+            <h3 className="text-xl font-headline font-semibold mb-2">Welcome to Lexio</h3>
             <p className="text-muted-foreground text-center">
               Your personalized journey to mastery. Use the sidebar to explore your English vocabulary and track your daily streak.
             </p>

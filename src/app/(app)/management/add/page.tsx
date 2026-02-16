@@ -27,9 +27,11 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save } from 'lucide-react';
+import { Save, Sparkles, Loader2 } from 'lucide-react';
 import { useAddVocabularyItem } from '@/firebase/firestore/use-vocabulary';
 import type { VocabularyItem } from '@/lib/types';
+import { defineWord } from '@/ai/flows/define-word';
+import { useToast } from '@/hooks/use-toast';
 
 
 const formSchema = z.object({
@@ -58,9 +60,15 @@ type NewVocabularyData = Omit<VocabularyItem, 'id' | 'userId' | 'accuracy' | 'al
 
 export default function AddWordPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const addVocabularyItem = useAddVocabularyItem();
   const [jsonInput, setJsonInput] = useState('');
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('ai');
+  
+  // AI related state
+  const [aiWord, setAiWord] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -116,7 +124,35 @@ export default function AddWordPage() {
     } catch (error) {
         setJsonError('Invalid JSON format.');
     }
-  }
+  };
+
+  const handleAiDefine = async () => {
+    if (!aiWord.trim()) return;
+    setIsAiLoading(true);
+    try {
+      const result = await defineWord({ word: aiWord });
+      form.reset({
+        word: result.word,
+        definition: result.definition,
+        ipa: result.ipa || '',
+        examples: result.examples.join('\n'),
+        type: result.type,
+      });
+      setActiveTab('form');
+      toast({
+        title: "Magic Complete",
+        description: `Successfully defined "${result.word}". You can now review and save it.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'AI Magic Failed',
+        description: 'Could not define the word. Please try again or fill the form manually.',
+      });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
 
   return (
@@ -129,11 +165,47 @@ export default function AddWordPage() {
                 <CardDescription>Add a new word to your practice collection.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="form">
-                <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-3 bg-muted/50">
+                    <TabsTrigger value="ai" className="gap-2">
+                      <Sparkles className="h-4 w-4" /> AI Magic
+                    </TabsTrigger>
                     <TabsTrigger value="form">Form</TabsTrigger>
                     <TabsTrigger value="json">JSON</TabsTrigger>
                 </TabsList>
+                
+                <TabsContent value="ai" className="pt-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-word">Which word would you like to add?</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          id="ai-word" 
+                          placeholder="e.g., Ephemeral" 
+                          value={aiWord}
+                          onChange={(e) => setAiWord(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAiDefine()}
+                        />
+                        <Button 
+                          onClick={handleAiDefine} 
+                          disabled={isAiLoading || !aiWord.trim()}
+                          className="shrink-0"
+                        >
+                          {isAiLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="mr-2 h-4 w-4" />
+                          )}
+                          Define
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Our AI will fill in the definition, IPA, and examples for you.
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+
                 <TabsContent value="form" className="pt-6">
                   <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -220,6 +292,7 @@ export default function AddWordPage() {
                   </form>
                   </Form>
                 </TabsContent>
+                
                 <TabsContent value="json" className="pt-6">
                   <div className="space-y-4">
                       <div className="space-y-2">

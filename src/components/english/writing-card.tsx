@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DetailCard } from "./detail-card";
 import { ExampleCard } from "./example-card";
 import { WordCard } from "./word-card";
@@ -76,11 +75,11 @@ export function WritingCard({
   const showWordIf = status.process !== "initial";
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full max-w-md h-full md:h-auto max-h-[85vh] flex flex-col border-none shadow-none md:border md:shadow-sm">
+      <CardHeader className="px-4 py-4 shrink-0">
         <DetailCard wordData={wordData} promptText="Writing Practice" />
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="flex-1 overflow-y-auto space-y-4 px-4 pb-4">
         <div className="relative flex flex-col justify-center">
             <ExampleCard 
                 wordData={wordData}
@@ -90,8 +89,8 @@ export function WritingCard({
             />
             <WordCard wordData={wordData} show={showWordIf} />
         </div>
-
-        <div className="pt-6 min-h-[8rem] flex flex-col justify-center">
+      </CardContent>
+      <CardContent className="px-4 py-4 shrink-0 bg-background md:bg-transparent">
           <ActionCard
             status={status}
             handleCheckAnswer={handleCheckAnswer}
@@ -99,7 +98,6 @@ export function WritingCard({
             practiceItem={practiceItem}
             handleNextCard={handleNextCard}
           />
-        </div>
       </CardContent>
     </Card>
   );

@@ -60,7 +60,7 @@ export function PracticeSession() {
 
   const handleFinishSession = async () => {
     if (!firestore || !user) {
-        router.push('/english');
+        router.push('/practice');
         return;
     }
     
@@ -72,15 +72,15 @@ export function PracticeSession() {
     } catch (error) {
         console.error("Failed to update streak:", error);
     } finally {
-        router.push('/english');
+        router.push('/practice');
     }
   };
 
   if (sessionFinished) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-4 h-[100dvh]">
+        <Card className="w-full max-w-2xl max-h-full overflow-hidden flex flex-col">
+          <CardHeader className="shrink-0">
             <CardTitle className="text-2xl font-bold font-headline mb-2">
               Session Complete!
             </CardTitle>
@@ -89,12 +89,12 @@ export function PracticeSession() {
               you practiced.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 overflow-y-auto px-4">
             <VocabularyList items={practicedItems.map((p) => p.wordData)} />
           </CardContent>
-          <CardContent>
-            <Button onClick={handleFinishSession}>
-              Back to Vocabulary
+          <CardContent className="shrink-0 pt-4">
+            <Button onClick={handleFinishSession} className="w-full h-12 text-lg">
+              Back to Practice
             </Button>
           </CardContent>
         </Card>
@@ -104,7 +104,7 @@ export function PracticeSession() {
 
   if (practiceItems.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+      <div className="flex-1 flex flex-col items-center justify-center text-center p-4 h-[100dvh]">
         <h2 className="text-2xl font-bold font-headline mb-2">
           No Words to Practice
         </h2>
@@ -112,8 +112,8 @@ export function PracticeSession() {
           There are no words matching your criteria. Try adding new words or
           wait for your next review cycle.
         </p>
-        <Button onClick={() => router.push('/english')}>
-          Back to Vocabulary
+        <Button onClick={() => router.push('/practice')} size="lg">
+          Back to Practice
         </Button>
       </div>
     );
@@ -121,8 +121,8 @@ export function PracticeSession() {
 
   if (!active) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <p>Loading next card...</p>
+      <div className="flex-1 flex flex-col items-center justify-center h-[100dvh]">
+        <p className="animate-pulse">Loading next card...</p>
       </div>
     );
   }
@@ -131,11 +131,11 @@ export function PracticeSession() {
     totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
+    <div className="flex flex-col h-[100dvh] overflow-hidden bg-background">
+      <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-card px-4">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="shrink-0">
               <X className="h-5 w-5" />
             </Button>
           </AlertDialogTrigger>
@@ -150,53 +150,46 @@ export function PracticeSession() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => router.push('/english')}>
+              <AlertDialogAction onClick={() => router.push('/practice')}>
                 Quit Session
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <Progress value={progressPercentage} className="flex-1" />
-        <div className="w-16 text-right font-semibold">
+        <div className="flex-1 flex flex-col justify-center">
+            <Progress value={progressPercentage} className="h-2 w-full" />
+        </div>
+        <div className="text-xs font-bold font-mono text-muted-foreground tabular-nums shrink-0">
           {completedCount} / {totalCount}
         </div>
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 overflow-hidden transition-opacity duration-300">
+      
+      <main className="flex-1 relative overflow-hidden">
         <AnimatePresence mode="wait">
-          {active.type === 'guess' && (
-            <motion.div
-              key={activeId}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ type: 'spring', stiffness: 100, damping: 18 }}
-              className="w-full max-w-xl"
-            >
+          <motion.div
+            key={activeId}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="absolute inset-0 flex items-center justify-center p-4"
+          >
+            {active.type === 'guess' ? (
               <Flashcard
                 practiceItem={active}
                 handleFeedback={handleFeedback}
                 nextCard={() => goToNext()}
               />
-            </motion.div>
-          )}
-          {active.type === 'write' && (
-            <motion.div
-              key={activeId}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ type: 'spring', stiffness: 100, damping: 18 }}
-              className="w-full max-w-xl"
-            >
+            ) : (
               <WritingCard
                 practiceItem={active}
                 handleFeedback={handleFeedback}
                 nextCard={() => goToNext()}
               />
-            </motion.div>
-          )}
+            )}
+          </motion.div>
         </AnimatePresence>
       </main>
-    </>
+    </div>
   );
 }

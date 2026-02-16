@@ -59,7 +59,6 @@ export function Flashcard({
   };
 
   const toContinue = () => {
-    // This function will be called by AccuracyCard to signal it's time for the continue button
     setStatus((s) => ({
         ...s,
         process: "continue",
@@ -75,11 +74,11 @@ export function Flashcard({
 
 
   return (
-    <Card className="w-full border-none shadow-none md:border md:shadow-sm">
-      <CardHeader className="px-4 pt-6">
+    <Card className="w-full max-w-md h-full md:h-auto max-h-[85vh] flex flex-col border-none shadow-none md:border md:shadow-sm">
+      <CardHeader className="px-4 py-4 shrink-0">
         <DetailCard wordData={wordData} />
       </CardHeader>
-      <CardContent className="space-y-6 px-4 pb-8">
+      <CardContent className="flex-1 overflow-y-auto space-y-4 px-4 pb-4">
         <div className="relative flex flex-col justify-center">
           <ExampleCard
             wordData={wordData}
@@ -93,10 +92,10 @@ export function Flashcard({
             show={showWord || status.process === "answer"}
           />
         </div>
-
-        <div className="pt-6 min-h-[10rem] flex flex-col justify-center">
+      </CardContent>
+      <CardContent className="px-4 py-4 shrink-0 bg-background md:bg-transparent">
            {status.process === 'continue' ? (
-                <div className="space-y-4 text-center px-2">
+                <div className="space-y-4 text-center">
                     <Button
                         type="button"
                         size="lg"
@@ -115,7 +114,6 @@ export function Flashcard({
                     nextCard={toContinue}
                 />
             )}
-        </div>
       </CardContent>
     </Card>
   );

@@ -59,7 +59,6 @@ export default function WordDetailPage() {
 
   if (loading || !mounted) {
     return (
-<<<<<<< HEAD
        <div className="flex min-h-screen w-full flex-col">
         <Header title="Loading..." backButtonHref="/management" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
@@ -78,34 +77,11 @@ export default function WordDetailPage() {
             </Card>
         </main>
       </div>
-=======
-       <AuthenticatedLayout>
-         <div className="flex min-h-screen w-full flex-col">
-          <Header title="Loading..." backButtonHref="/management" />
-          <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
-              <Card className="w-full max-w-2xl">
-                <CardHeader>
-                  <Skeleton className="h-10 w-3/4" />
-                  <Skeleton className="h-6 w-1/4" />
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-                <CardFooter>
-                  <Skeleton className="h-6 w-1/2" />
-                </CardFooter>
-              </Card>
-          </main>
-        </div>
-      </AuthenticatedLayout>
->>>>>>> origin/main
     )
   }
 
   if (!wordData) {
     return (
-<<<<<<< HEAD
       <div className="flex min-h-screen w-full flex-col">
         <Header title="Word not found" backButtonHref="/management" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
@@ -115,19 +91,6 @@ export default function WordDetailPage() {
             </Button>
         </main>
       </div>
-=======
-      <AuthenticatedLayout>
-        <div className="flex min-h-screen w-full flex-col">
-          <Header title="Word not found" backButtonHref="/management" />
-          <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
-            <p>The word you are looking for could not be found.</p>
-             <Button asChild>
-                  <a href="/management">Back to Management</a>
-              </Button>
-          </main>
-        </div>
-      </AuthenticatedLayout>
->>>>>>> origin/main
     )
   }
   

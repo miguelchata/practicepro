@@ -9,17 +9,20 @@ export default function Home() {
 
   useEffect(() => {
     if (user.loading) {
-      // Wait until user status is resolved
       return;
     }
     if (!user.data) {
       redirect('/login');
     } else {
-      // Assuming that if a user exists, they have completed onboarding.
-      // A more robust solution would check if onboarding is complete from user profile data.
       redirect('/dashboard');
     }
   }, [user.data, user.loading]);
 
-  return null; // Or a loading spinner
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="animate-pulse font-headline text-lg font-semibold">
+        Lexio
+      </div>
+    </div>
+  );
 }

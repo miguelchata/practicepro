@@ -1,5 +1,6 @@
+// This file is neutralized to avoid route group collisions with src/app/page.tsx
 import { redirect } from 'next/navigation';
 
-export default function DashboardRedirectPage() {
+export default function Page() {
   redirect('/dashboard');
 }

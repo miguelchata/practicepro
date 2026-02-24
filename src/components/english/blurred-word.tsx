@@ -21,38 +21,38 @@ export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordP
   const trimmedWord = wordToBlur.trim();
   const escapedWord = escapeRegExp(trimmedWord);
   
-  // Use capture group (\b...\b) so split() includes the match in the array.
-  // This correctly matches whole words and phrases.
-  const regex = new RegExp(`(\\b${escapedWord}\\b)`, 'gi');
+  // Create a regex that matches the word or phrase literals. 
+  // We use a capture group to keep the match in the split array.
+  const regex = new RegExp(`(${escapedWord})`, 'gi');
   const parts = sentence.split(regex);
 
   return (
     <>
       {parts.map((part, index) => {
-        // Match the target word/phrase case-insensitively
+        // Check if this part of the split sentence is the word/phrase we want to blur
         if (part.toLowerCase() === trimmedWord.toLowerCase()) {
           if (showFullWord) {
             return <strong key={index} className="text-foreground font-semibold">{part}</strong>;
           }
           
-          // Split the phrase into words and whitespace so we can hint each word
+          // Split the matching phrase into individual words and whitespace
           const subParts = part.split(/(\s+)/);
           
           return (
-            <span key={index} className="font-mono tracking-widest text-muted-foreground/70">
+            <span key={index} className="font-mono text-muted-foreground/70">
               {subParts.map((sub, sIdx) => {
-                // Preserve literal spaces as non-breaking spaces
+                // Return whitespace characters literally
                 if (/^\s+$/.test(sub)) {
-                  return <React.Fragment key={sIdx}>&nbsp;</React.Fragment>;
+                  return <React.Fragment key={sIdx}>{sub}</React.Fragment>;
                 }
                 
-                // For each word in the phrase, show the first letter and blur the rest
+                // For each actual word in the phrase, reveal only the first letter
                 if (sub.length > 0) {
                   return (
                     <React.Fragment key={sIdx}>
                       <span className="font-semibold text-foreground">{sub[0]}</span>
-                      {sub.slice(1).split('').map((char, charIdx) => (
-                        <span key={charIdx}>■</span>
+                      {sub.slice(1).split('').map((_, charIdx) => (
+                        <span key={charIdx} className="opacity-40">■</span>
                       ))}
                     </React.Fragment>
                   );
@@ -62,7 +62,7 @@ export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordP
             </span>
           );
         }
-        // Return surrounding sentence text as is
+        // Return parts of the sentence that are NOT the target word/phrase
         return <React.Fragment key={index}>{part}</React.Fragment>;
       })}
     </>

@@ -21,6 +21,7 @@ import { AuthenticatedLayout } from '@/components/layout/authenticated-layout'
 
 export default function WordDetailPage() {
   const params = useParams()
+  // Ensure we decode phrasal verbs like "carry on" from the URL
   const wordParam = params.word ? decodeURIComponent(params.word as string) : ''
   const { data: vocabularyList, loading } = useVocabulary();
   const [mounted, setMounted] = useState(false);
@@ -30,8 +31,8 @@ export default function WordDetailPage() {
   }, []);
 
   const wordData = useMemo(() => {
-    if (!wordParam) return null;
-    return vocabularyList.find(item => item.word.toLowerCase() === wordParam.toLowerCase());
+    if (!wordParam || !vocabularyList) return null;
+    return vocabularyList.find(item => item.word.toLowerCase().trim() === wordParam.toLowerCase().trim());
   }, [vocabularyList, wordParam]);
 
   const reviewInfo = useMemo(() => {
@@ -60,38 +61,42 @@ export default function WordDetailPage() {
 
   if (loading || !mounted) {
     return (
+      <AuthenticatedLayout>
        <div className="flex min-h-screen w-full flex-col">
-        <Header title="Loading..." backButtonHref="/management" />
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
-            <Card className="w-full max-w-2xl">
-              <CardHeader>
-                <Skeleton className="h-10 w-3/4" />
-                <Skeleton className="h-6 w-1/4" />
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-              <CardFooter>
-                <Skeleton className="h-6 w-1/2" />
-              </CardFooter>
-            </Card>
-        </main>
-      </div>
+          <Header title="Loading..." backButtonHref="/management" />
+          <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
+              <Card className="w-full max-w-2xl">
+                <CardHeader>
+                  <Skeleton className="h-10 w-3/4" />
+                  <Skeleton className="h-6 w-1/4" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-6 w-1/2" />
+                </CardFooter>
+              </Card>
+          </main>
+        </div>
+      </AuthenticatedLayout>
     )
   }
 
   if (!wordData) {
     return (
-      <div className="flex min-h-screen w-full flex-col">
-        <Header title="Word not found" backButtonHref="/management" />
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
-          <p>The word &quot;{wordParam}&quot; could not be found in your collection.</p>
-           <Button asChild>
-                <a href="/management">Back to Management</a>
-            </Button>
-        </main>
-      </div>
+      <AuthenticatedLayout>
+        <div className="flex min-h-screen w-full flex-col">
+          <Header title="Word not found" backButtonHref="/management" />
+          <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
+            <p className="text-lg">The word <span className="font-bold">&quot;{wordParam}&quot;</span> could not be found in your collection.</p>
+             <Button asChild className="mt-4">
+                  <a href="/management">Back to Management</a>
+              </Button>
+          </main>
+        </div>
+      </AuthenticatedLayout>
     )
   }
   
@@ -103,24 +108,26 @@ export default function WordDetailPage() {
           <Card className="w-full max-w-2xl">
             <CardHeader>
               <CardTitle className="font-headline text-4xl">{wordData.word}</CardTitle>
-              <div className="flex items-baseline justify-between">
-                  <CardDescription>{wordData.type ? wordData.type.charAt(0).toUpperCase() + wordData.type.slice(1) : 'Vocabulary Item'}</CardDescription>
+              <div className="flex items-baseline justify-between mt-2">
+                  <CardDescription className="text-primary font-semibold uppercase tracking-wider text-xs">{wordData.type || 'Vocabulary Item'}</CardDescription>
                    {wordData.ipa && <p className="text-muted-foreground font-mono text-lg">{wordData.ipa}</p>}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                  <p className="font-semibold">Definition</p>
-                  <p className="text-muted-foreground text-lg">{wordData.definition}</p>
+              <div className="space-y-2">
+                  <p className="text-sm font-bold uppercase text-muted-foreground tracking-tight">Definition</p>
+                  <p className="text-foreground text-xl leading-relaxed">{wordData.definition}</p>
               </div>
               {wordData.examples && wordData.examples.length > 0 && (
                 <>
                   <Separator/>
-                  <div>
-                      <p className="font-semibold">Examples</p>
-                      <ul className="list-disc pl-5 mt-2 space-y-2 text-muted-foreground">
+                  <div className="space-y-4">
+                      <p className="text-sm font-bold uppercase text-muted-foreground tracking-tight">Examples</p>
+                      <ul className="space-y-4">
                           {wordData.examples.map((example, index) => (
-                              <li key={index} className="italic">&quot;{example}&quot;</li>
+                              <li key={index} className="italic text-lg text-muted-foreground border-l-4 border-primary/20 pl-4 bg-muted/30 py-2 rounded-r-md">
+                                &quot;{example}&quot;
+                              </li>
                           ))}
                       </ul>
                   </div>
@@ -128,10 +135,10 @@ export default function WordDetailPage() {
               )}
             </CardContent>
             {reviewInfo && (
-              <CardFooter>
+              <CardFooter className="pt-4 border-t bg-muted/20">
                   <div className={cn(
                       "flex items-center gap-2 text-sm",
-                      reviewInfo.isOverdue ? 'text-destructive font-semibold' : 'text-muted-foreground'
+                      reviewInfo.isOverdue ? 'text-destructive font-bold' : 'text-muted-foreground'
                   )}>
                       <Calendar className="h-4 w-4" />
                       <span>{reviewInfo.text}</span>

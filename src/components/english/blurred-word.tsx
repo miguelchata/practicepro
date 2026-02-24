@@ -16,35 +16,53 @@ function escapeRegExp(string: string) {
 }
 
 export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordProps) => {
-  if (!wordToBlur) return <>{sentence}</>;
+  if (!wordToBlur || !sentence) return <>{sentence}</>;
 
-  // Escape the word to prevent crashes with special regex characters
-  const escapedWord = escapeRegExp(wordToBlur);
+  const trimmedWord = wordToBlur.trim();
+  const escapedWord = escapeRegExp(trimmedWord);
   
-  // Using word boundaries to avoid matching parts of other words (e.g., "car" in "carpet")
-  const regex = new RegExp(`\\b(${escapedWord})\\b`, 'gi');
+  // Use capture group (\b...\b) so split() includes the match in the array.
+  // This correctly matches whole words and phrases.
+  const regex = new RegExp(`(\\b${escapedWord}\\b)`, 'gi');
   const parts = sentence.split(regex);
 
   return (
     <>
       {parts.map((part, index) => {
-        if (part.toLowerCase() === wordToBlur.toLowerCase()) {
+        // Match the target word/phrase case-insensitively
+        if (part.toLowerCase() === trimmedWord.toLowerCase()) {
           if (showFullWord) {
             return <strong key={index} className="text-foreground font-semibold">{part}</strong>;
           }
           
-          // Blur logic: show first letter, then blur the rest but keep spaces/symbols visible
+          // Split the phrase into words and whitespace so we can hint each word
+          const subParts = part.split(/(\s+)/);
+          
           return (
             <span key={index} className="font-mono tracking-widest text-muted-foreground/70">
-              <span className="font-semibold text-foreground">{part[0]}</span>
-              {part.slice(1).split('').map((char, charIdx) => {
-                // Keep spaces as spaces, replace everything else with a block
-                if (char === ' ') return <span key={charIdx}>&nbsp;</span>;
-                return <span key={charIdx}>■</span>;
+              {subParts.map((sub, sIdx) => {
+                // Preserve literal spaces as non-breaking spaces
+                if (/^\s+$/.test(sub)) {
+                  return <React.Fragment key={sIdx}>&nbsp;</React.Fragment>;
+                }
+                
+                // For each word in the phrase, show the first letter and blur the rest
+                if (sub.length > 0) {
+                  return (
+                    <React.Fragment key={sIdx}>
+                      <span className="font-semibold text-foreground">{sub[0]}</span>
+                      {sub.slice(1).split('').map((char, charIdx) => (
+                        <span key={charIdx}>■</span>
+                      ))}
+                    </React.Fragment>
+                  );
+                }
+                return null;
               })}
             </span>
           );
         }
+        // Return surrounding sentence text as is
         return <React.Fragment key={index}>{part}</React.Fragment>;
       })}
     </>

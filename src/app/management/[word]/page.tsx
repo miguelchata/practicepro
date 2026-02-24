@@ -21,8 +21,8 @@ import { AuthenticatedLayout } from '@/components/layout/authenticated-layout'
 
 export default function WordDetailPage() {
   const params = useParams()
-  // Ensure we decode phrasal verbs like "carry on" from the URL
-  const wordParam = params.word ? decodeURIComponent(params.word as string) : ''
+  // The param is now expected to be a slug (e.g., "carry-on")
+  const wordParam = params.word ? (params.word as string).toLowerCase() : ''
   const { data: vocabularyList, loading } = useVocabulary();
   const [mounted, setMounted] = useState(false);
 
@@ -32,7 +32,11 @@ export default function WordDetailPage() {
 
   const wordData = useMemo(() => {
     if (!wordParam || !vocabularyList) return null;
-    return vocabularyList.find(item => item.word.toLowerCase().trim() === wordParam.toLowerCase().trim());
+    // Find the item by slugifying its stored word and comparing
+    return vocabularyList.find(item => {
+      const slug = item.word.toLowerCase().trim().replace(/\s+/g, '-');
+      return slug === wordParam;
+    });
   }, [vocabularyList, wordParam]);
 
   const reviewInfo = useMemo(() => {
@@ -90,7 +94,7 @@ export default function WordDetailPage() {
         <div className="flex min-h-screen w-full flex-col">
           <Header title="Word not found" backButtonHref="/management" />
           <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
-            <p className="text-lg">The word <span className="font-bold">&quot;{wordParam}&quot;</span> could not be found in your collection.</p>
+            <p className="text-lg">The word <span className="font-bold">&quot;{wordParam.replace(/-/g, ' ')}&quot;</span> could not be found in your collection.</p>
              <Button asChild className="mt-4">
                   <a href="/management">Back to Management</a>
               </Button>

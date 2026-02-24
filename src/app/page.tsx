@@ -19,15 +19,10 @@ export default function Home() {
   }, [user.data, user.loading]);
 
   return (
-<<<<<<< HEAD
     <div className="flex min-h-screen items-center justify-center">
       <div className="animate-pulse font-headline text-lg font-semibold">
         Lexio
       </div>
-=======
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <p className="animate-pulse text-muted-foreground">Checking authentication...</p>
->>>>>>> origin/main
     </div>
   );
 }

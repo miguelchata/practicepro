@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -9,8 +8,21 @@ type BlurredWordProps = {
   showFullWord: boolean;
 };
 
+/**
+ * Escapes special characters for use in a regular expression.
+ */
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordProps) => {
-  const regex = new RegExp(`\\b(${wordToBlur})\\b`, 'gi');
+  if (!wordToBlur) return <>{sentence}</>;
+
+  // Escape the word to prevent crashes with special regex characters
+  const escapedWord = escapeRegExp(wordToBlur);
+  
+  // Using word boundaries to avoid matching parts of other words (e.g., "car" in "carpet")
+  const regex = new RegExp(`\\b(${escapedWord})\\b`, 'gi');
   const parts = sentence.split(regex);
 
   return (
@@ -20,10 +32,16 @@ export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordP
           if (showFullWord) {
             return <strong key={index} className="text-foreground font-semibold">{part}</strong>;
           }
-          const shapes = '■'.repeat(part.length - 1);
+          
+          // Blur logic: show first letter, then blur the rest but keep spaces/symbols visible
           return (
             <span key={index} className="font-mono tracking-widest text-muted-foreground/70">
-              <span className="font-semibold text-foreground">{part[0]}</span>{shapes}
+              <span className="font-semibold text-foreground">{part[0]}</span>
+              {part.slice(1).split('').map((char, charIdx) => {
+                // Keep spaces as spaces, replace everything else with a block
+                if (char === ' ') return <span key={charIdx}>&nbsp;</span>;
+                return <span key={charIdx}>■</span>;
+              })}
             </span>
           );
         }

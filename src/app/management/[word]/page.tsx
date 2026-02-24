@@ -21,7 +21,7 @@ import { AuthenticatedLayout } from '@/components/layout/authenticated-layout'
 
 export default function WordDetailPage() {
   const params = useParams()
-  const wordParam = params.word as string
+  const wordParam = params.word ? decodeURIComponent(params.word as string) : ''
   const { data: vocabularyList, loading } = useVocabulary();
   const [mounted, setMounted] = useState(false);
 
@@ -30,6 +30,7 @@ export default function WordDetailPage() {
   }, []);
 
   const wordData = useMemo(() => {
+    if (!wordParam) return null;
     return vocabularyList.find(item => item.word.toLowerCase() === wordParam.toLowerCase());
   }, [vocabularyList, wordParam]);
 
@@ -85,7 +86,7 @@ export default function WordDetailPage() {
       <div className="flex min-h-screen w-full flex-col">
         <Header title="Word not found" backButtonHref="/management" />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center md:gap-8 md:p-8">
-          <p>The word you are looking for could not be found.</p>
+          <p>The word &quot;{wordParam}&quot; could not be found in your collection.</p>
            <Button asChild>
                 <a href="/management">Back to Management</a>
             </Button>

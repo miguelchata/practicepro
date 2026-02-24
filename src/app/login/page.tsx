@@ -1,5 +1,15 @@
+<<<<<<< HEAD
 'use client';
 
+=======
+// This file is neutralized to avoid route group collisions with src/app/login/page.tsx
+import { redirect } from 'next/navigation';
+
+<<<<<<<< HEAD:src/app/(auth)/login/page.tsx
+export default function Page() {
+  redirect('/login');
+========
+>>>>>>> origin/main
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -52,7 +62,10 @@ export default function LoginPage() {
     const docSnap = await getDoc(userDocRef);
 
     if (!docSnap.exists()) {
+<<<<<<< HEAD
       // Create profile for existing users who might not have one
+=======
+>>>>>>> origin/main
       const userProfile = {
         displayName: user.displayName || 'Anonymous User',
         email: user.email,
@@ -187,4 +200,8 @@ export default function LoginPage() {
       </div>
     </div>
   );
+<<<<<<< HEAD
+=======
+>>>>>>>> origin/main:src/app/login/page.tsx
+>>>>>>> origin/main
 }

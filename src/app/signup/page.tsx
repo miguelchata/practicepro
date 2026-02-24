@@ -1,5 +1,15 @@
+<<<<<<< HEAD
 'use client';
 
+=======
+// This file is neutralized to avoid route group collisions with src/app/signup/page.tsx
+import { redirect } from 'next/navigation';
+
+<<<<<<<< HEAD:src/app/(auth)/signup/page.tsx
+export default function Page() {
+  redirect('/signup');
+========
+>>>>>>> origin/main
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -85,7 +95,10 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       await updateProfile(user, { displayName: name });
+<<<<<<< HEAD
       // Pass `true` to indicate this is a new user signup
+=======
+>>>>>>> origin/main
       await handleUserLogin(user, true, name);
     } catch (error: any) {
       toast({
@@ -101,7 +114,10 @@ export default function SignupPage() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
+<<<<<<< HEAD
       // A simple way to check if the user is new with Firebase Auth.
+=======
+>>>>>>> origin/main
       const isNewUser = result.user.metadata.creationTime === result.user.metadata.lastSignInTime;
       await handleUserLogin(result.user, isNewUser);
     } catch (error: any) {
@@ -115,7 +131,11 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+<<<<<<< HEAD
       <div className="w-full max-w-md">
+=======
+      <div className="w-full max-md">
+>>>>>>> origin/main
         <div className="mb-8 flex justify-center">
           <Link
             href="/dashboard"
@@ -208,4 +228,8 @@ export default function SignupPage() {
       </div>
     </div>
   );
+<<<<<<< HEAD
+=======
+>>>>>>>> origin/main:src/app/signup/page.tsx
+>>>>>>> origin/main
 }

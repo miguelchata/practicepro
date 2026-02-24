@@ -52,7 +52,7 @@ export const BlurredWord = ({ sentence, wordToBlur, showFullWord }: BlurredWordP
                     <React.Fragment key={sIdx}>
                       <span className="font-semibold text-foreground">{sub[0]}</span>
                       {sub.slice(1).split('').map((_, charIdx) => (
-                        <span key={charIdx} className="opacity-40">■</span>
+                        <span key={charIdx} className="opacity-40 px-[1px]">■</span>
                       ))}
                     </React.Fragment>
                   );

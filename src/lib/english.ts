@@ -1,4 +1,5 @@
 import { useUpdateVocabularyItem } from "@/firebase/firestore/use-vocabulary";
+// Here is where I started to improve the selector algorithm
 
 import type { VocabularyItem } from "@/lib/types";
 type ExerciseType = "guess" | "write" | "both";
